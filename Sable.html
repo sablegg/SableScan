@@ -2795,22 +2795,28 @@ document.getElementById(steps[i-1] || steps[0]).classList.add(‘done’);
 await delay(400);
 document.getElementById(steps[steps.length-1]).classList.add(‘done’);
 
-// ── REAL IMPLEMENTATION ──────────────────────────────────────
-// const formData = new FormData();
-// if (file) formData.append(‘photo’, file);
-// formData.append(‘quickHint’, document.getElementById(‘quick-hint’).value);
-// formData.append(‘textOnly’, textOnly);
-// formData.append(‘salesCount’, document.getElementById(‘cfg-sales’).value);
-// formData.append(‘marginPct’, document.getElementById(‘cfg-margin’).value);
-// formData.append(‘avgWindow’, document.getElementById(‘cfg-window’).value);
-// formData.append(‘mode’, STATE.currentMode);
-// const response = await fetch(BACKEND.scanWebhook, { method: ‘POST’, body: formData });
-// const data = await response.json();
-// ── END REAL IMPLEMENTATION ──────────────────────────────────
-
-// Use demo data for now
-const data = DEMO.scan;
-logScan(STATE.currentMode, null); // track usage (IP added by n8n in production)
+// Real API call
+let imageBase64 = null;
+let mediaType = 'image/jpeg';
+if (file) {
+  imageBase64 = await new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => { imageBase64 = reader.result.split(',')[1]; mediaType = file.type || 'image/jpeg'; resolve(reader.result.split(',')[1]); };
+    reader.readAsDataURL(file);
+  });
+}
+const hint = document.getElementById('quick-hint').value;
+const payload = { image: imageBase64, mediaType, hint, marginPct: parseInt(document.getElementById('cfg-margin').value)||15, mode: STATE.currentMode };
+let data;
+try {
+  const resp = await fetch(BACKEND.scanWebhook, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  data = await resp.json();
+  if (data.error) throw new Error(data.error);
+} catch(e) {
+  showToast('Using demo — ' + e.message);
+  data = DEMO.scan;
+}
+logScan(STATE.currentMode, null);
 STATE.lastResult = data;
 
 await delay(300);
