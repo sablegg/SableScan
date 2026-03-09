@@ -2761,7 +2761,7 @@ uploadPreview.src = url;
 uploadPreview.style.display = ‘block’;
 uploadIcon.style.display = ‘none’;
 uploadText.textContent = ‘Photo captured — analyzing…’;
-startScan(file, false);
+startScan(file, false).catch(e => showToast('Error: ' + e.message));
 }
 
 function setMode(m) {
