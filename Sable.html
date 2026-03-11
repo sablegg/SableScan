@@ -966,7 +966,7 @@ async function startScan(file, textOnly) {
         reader.onload = () => {
           const parts = reader.result.split(',');
           mediaType = (file.type && file.type !== '') ? file.type : 'image/jpeg';
-          resolve(parts[1]);
+          resolve(parts[1].replace(/[^A-Za-z0-9+/=]/g, ''));
         };
         reader.onerror = reject;
         reader.readAsDataURL(file);
