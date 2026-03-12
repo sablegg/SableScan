@@ -1005,7 +1005,8 @@ async function startScan(file, textOnly) {
         body: JSON.stringify(payload),
       });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      data = await resp.json();
+      const raw = await resp.json();
+data = Array.isArray(raw) ? raw[0] : raw;
       if (data.error) throw new Error(data.error);
     } catch (err) {
       console.warn('n8n error, using demo:', err.message);
