@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sable — Rel ease Radar</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0d;--surface:#13131a;--surface2:#1a1a24;--surface3:#1f1f2e;
+  --border:#252535;--accent:#7c6aff;--green:#4ade80;--text:#f0f0f8;
+  --muted:#5a5a72;--danger:#ff4d6d;--gold:#f5c842;--orange:#fb923c;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+.phone{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* NAV */
+.top-nav{display:flex;align-items:center;background:var(–surface);border-bottom:1px solid var(–border);padding:13px 18px;flex-shrink:0;gap:10px;}
+.back-btn{background:none;border:none;cursor:pointer;color:var(–accent);display:flex;align-items:center;gap:5px;font-family:‘DM Sans’,sans-serif;font-size:13px;font-weight:500;padding:0;}
+.nav-title{font-family:‘Bebas Neue’,sans-serif;font-size:16px;letter-spacing:2px;flex:1;text-align:center;}
+.refresh-btn{background:none;border:1px solid var(–border);border-radius:8px;color:var(–muted);font-family:‘DM Mono’,monospace;font-size:11px;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:border-color .2s,color .2s;flex-shrink:0;}
+.refresh-btn:hover{border-color:var(–accent);color:var(–accent);}
+.refresh-btn.loading{border-color:var(–accent);color:var(–accent);pointer-events:none;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* SCROLL */
+.scrollbody{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;padding-bottom:32px;}
+.scrollbody::-webkit-scrollbar{width:3px;}
+.scrollbody::-webkit-scrollbar-thumb{background:var(–border);}
+
+/* SECTION LABEL */
+.section-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:11px;letter-spacing:2.5px;color:var(–muted);padding:2px 2px 0;}
+
+/* NEXT UP HERO */
+.next-hero{background:var(–surface);border:1px solid var(–border);border-radius:18px;overflow:visible;position:relative;}
+.next-hero-badge{position:absolute;top:12px;left:14px;background:var(–accent);color:white;font-family:‘Bebas Neue’,sans-serif;font-size:10px;letter-spacing:2px;padding:3px 8px;border-radius:20px;}
+.next-hero-body{padding:36px 14px 16px;overflow:visible;}
+.next-hero-name{font-family:‘Bebas Neue’,sans-serif;font-size:28px;letter-spacing:2px;line-height:1.1;margin-bottom:2px;}
+.next-hero-type{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–muted);margin-bottom:12px;}
+
+/* COUNTDOWN */
+.countdown{display:flex;gap:6px;margin-bottom:14px;width:100%;}
+.cd-block{flex:1;background:var(–surface2);border-radius:10px;padding:10px 4px;text-align:center;min-width:0;overflow:hidden;}
+.cd-num{font-family:‘Bebas Neue’,sans-serif;font-size:26px;letter-spacing:0;line-height:1;color:var(–accent);}
+.cd-num.urgent{color:var(–danger);}
+.cd-num.soon  {color:var(–gold);}
+.cd-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:9px;letter-spacing:2px;color:var(–muted);margin-top:2px;}
+
+/* META CHIPS */
+.meta-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.meta-chip{background:var(–surface2);border:1px solid var(–border);border-radius:8px;padding:5px 10px;display:flex;flex-direction:column;gap:1px;}
+.mc-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:8px;letter-spacing:2px;color:var(–muted);}
+.mc-val{font-family:‘DM Mono’,monospace;font-size:12px;color:var(–text);}
+.mc-val.green{color:var(–green);}
+.mc-val.gold {color:var(–gold);}
+
+/* PACKS INCLUDED */
+.packs-list{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.pack-chip{display:flex;align-items:center;gap:8px;background:var(–surface2);border-radius:8px;padding:7px 10px;}
+.pack-set-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.pack-set-name{font-size:12px;flex:1;}
+.pack-qty-badge{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–muted);flex-shrink:0;}
+
+/* HYPE BAR */
+.hype-section{display:flex;flex-direction:column;gap:5px;}
+.hype-row{display:flex;align-items:center;gap:8px;}
+.hype-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:9px;letter-spacing:1.5px;color:var(–muted);width:80px;flex-shrink:0;}
+.hype-track{flex:1;height:5px;background:var(–surface2);border-radius:3px;position:relative;overflow:visible;}
+.hype-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.hype-dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:9px;height:9px;border-radius:50%;border:2px solid var(–surface);transition:left .8s cubic-bezier(.4,0,.2,1);}
+.hype-val{font-family:‘DM Mono’,monospace;font-size:10px;width:26px;text-align:right;flex-shrink:0;}
+.hype-label{font-family:‘Bebas Neue’,sans-serif;font-size:13px;letter-spacing:1.5px;padding:3px 10px;border-radius:20px;align-self:flex-start;margin-top:2px;}
+.hype-label.hot  {background:rgba(255,77,109,.12);color:var(–danger);border:1px solid rgba(255,77,109,.3);}
+.hype-label.warm {background:rgba(245,200,66,.1); color:var(–gold);  border:1px solid rgba(245,200,66,.3);}
+.hype-label.watch{background:rgba(124,106,255,.1);color:var(–accent); border:1px solid rgba(124,106,255,.3);}
+
+/* RELEASE LIST ITEM */
+.release-card{background:var(–surface);border:1px solid var(–border);border-radius:14px;overflow:visible;animation:fadeUp .25s ease;cursor:pointer;transition:border-color .2s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.release-card:active{opacity:.85;}
+.release-main{display:flex;align-items:center;gap:12px;padding:13px 14px;}
+.release-date-block{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(–surface2);border-radius:10px;padding:8px 10px;min-width:52px;flex-shrink:0;}
+.release-month{font-family:‘Bebas Neue’,sans-serif;font-size:10px;letter-spacing:1.5px;color:var(–muted);}
+.release-day{font-family:‘Bebas Neue’,sans-serif;font-size:26px;letter-spacing:1px;line-height:1;color:var(–text);}
+.release-info{flex:1;min-width:0;}
+.release-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.release-sub{font-family:‘DM Mono’,monospace;font-size:10px;color:var(–muted);margin-top:2px;}
+.release-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.release-msrp{font-family:‘DM Mono’,monospace;font-size:13px;color:var(–green);}
+.release-countdown{font-family:‘DM Mono’,monospace;font-size:10px;color:var(–muted);}
+.release-countdown.urgent{color:var(–danger);}
+.release-countdown.soon  {color:var(–gold);}
+
+/* RELEASE EXPAND */
+.release-expand{max-height:0;overflow:hidden;transition:max-height .35s ease;background:var(–surface2);border-top:0 solid var(–border);border-radius:0 0 14px 14px;}
+.release-expand.open{max-height:400px;border-top:1px solid var(–border);}
+.release-expand-inner{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+.expand-packs{display:flex;flex-direction:column;gap:4px;}
+.expand-pack-row{display:flex;align-items:center;gap:8px;font-size:12px;}
+.expand-pack-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.expand-news-item{font-size:11px;color:var(–muted);line-height:1.5;padding:6px 0;border-bottom:1px solid var(–border);}
+.expand-news-item:last-child{border-bottom:none;}
+
+/* NEWS SECTION */
+.news-card{background:var(–surface);border:1px solid var(–border);border-radius:14px;overflow:visible;}
+.news-item{padding:12px 14px;border-bottom:1px solid var(–border);display:flex;flex-direction:column;gap:4px;cursor:pointer;transition:background .15s;}
+.news-item:last-child{border-bottom:none;}
+.news-item:active{background:var(–surface2);}
+.news-headline{font-size:13px;font-weight:500;line-height:1.4;}
+.news-meta{display:flex;align-items:center;gap:8px;}
+.news-source{font-family:‘DM Mono’,monospace;font-size:10px;color:var(–accent);}
+.news-date{font-family:‘DM Mono’,monospace;font-size:10px;color:var(–muted);}
+.news-summary{font-size:11px;color:var(–muted);line-height:1.5;margin-top:2px;}
+
+/* SKELETON */
+.skeleton{background:linear-gradient(90deg,var(–surface2) 25%,var(–surface3) 50%,var(–surface2) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:4px;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:40px 24px;color:var(–muted);font-size:12px;line-height:1.8;}
+</style>
+
+</head>
+<body>
+<div class="phone">
+  <div class="top-nav">
+    <button class="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="nav-title">RELEASE RADAR</div>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      REFRESH
+    </button>
+  </div>
+  <div class="scrollbody" id="radarBody"></div>
+</div>
+
+<script>
+const CACHE_KEY = 'sable_release_radar_v2';
+// Clear old cache key if present
+localStorage.removeItem('sable_release_radar');
+let radarData = null;
+let openRelease = null;
+let countdownTimers = [];
+
+// ── LOAD ──────────────────────────────────────
+async function loadAll() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+  btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Loading…';
+  showSkeletons();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 3000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: buildPrompt() }]
+      })
+    });
+    const data = await res.json();
+    // Collect all text blocks (web_search returns multiple content blocks)
+    const allText = (data.content || [])
+      .filter(b => b.type === 'text')
+      .map(b => b.text || '')
+      .join('');
+    const clean = allText.replace(/```json|```/g, '').trim();
+    // Try to find JSON object in response
+    const jsonMatch = clean.match(/\{[\s\S]*"releases"[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        radarData = JSON.parse(jsonMatch[0]);
+        localStorage.setItem(CACHE_KEY, JSON.stringify(radarData));
+      } catch(parseErr) {
+        console.warn('JSON parse failed, using demo data');
+        radarData = getDemoData();
+      }
+    } else {
+      console.warn('No JSON found in response, using demo data');
+      radarData = getDemoData();
+    }
+  } catch(e) {
+    console.warn('Radar error:', e);
+    radarData = getDemoData();
+  }
+
+  btn.classList.remove('loading');
+  btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> REFRESH';
+  render();
+}
+
+function buildPrompt() {
+  const today = new Date().toISOString().split('T')[0];
+  return `Today is ${today}. Search for all upcoming Pokemon TCG product releases — booster boxes, ETBs, UPCs, special collections, tins, and sealed products. Include everything known from now through the next 12 months.
+
+For each product include: exact release date, MSRP, pack count, which set packs are included, product type, and community hype/sentiment assessment.
+
+Also search for the latest Pokemon TCG news items (announcements, card reveals, tournament results, market news) — include as many as you find.
+
+Respond ONLY in valid JSON:
+{
+  "releases": [
+    {
+      "id": "unique_slug",
+      "name": "Full Product Name",
+      "type": "Booster Box|ETB|Blister|Tin|UPC|Special Collection|Bundle",
+      "set": "Set name",
+      "releaseDate": "YYYY-MM-DD",
+      "msrp": 0.00,
+      "packCount": 0,
+      "packs": [{"setName": "Set name", "qty": 0, "color": "#hex"}],
+      "extras": ["Promo card description", "Accessory"],
+      "hype": 0,
+      "communityBuzz": 0,
+      "investorScore": 0,
+      "hypeLabel": "HOT|WARM|WATCH",
+      "description": "One sentence about this product and why collectors care"
+    }
+  ],
+  "news": [
+    {
+      "headline": "News headline",
+      "summary": "2-3 sentence summary",
+      "source": "Source name",
+      "date": "YYYY-MM-DD",
+      "url": "https://..."
+    }
+  ]
+}`;
+}
+
+// ── COUNTDOWN ─────────────────────────────────
+function msUntil(dateStr) {
+  return new Date(dateStr+'T00:00:00') - new Date();
+}
+
+function formatCountdown(dateStr, short) {
+  const ms = msUntil(dateStr);
+  if (ms <= 0) return short ? 'TODAY' : 'Released';
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor((ms % 86400000) / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if (short) {
+    if (d === 0) return h+'h '+m+'m';
+    if (d < 7)  return d+'d '+h+'h';
+    if (d < 30) return d+' days';
+    return Math.floor(d/30)+'mo '+( d%30)+'d';
+  }
+  return {d, h, m, s};
+}
+
+function urgencyClass(dateStr) {
+  const d = Math.floor(msUntil(dateStr) / 86400000);
+  if (d <= 7)  return 'urgent';
+  if (d <= 30) return 'soon';
+  return '';
+}
+
+function startCountdowns() {
+  countdownTimers.forEach(clearInterval);
+  countdownTimers = [];
+  const timer = setInterval(() => {
+    document.querySelectorAll('[data-countdown]').forEach(el => {
+      const dateStr = el.dataset.countdown;
+      el.textContent = formatCountdown(dateStr, true);
+      el.className = 'release-countdown ' + urgencyClass(dateStr);
+    });
+    // Update hero countdown
+    const hero = document.querySelector('[data-hero-countdown]');
+    if (hero) {
+      const dateStr = hero.dataset.heroCountdown;
+      const t = formatCountdown(dateStr, false);
+      if (typeof t === 'object') {
+        const uc = urgencyClass(dateStr);
+        ['d','h','m','s'].forEach(u => {
+          const el = document.getElementById('cd-'+u);
+          if (el) { el.textContent = t[u]; el.className = 'cd-num '+(uc||''); }
+        });
+      }
+    }
+  }, 1000);
+  countdownTimers.push(timer);
+}
+
+// ── PACK COLORS ───────────────────────────────
+const SET_COLORS = [
+  '#7c6aff','#4ade80','#f5c842','#fb923c','#ff4d6d','#38bdf8','#a78bfa','#34d399','#f472b6','#60a5fa'
+];
+let colorIdx = 0;
+const colorMap = {};
+function getSetColor(setName) {
+  if (!colorMap[setName]) { colorMap[setName] = SET_COLORS[colorIdx++ % SET_COLORS.length]; }
+  return colorMap[setName];
+}
+
+// ── SHOW SKELETONS ────────────────────────────
+function showSkeletons() {
+  const body = document.getElementById('radarBody'); body.innerHTML = '';
+  // Hero skeleton
+  const hero = document.createElement('div'); hero.className='next-hero';
+  hero.style.cssText='padding:36px 16px 16px;display:flex;flex-direction:column;gap:12px;';
+  hero.innerHTML='<div class="skeleton" style="width:60%;height:28px;"></div><div style="display:flex;gap:8px;"><div class="skeleton" style="flex:1;height:60px;border-radius:10px;"></div><div class="skeleton" style="flex:1;height:60px;border-radius:10px;"></div><div class="skeleton" style="flex:1;height:60px;border-radius:10px;"></div><div class="skeleton" style="flex:1;height:60px;border-radius:10px;"></div></div>';
+  body.appendChild(hero);
+  for (let i=0;i<4;i++) {
+    const sk=document.createElement('div'); sk.className='release-card';
+    sk.innerHTML='<div style="display:flex;gap:12px;padding:13px 14px;"><div class="skeleton" style="width:52px;height:60px;border-radius:10px;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:8px;padding-top:4px;"><div class="skeleton" style="width:65%;height:13px;"></div><div class="skeleton" style="width:40%;height:11px;"></div></div></div>';
+    body.appendChild(sk);
+  }
+}
+
+// ── RENDER ────────────────────────────────────
+function render() {
+  countdownTimers.forEach(clearInterval); countdownTimers = [];
+  const body = document.getElementById('radarBody'); body.innerHTML = '';
+  if (!radarData) { body.innerHTML='<div class="empty-state">📡<br>Tap REFRESH to load upcoming releases and news</div>'; return; }
+
+  const releases = (radarData.releases || []).filter(r => msUntil(r.releaseDate) >= -86400000 * 7)
+    .sort((a,b) => new Date(a.releaseDate) - new Date(b.releaseDate));
+  const news = radarData.news || [];
+
+  // ── NEXT UP HERO ──
+  if (releases.length) {
+    const next = releases[0];
+    body.appendChild(buildHero(next));
+  }
+
+  // ── UPCOMING LIST ──
+  if (releases.length > 1) {
+    body.appendChild(Object.assign(document.createElement('div'), {className:'section-lbl', textContent:'ALL UPCOMING'}));
+    releases.forEach((r, i) => {
+      if (i === 0) return; // skip hero
+      try {
+        const card = buildReleaseCard(r);
+        card.style.animationDelay = (i * 0.02) + 's';
+        body.appendChild(card);
+      } catch(e) {
+        console.warn('buildReleaseCard error for', r.id, e);
+        // Show minimal fallback card
+        const fb = document.createElement('div'); fb.className='release-card';
+        fb.innerHTML = '<div style="padding:12px 14px;font-size:12px;color:var(--muted)">'+r.name+' · '+r.releaseDate+'</div>';
+        body.appendChild(fb);
+      }
+    });
+  }
+
+  // ── NEWS ──
+  if (news.length) {
+    body.appendChild(Object.assign(document.createElement('div'), {className:'section-lbl', textContent:'POKEMON TCG NEWS'}));
+    const newsCard = document.createElement('div'); newsCard.className = 'news-card';
+    news.forEach(n => {
+      try { newsCard.appendChild(buildNewsItem(n)); }
+      catch(e) { console.warn('buildNewsItem error', e); }
+    });
+    body.appendChild(newsCard);
+  }
+
+  startCountdowns();
+}
+
+// ── BUILD HERO ────────────────────────────────
+function buildHero(r) {
+  const card = document.createElement('div'); card.className = 'next-hero';
+  const t = formatCountdown(r.releaseDate, false);
+  const uc = urgencyClass(r.releaseDate);
+
+  const badge = document.createElement('div'); badge.className = 'next-hero-badge'; badge.textContent = 'UP NEXT';
+  const body = document.createElement('div'); body.className = 'next-hero-body';
+  body.setAttribute('data-hero-countdown', r.releaseDate);
+
+  // Name + type
+  const name = document.createElement('div'); name.className = 'next-hero-name'; name.textContent = r.name;
+  const type = document.createElement('div'); type.className = 'next-hero-type'; type.textContent = r.type + (r.set ? ' · ' + r.set : '') + ' · ' + new Date(r.releaseDate+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+  // Countdown blocks
+  const countdown = document.createElement('div'); countdown.className = 'countdown';
+  if (typeof t === 'object') {
+    [{id:'d',lbl:'DAYS'},{id:'h',lbl:'HRS'},{id:'m',lbl:'MIN'},{id:'s',lbl:'SEC'}].forEach(({id,lbl}) => {
+      const block = document.createElement('div'); block.className = 'cd-block';
+      block.innerHTML = '<div class="cd-num '+(uc||'')+'" id="cd-'+id+'">'+(t[id]||0)+'</div><div class="cd-lbl">'+lbl+'</div>';
+      countdown.appendChild(block);
+    });
+  } else {
+    countdown.innerHTML = '<div class="cd-block"><div class="cd-num urgent">'+t+'</div></div>';
+  }
+
+  // Meta chips
+  const chips = document.createElement('div'); chips.className = 'meta-chips';
+  if (r.msrp) {
+    const c1 = document.createElement('div'); c1.className = 'meta-chip';
+    c1.innerHTML = '<div class="mc-lbl">MSRP</div><div class="mc-val green">$'+r.msrp.toFixed(2)+'</div>';
+    chips.appendChild(c1);
+  }
+  if (r.packCount) {
+    const c2 = document.createElement('div'); c2.className = 'meta-chip';
+    c2.innerHTML = '<div class="mc-lbl">PACKS</div><div class="mc-val">'+r.packCount+'</div>';
+    chips.appendChild(c2);
+  }
+  if (r.msrp && r.packCount) {
+    const ppc = r.msrp / r.packCount;
+    const c3 = document.createElement('div'); c3.className = 'meta-chip';
+    c3.innerHTML = '<div class="mc-lbl">$/PACK</div><div class="mc-val '+(ppc<=4?'green':ppc<=6?'gold':'')+'">$'+ppc.toFixed(2)+'</div>';
+    chips.appendChild(c3);
+  }
+
+  // Packs included
+  if (r.packs?.length) {
+    const packLbl = document.createElement('div');
+    packLbl.style.cssText = 'font-family:Bebas Neue,sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:4px;';
+    packLbl.textContent = 'PACKS INCLUDED';
+    body.append(name, type, countdown, chips, packLbl);
+    const packsList = document.createElement('div'); packsList.className = 'packs-list';
+    r.packs.forEach(p => {
+      const col = p.color || getSetColor(p.setName);
+      const row = document.createElement('div'); row.className = 'pack-chip';
+      row.innerHTML =
+        '<div class="pack-set-dot" style="background:'+col+'"></div>'+
+        '<div class="pack-set-name">'+p.setName+'</div>'+
+        '<div class="pack-qty-badge">×'+p.qty+'</div>';
+      packsList.appendChild(row);
+    });
+    body.appendChild(packsList);
+  } else {
+    body.append(name, type, countdown, chips);
+  }
+
+  // Hype bars
+  if (r.hype || r.communityBuzz || r.investorScore) {
+    const hypeSec = document.createElement('div'); hypeSec.className = 'hype-section';
+    const signals = [
+      {lbl:'COMMUNITY HYPE', val:r.hype||0,          color:'var(--danger)'},
+      {lbl:'BUZZ',           val:r.communityBuzz||0,  color:'var(--gold)'},
+      {lbl:'INVESTOR',       val:r.investorScore||0,  color:'var(--accent)'},
+    ];
+    signals.forEach((s, idx) => {
+      const row = document.createElement('div'); row.className = 'hype-row';
+      const lbl = document.createElement('div'); lbl.className = 'hype-lbl'; lbl.textContent = s.lbl;
+      const track = document.createElement('div'); track.className = 'hype-track';
+      const fill = document.createElement('div'); fill.className = 'hype-fill'; fill.style.cssText = 'width:0%;background:'+s.color+';';
+      const dot  = document.createElement('div'); dot.className  = 'hype-dot';  dot.style.cssText  = 'background:'+s.color+';border-color:var(--surface);left:0%;';
+      track.append(fill, dot);
+      const val = document.createElement('div'); val.className = 'hype-val'; val.style.color = s.color; val.textContent = s.val;
+      row.append(lbl, track, val); hypeSec.appendChild(row);
+      setTimeout(() => { fill.style.width=s.val+'%'; dot.style.left=s.val+'%'; }, 100+idx*60);
+    });
+    if (r.hypeLabel) {
+      const lbl = document.createElement('div');
+      lbl.className = 'hype-label '+(r.hypeLabel||'watch').toLowerCase();
+      lbl.textContent = r.hypeLabel;
+      hypeSec.appendChild(lbl);
+    }
+    body.appendChild(hypeSec);
+  }
+
+  if (r.description) {
+    const desc = document.createElement('div');
+    desc.style.cssText = 'font-size:11px;color:var(--muted);line-height:1.5;margin-top:8px;padding:8px 10px;background:var(--surface2);border-radius:8px;border-left:2px solid var(--accent);';
+    desc.textContent = r.description;
+    body.appendChild(desc);
+  }
+
+  card.append(badge, body);
+  return card;
+}
+
+// ── BUILD RELEASE CARD ────────────────────────
+function buildReleaseCard(r) {
+  const card = document.createElement('div'); card.className = 'release-card';
+  card.onclick = () => toggleRelease(r.id, card);
+  const d = new Date(r.releaseDate+'T00:00:00');
+  const uc = urgencyClass(r.releaseDate);
+
+  const main = document.createElement('div'); main.className = 'release-main';
+  // Date block
+  const dateBlock = document.createElement('div'); dateBlock.className = 'release-date-block';
+  const monthEl = document.createElement('div'); monthEl.className = 'release-month';
+  monthEl.textContent = d.toLocaleDateString('en-US', {month:'short'}).toUpperCase();
+  const dayEl = document.createElement('div'); dayEl.className = 'release-day';
+  dayEl.textContent = d.getDate();
+  dateBlock.append(monthEl, dayEl);
+  // Info
+  const info = document.createElement('div'); info.className = 'release-info';
+  const name = document.createElement('div'); name.className = 'release-name'; name.textContent = r.name;
+  const sub  = document.createElement('div'); sub.className  = 'release-sub';
+  sub.textContent = r.type + (r.packCount?' · '+r.packCount+' packs':'');
+  info.append(name, sub);
+  // Right
+  const right = document.createElement('div'); right.className = 'release-right';
+  const msrp = document.createElement('div'); msrp.className = 'release-msrp';
+  msrp.textContent = r.msrp ? '$'+r.msrp.toFixed(2) : '—';
+  const cd = document.createElement('div'); cd.className = 'release-countdown '+(uc||'');
+  cd.setAttribute('data-countdown', r.releaseDate);
+  cd.textContent = formatCountdown(r.releaseDate, true);
+  right.append(msrp, cd);
+  main.append(dateBlock, info, right);
+  card.appendChild(main);
+
+  // Expand
+  const expand = document.createElement('div'); expand.className = 'release-expand'; expand.id = 'exp-'+r.id;
+  const inner  = document.createElement('div'); inner.className = 'release-expand-inner';
+
+  // Hype mini bars
+  if (r.hype || r.communityBuzz) {
+    const hypeSec = document.createElement('div'); hypeSec.className = 'hype-section';
+    [{lbl:'HYPE',val:r.hype||0,color:'var(--danger)'},{lbl:'BUZZ',val:r.communityBuzz||0,color:'var(--gold)'},{lbl:'INVEST',val:r.investorScore||0,color:'var(--accent)'}].forEach((s,idx)=>{
+      const row=document.createElement('div');row.className='hype-row';
+      const lbl=document.createElement('div');lbl.className='hype-lbl';lbl.textContent=s.lbl;
+      const track=document.createElement('div');track.className='hype-track';
+      const fill=document.createElement('div');fill.className='hype-fill';fill.style.cssText='width:0%;background:'+s.color+';';
+      const dot=document.createElement('div');dot.className='hype-dot';dot.style.cssText='background:'+s.color+';border-color:var(--surface2);left:0%;';
+      track.append(fill,dot);
+      const val=document.createElement('div');val.className='hype-val';val.style.color=s.color;val.textContent=s.val;
+      row.append(lbl,track,val);hypeSec.appendChild(row);
+      card.addEventListener('click',function h(){
+        if(card.classList.contains('expanded')){
+          setTimeout(()=>{fill.style.width=s.val+'%';dot.style.left=s.val+'%';},50+idx*50);
+          card.removeEventListener('click',h);
+        }
+      });
+    });
+    if (r.hypeLabel) {
+      const hl=document.createElement('div'); hl.className='hype-label '+(r.hypeLabel||'watch').toLowerCase(); hl.textContent=r.hypeLabel;
+      hypeSec.appendChild(hl);
+    }
+    inner.appendChild(hypeSec);
+  }
+
+  // Packs
+  if (r.packs?.length) {
+    const pl = document.createElement('div');
+    pl.innerHTML = '<div style="font-family:Bebas Neue,sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:4px;">PACKS INCLUDED</div>';
+    r.packs.forEach(p => {
+      const pr=document.createElement('div');pr.className='expand-pack-row';
+      pr.innerHTML='<div class="expand-pack-dot" style="background:'+(p.color||getSetColor(p.setName))+'"></div><span>'+p.setName+'</span><span style="margin-left:auto;font-family:DM Mono,monospace;font-size:11px;color:var(--muted)">×'+p.qty+'</span>';
+      pl.appendChild(pr);
+    });
+    inner.appendChild(pl);
+  }
+
+  // Extras
+  if (r.extras?.length) {
+    const el2 = document.createElement('div');
+    el2.innerHTML = '<div style="font-family:Bebas Neue,sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:4px;">EXTRAS</div>';
+    r.extras.forEach(e => {
+      const ei=document.createElement('div');ei.style.cssText='font-size:11px;color:var(--muted);padding:2px 0;';ei.textContent='· '+e;
+      el2.appendChild(ei);
+    });
+    inner.appendChild(el2);
+  }
+
+  // Description
+  if (r.description) {
+    const desc=document.createElement('div');
+    desc.style.cssText='font-size:11px;color:var(--muted);line-height:1.5;padding:8px 10px;background:var(--surface);border-radius:8px;border-left:2px solid var(--accent);';
+    desc.textContent=r.description;
+    inner.appendChild(desc);
+  }
+
+  expand.appendChild(inner);
+  card.appendChild(expand);
+  return card;
+}
+
+function toggleRelease(id, card) {
+  const expand = document.getElementById('exp-'+id); if(!expand) return;
+  const isOpen = expand.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.release-expand.open').forEach(e=>e.classList.remove('open'));
+  document.querySelectorAll('.release-card.expanded').forEach(c=>c.classList.remove('expanded'));
+  if (!isOpen) { expand.classList.add('open'); card.classList.add('expanded'); }
+  else openRelease = null;
+}
+
+// ── BUILD NEWS ITEM ───────────────────────────
+function buildNewsItem(n) {
+  const item = document.createElement('div'); item.className = 'news-item';
+  if (n.url) item.onclick = () => window.open(n.url, '_blank');
+  const headline = document.createElement('div'); headline.className = 'news-headline'; headline.textContent = n.headline;
+  const meta = document.createElement('div'); meta.className = 'news-meta';
+  meta.innerHTML = '<span class="news-source">'+(n.source||'Pokemon TCG')+'</span><span class="news-date">'+(n.date||'')+'</span>';
+  item.appendChild(headline);
+  item.appendChild(meta);
+  if (n.summary) {
+    const sum = document.createElement('div'); sum.className = 'news-summary'; sum.textContent = n.summary;
+    item.appendChild(sum);
+  }
+  return item;
+}
+
+// ── DEMO DATA ─────────────────────────────────
+function getDemoData() {
+  return {
+    releases: [
+      {
+        id:'perfect-order',name:'Mega Evolution — Perfect Order',type:'Booster Box',set:'Perfect Order',
+        releaseDate:'2026-03-27',msrp:143.64,packCount:36,
+        packs:[{setName:'Perfect Order',qty:36,color:'#7c6aff'}],
+        extras:[],hype:88,communityBuzz:82,investorScore:76,hypeLabel:'HOT',
+        description:'Mega Zygarde ex leads this ground-type focused set. Post-Seattle Regionals meta data shows strong competitive adoption potential with Zygarde countering dominant Dragapult builds.'
+      },
+      {
+        id:'perfect-order-etb',name:'Perfect Order Elite Trainer Box',type:'ETB',set:'Perfect Order',
+        releaseDate:'2026-03-27',msrp:49.99,packCount:9,
+        packs:[{setName:'Perfect Order',qty:9,color:'#7c6aff'}],
+        extras:['Mega Zygarde ex promo card','65 card sleeves','6 damage counter dice','Coin','Deck box'],
+        hype:85,communityBuzz:80,investorScore:72,hypeLabel:'HOT',
+        description:'Best entry point for Perfect Order. Promo card already showing strong pre-sale demand.'
+      },
+      {
+        id:'twilight-masquerade-etb',name:'Twilight Masquerade ETB Restock',type:'ETB',set:'Twilight Masquerade',
+        releaseDate:'2026-04-11',msrp:49.99,packCount:9,
+        packs:[{setName:'Twilight Masquerade',qty:9,color:'#f472b6'}],
+        extras:['Ogerpon ex promo','Accessories'],
+        hype:62,communityBuzz:58,investorScore:70,hypeLabel:'WARM',
+        description:'Post-rotation restock hits right as Twilight Masquerade exits standard play — a bittersweet moment that often triggers collector buying.'
+      },
+      {
+        id:'cri-set',name:'Mega Evolution — CRI (Upcoming)',type:'Booster Box',set:'CRI Set',
+        releaseDate:'2026-05-15',msrp:143.64,packCount:36,
+        packs:[{setName:'CRI Set',qty:36,color:'#34d399'}],
+        extras:[],hype:72,communityBuzz:78,investorScore:68,hypeLabel:'WARM',
+        description:'Mega Greninja ex and Floette ex leaked as chase cards. Ninja mechanic shows strong competitive potential based on Japan city league results.'
+      },
+      {
+        id:'za-set',name:'Pokémon TCG: Z-A Expansion',type:'Booster Box',set:'Z-A',
+        releaseDate:'2026-07-01',msrp:143.64,packCount:36,
+        packs:[{setName:'Z-A',qty:36,color:'#f5c842'}],
+        extras:[],hype:95,communityBuzz:92,investorScore:90,hypeLabel:'HOT',
+        description:'Tied to the Z-A game release, this expansion is expected to be the biggest TCG launch since Evolving Skies. Mega Mega evolution mechanic debuting. Already the most anticipated set of 2026.'
+      },
+    ],
+    news: [
+      {
+        headline:'Pikachu Illustrator Sells for Record $16.49M at Goldin Auctions',
+        summary:'Logan Paul\'s PSA 10 Pikachu Illustrator, certified by Guinness as the most expensive trading card ever sold at auction, changed hands again in February 2026 for a new world record.',
+        source:'Goldin Auctions',date:'2026-02-16'
+      },
+      {
+        headline:'April 10 Standard Rotation Confirmed — G-Regulation Sets Exit',
+        summary:'Pokemon officially confirmed the April 10 2026 rotation removing SV Base, Paldea Evolved, Obsidian Flames, 151, Paradox Rift, and Paldean Fates from standard. Sealed product from these sets is expected to appreciate as print runs end.',
+        source:'Pokemon TCG Official',date:'2026-01-23'
+      },
+      {
+        headline:'Seattle Regionals Results: Dragapult ex Takes Top Cut',
+        summary:'Truwin Tran\'s Dragapult ex box deck dominated Seattle Regionals March 1-2, signaling continued meta relevance for the archetype. Perfect Order cards with ground-type tech are now a target.',
+        source:'Limitless TCG',date:'2026-03-02'
+      },
+      {
+        headline:'Pokemon Center Z-A Collection Pre-Orders Sell Out in Minutes',
+        summary:'The Pokemon Center exclusive Z-A collection sold out within minutes of going live, with secondary market prices already hitting 2x MSRP. The release is tied to the Z-A video game launch later this year.',
+        source:'Pokemon Center',date:'2026-03-10'
+      },
+      {
+        headline:'PSA 10 Mega Lucario ex Multipliers Triple While Raw Prices Stagnate',
+        summary:'A curious divergence has emerged in the market — raw Mega Lucario ex prices have plateaued around $180, while PSA 10 copies are selling for $480+, a 2.6x multiplier that is unusually high for a modern set.',
+        source:'Card Chill',date:'2026-02-27'
+      },
+    ]
+  };
+}
+
+// ── INIT ──────────────────────────────────────
+// Always show demo data first so sections are never empty
+radarData = getDemoData();
+render();
+// Then try to refresh from API in background
+const cached = localStorage.getItem(CACHE_KEY);
+if (cached) {
+  try {
+    const c = JSON.parse(cached);
+    if (c.releases?.length && c.news?.length) { radarData = c; render(); }
+  } catch(e) {}
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sable — Pack Selection</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0d;--surface:#13131a;--surface2:#1a1a24;--surface3:#1f1f2e;
+  --border:#252535;--accent:#7c6aff;--green:#4ade80;--text:#f0f0f8;
+  --muted:#5a5a72;--danger:#ff4d6d;--gold:#f5c842;--orange:#fb923c;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+.phone{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* NAV */
+.top-nav{display:flex;align-items:center;background:var(–surface);border-bottom:1px solid var(–border);padding:13px 18px;flex-shrink:0;gap:10px;}
+.back-btn{background:none;border:none;cursor:pointer;color:var(–accent);display:flex;align-items:center;gap:5px;font-family:‘DM Sans’,sans-serif;font-size:13px;font-weight:500;padding:0;}
+.nav-title{font-family:‘Bebas Neue’,sans-serif;font-size:16px;letter-spacing:2px;color:var(–text);flex:1;text-align:center;}
+.tab-toggle{display:flex;background:var(–surface2);border-radius:8px;padding:2px;gap:2px;flex-shrink:0;}
+.tab-toggle-btn{font-family:‘Bebas Neue’,sans-serif;font-size:11px;letter-spacing:1.5px;padding:5px 10px;border:none;border-radius:6px;cursor:pointer;color:var(–muted);background:none;transition:background .2s,color .2s;}
+.tab-toggle-btn.active{background:var(–accent);color:white;}
+
+/* SCROLL */
+.scrollbody{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;padding-bottom:32px;}
+.scrollbody::-webkit-scrollbar{width:3px;}
+.scrollbody::-webkit-scrollbar-thumb{background:var(–border);border-radius:2px;}
+
+/* ══════════════════════════
+SCANNER TAB
+══════════════════════════ */
+/* INPUT AREA */
+.input-card{background:var(–surface);border:1px solid var(–border);border-radius:16px;overflow:hidden;}
+.input-method-tabs{display:flex;border-bottom:1px solid var(–border);}
+.input-tab{flex:1;padding:10px;text-align:center;font-family:‘Bebas Neue’,sans-serif;font-size:12px;letter-spacing:1.5px;color:var(–muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .2s;}
+.input-tab.active{color:var(–accent);border-bottom-color:var(–accent);}
+
+/* CAMERA */
+.camera-area{position:relative;aspect-ratio:4/3;background:#000;overflow:hidden;cursor:pointer;}
+.camera-video{width:100%;height:100%;object-fit:cover;}
+.camera-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
+.camera-frame{width:200px;height:140px;border:2px solid var(–accent);border-radius:8px;position:relative;}
+.camera-frame::before,.camera-frame::after{content:’’;position:absolute;width:20px;height:20px;border-color:var(–green);border-style:solid;}
+.camera-frame::before{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:4px 0 0 0;}
+.camera-frame::after{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+.camera-hint{font-family:‘Bebas Neue’,sans-serif;font-size:12px;letter-spacing:2px;color:rgba(255,255,255,.6);}
+.camera-start-btn{background:var(–accent);border:none;border-radius:10px;color:white;font-family:‘Bebas Neue’,sans-serif;font-size:14px;letter-spacing:2px;padding:10px 24px;cursor:pointer;}
+.camera-snap-btn{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:white;border:4px solid rgba(255,255,255,.3);cursor:pointer;transition:transform .1s;}
+.camera-snap-btn:active{transform:translateX(-50%) scale(.9);}
+.camera-stop-btn{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.5);border:none;color:white;font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+canvas{display:none;}
+
+/* TYPE INPUT */
+.type-area{padding:14px;}
+.search-input{width:100%;background:var(–surface2);border:1px solid var(–border);border-radius:10px;padding:12px 14px;color:var(–text);font-family:‘DM Sans’,sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.search-input:focus{border-color:var(–accent);}
+.search-input::placeholder{color:var(–muted);}
+.search-btn{width:100%;margin-top:8px;padding:12px;background:var(–accent);border:none;border-radius:10px;color:white;font-family:‘Bebas Neue’,sans-serif;font-size:15px;letter-spacing:2px;cursor:pointer;transition:opacity .2s;}
+.search-btn:hover{opacity:.9;}
+.search-btn:disabled{opacity:.5;pointer-events:none;}
+
+/* LOADING */
+.analyzing-state{display:flex;flex-direction:column;align-items:center;gap:12px;padding:32px 20px;text-align:center;}
+.analyzing-spinner{width:40px;height:40px;border:3px solid var(–border);border-top-color:var(–accent);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.analyzing-text{font-family:‘Bebas Neue’,sans-serif;font-size:14px;letter-spacing:2px;color:var(–muted);}
+
+/* VERDICT */
+.verdict-card{border-radius:16px;padding:16px;text-align:center;border:2px solid transparent;}
+.verdict-card.buy  {background:rgba(74,222,128,.08); border-color:rgba(74,222,128,.4);}
+.verdict-card.fair {background:rgba(245,200,66,.08);  border-color:rgba(245,200,66,.4);}
+.verdict-card.pass {background:rgba(255,77,109,.08);  border-color:rgba(255,77,109,.3);}
+.verdict-label{font-family:‘Bebas Neue’,sans-serif;font-size:36px;letter-spacing:4px;line-height:1;}
+.verdict-card.buy  .verdict-label{color:var(–green);}
+.verdict-card.fair .verdict-label{color:var(–gold);}
+.verdict-card.pass .verdict-label{color:var(–danger);}
+.verdict-sub{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–muted);margin-top:4px;}
+.verdict-score{font-family:‘Bebas Neue’,sans-serif;font-size:48px;margin-top:8px;line-height:1;}
+.verdict-card.buy  .verdict-score{color:var(–green);}
+.verdict-card.fair .verdict-score{color:var(–gold);}
+.verdict-card.pass .verdict-score{color:var(–danger);}
+
+/* PRODUCT INFO */
+.product-card{background:var(–surface);border:1px solid var(–border);border-radius:16px;padding:14px 16px;}
+.product-name{font-family:‘Bebas Neue’,sans-serif;font-size:20px;letter-spacing:1px;color:var(–text);}
+.product-meta{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–muted);margin-top:3px;}
+.price-row{display:flex;gap:0;margin-top:12px;border:1px solid var(–border);border-radius:10px;overflow:hidden;}
+.price-block{flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:2px;border-right:1px solid var(–border);}
+.price-block:last-child{border-right:none;}
+.price-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:9px;letter-spacing:2px;color:var(–muted);}
+.price-val{font-family:‘DM Mono’,monospace;font-size:15px;font-weight:500;}
+.price-val.green{color:var(–green);}
+.price-val.gold{color:var(–gold);}
+.price-val.muted{color:var(–muted);}
+.price-val.danger{color:var(–danger);}
+/* Paid input */
+.paid-input-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding:10px 12px;background:var(–surface2);border-radius:10px;border:1px solid var(–border);}
+.paid-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:11px;letter-spacing:2px;color:var(–muted);flex-shrink:0;}
+.paid-input{flex:1;background:none;border:none;color:var(–green);font-family:‘DM Mono’,monospace;font-size:16px;outline:none;text-align:right;}
+.paid-input::placeholder{color:var(–muted);}
+
+/* PACK LIST */
+.pack-section{background:var(–surface);border:1px solid var(–border);border-radius:16px;overflow:hidden;}
+.pack-section-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(–border);}
+.pack-section-title{font-family:‘Bebas Neue’,sans-serif;font-size:13px;letter-spacing:2px;color:var(–text);}
+.pack-total-val{font-family:‘DM Mono’,monospace;font-size:13px;color:var(–green);}
+.pack-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(–border);}
+.pack-row:last-child{border-bottom:none;}
+.pack-qty{font-family:‘DM Mono’,monospace;font-size:13px;color:var(–muted);width:28px;flex-shrink:0;}
+.pack-name{font-size:13px;font-weight:500;flex:1;}
+.pack-unit{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–muted);flex-shrink:0;}
+.pack-value{font-family:‘DM Mono’,monospace;font-size:13px;color:var(–green);flex-shrink:0;min-width:52px;text-align:right;}
+.pack-edit-btn{background:none;border:1px solid var(–border);border-radius:6px;color:var(–muted);font-size:11px;padding:3px 8px;cursor:pointer;flex-shrink:0;transition:border-color .15s,color .15s;font-family:‘DM Sans’,sans-serif;}
+.pack-edit-btn:hover{border-color:var(–accent);color:var(–accent);}
+.pack-add-row{padding:10px 16px;}
+.pack-add-btn{width:100%;background:none;border:1px dashed var(–border);border-radius:8px;color:var(–muted);font-family:‘DM Sans’,sans-serif;font-size:12px;padding:8px;cursor:pointer;transition:border-color .15s,color .15s;}
+.pack-add-btn:hover{border-color:var(–accent);color:var(–accent);}
+
+/* AI INSIGHT */
+.insight-box{background:var(–surface2);border-left:2px solid var(–accent);border-radius:0 10px 10px 0;padding:10px 14px;font-size:12px;color:var(–text);line-height:1.6;}
+.insight-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:9px;letter-spacing:2px;color:var(–accent);margin-bottom:4px;}
+
+/* SKELETON */
+.skeleton{background:linear-gradient(90deg,var(–surface2) 25%,var(–surface3) 50%,var(–surface2) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:4px;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* ══════════════════════════
+PACK INDEX TAB
+══════════════════════════ */
+.index-filter-row{display:flex;gap:6px;flex-wrap:wrap;}
+.index-filter-btn{background:var(–surface);border:1px solid var(–border);border-radius:20px;color:var(–muted);font-family:‘DM Mono’,monospace;font-size:11px;padding:5px 12px;cursor:pointer;transition:border-color .2s,color .2s;}
+.index-filter-btn.active{border-color:var(–accent);color:var(–accent);background:rgba(124,106,255,.08);}
+.index-refresh-row{display:flex;align-items:center;justify-content:space-between;}
+.index-refresh-btn{background:none;border:1px solid var(–border);border-radius:8px;color:var(–muted);font-family:‘DM Mono’,monospace;font-size:11px;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:border-color .2s,color .2s;}
+.index-refresh-btn:hover{border-color:var(–accent);color:var(–accent);}
+.index-note{font-family:‘DM Mono’,monospace;font-size:9px;color:var(–muted);}
+
+.pack-index-card{background:var(–surface);border:1px solid var(–border);border-radius:12px;display:flex;align-items:center;gap:12px;padding:12px 14px;}
+.rank-num{font-family:‘Bebas Neue’,sans-serif;font-size:20px;color:var(–border);width:24px;flex-shrink:0;text-align:center;}
+.rank-num.top3{color:var(–gold);}
+.index-info{flex:1;min-width:0;}
+.index-pack-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.index-set-name{font-family:‘DM Mono’,monospace;font-size:10px;color:var(–muted);margin-top:2px;}
+.index-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+.index-price{font-family:‘DM Mono’,monospace;font-size:15px;font-weight:500;color:var(–green);}
+.index-trend{font-family:‘DM Mono’,monospace;font-size:10px;}
+.index-trend.up{color:var(–green);}
+.index-trend.down{color:var(–danger);}
+.index-trend.flat{color:var(–muted);}
+
+/* EDIT MODAL */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.active{display:flex;}
+.modal-sheet{background:var(–surface);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;}
+.modal-title{font-family:‘Bebas Neue’,sans-serif;font-size:16px;letter-spacing:2px;margin-bottom:14px;}
+.modal-input{width:100%;background:var(–surface2);border:1px solid var(–border);border-radius:10px;padding:10px 14px;color:var(–text);font-family:‘DM Sans’,sans-serif;font-size:14px;outline:none;margin-bottom:8px;}
+.modal-input:focus{border-color:var(–accent);}
+.modal-row{display:flex;gap:8px;}
+.modal-btn{flex:1;padding:12px;border:none;border-radius:10px;font-family:‘Bebas Neue’,sans-serif;font-size:14px;letter-spacing:2px;cursor:pointer;}
+.modal-btn.cancel{background:var(–surface2);color:var(–muted);}
+.modal-btn.save{background:var(–accent);color:white;}
+</style>
+
+</head>
+<body>
+<div class="phone">
+  <div class="top-nav">
+    <button class="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="nav-title">PACK SELECTION</div>
+    <div class="tab-toggle">
+      <button class="tab-toggle-btn active" id="tabScanner" onclick="switchMainTab('scanner')">SCAN</button>
+      <button class="tab-toggle-btn" id="tabIndex" onclick="switchMainTab('index')">INDEX</button>
+    </div>
+  </div>
+
+  <!-- SCANNER TAB -->
+
+  <div id="scannerTab" class="scrollbody">
+    <!-- Input card -->
+    <div class="input-card">
+      <div class="input-method-tabs">
+        <div class="input-tab active" id="tabCamera" onclick="switchInputTab('camera')">📷 SCAN</div>
+        <div class="input-tab" id="tabType" onclick="switchInputTab('type')">✏️ TYPE</div>
+      </div>
+      <!-- Camera -->
+      <div id="cameraArea" class="camera-area" style="display:none">
+        <div class="camera-overlay" id="cameraIdle" style="display:none">
+          <div class="camera-frame"></div>
+          <div class="camera-hint">POINT AT SEALED PRODUCT</div>
+        </div>
+        <video id="cameraVideo" class="camera-video" style="display:none" autoplay playsinline></video>
+        <canvas id="snapCanvas"></canvas>
+        <button class="camera-stop-btn" id="stopBtn" style="display:none" onclick="stopCamera()">×</button>
+        <button class="camera-snap-btn" id="snapBtn" style="display:none" onclick="snapPhoto()"></button>
+      </div>
+      <!-- Type -->
+      <div id="typeArea" class="type-area">
+        <input class="search-input" id="searchInput" type="text" placeholder="e.g. Evolving Skies ETB, 151 Booster Box…" onkeydown="if(event.key==='Enter')analyzeByText()">
+        <button class="search-btn" id="searchBtn" onclick="analyzeByText()">ANALYZE PRODUCT</button>
+      </div>
+    </div>
+
+```
+<!-- Results area -->
+<div id="resultsArea"></div>
+```
+
+  </div>
+
+  <!-- INDEX TAB -->
+
+  <div id="indexTab" class="scrollbody" style="display:none">
+    <div class="index-refresh-row">
+      <div class="index-note" id="indexNote">~$0.01 · sorted newest to oldest</div>
+      <button class="index-refresh-btn" id="indexRefreshBtn" onclick="refreshIndex()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        REFRESH
+      </button>
+    </div>
+    <div class="index-filter-row" id="indexFilters"></div>
+    <div id="indexList"></div>
+  </div>
+</div>
+
+<!-- Edit pack modal -->
+
+<div class="modal-overlay" id="editModal">
+  <div class="modal-sheet">
+    <div class="modal-title">EDIT PACK</div>
+    <input class="modal-input" id="editName" placeholder="Pack name">
+    <div class="modal-row" style="gap:8px;margin-bottom:8px;">
+      <input class="modal-input" id="editQty" type="number" placeholder="Qty" style="margin:0">
+      <input class="modal-input" id="editPrice" type="number" step="0.01" placeholder="Value $" style="margin:0">
+    </div>
+    <div class="modal-row">
+      <button class="modal-btn cancel" onclick="closeModal()">CANCEL</button>
+      <button class="modal-btn save" onclick="saveEdit()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────
+let mainTab = 'scanner';
+let inputTab = 'type';
+let cameraStream = null;
+// Set initial UI state to type tab
+
+let currentProduct = null;
+let currentPacks = [];
+let editingIdx = null;
+let indexData = [];
+let indexFilter = 'ALL';
+
+const INDEX_KEY = 'sable_pack_index';
+const loadIndex = () => { try{return JSON.parse(localStorage.getItem(INDEX_KEY)||'[]');}catch(e){return [];} };
+const saveIndex = d => localStorage.setItem(INDEX_KEY, JSON.stringify(d));
+
+indexData = loadIndex();
+
+// ── TAB SWITCHING ─────────────────────────────
+function switchMainTab(t) {
+  mainTab = t;
+  document.getElementById('scannerTab').style.display = t==='scanner'?'flex':'none';
+  document.getElementById('indexTab').style.display   = t==='index'?'flex':'none';
+  document.getElementById('tabScanner').classList.toggle('active', t==='scanner');
+  document.getElementById('tabIndex').classList.toggle('active', t==='index');
+  if (t==='index') renderIndex();
+}
+
+function switchInputTab(t) {
+  inputTab = t;
+  document.getElementById('tabCamera').classList.toggle('active', t==='camera');
+  document.getElementById('tabType').classList.toggle('active', t==='type');
+  document.getElementById('cameraArea').style.display = t==='camera'?'block':'none';
+  document.getElementById('typeArea').style.display   = t==='type'?'block':'none';
+  if (t==='camera') startCamera();
+  else if (cameraStream) stopCamera();
+}
+
+// ── CAMERA ───────────────────────────────────
+async function startCamera() {
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:'environment', width:{ideal:1280}, height:{ideal:720}}
+    });
+    const video = document.getElementById('cameraVideo');
+    video.srcObject = cameraStream;
+    video.style.display = 'block';
+    // Show scan frame over video
+    const idle = document.getElementById('cameraIdle');
+    idle.style.display = 'flex';
+    idle.style.pointerEvents = 'none';
+    document.getElementById('stopBtn').style.display = 'flex';
+    document.getElementById('snapBtn').style.display = 'block';
+  } catch(e) {
+    // Camera blocked (sandbox/permissions) — silently fall back to type
+    switchInputTab('type');
+  }
+}
+
+function stopCamera() {
+  if (cameraStream) { cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; }
+  const video = document.getElementById('cameraVideo');
+  video.style.display = 'none';
+  video.srcObject = null;
+  document.getElementById('cameraIdle').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('snapBtn').style.display = 'none';
+}
+
+function snapPhoto() {
+  const video = document.getElementById('cameraVideo');
+  const canvas = document.getElementById('snapCanvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const imageData = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+  stopCamera();
+  analyzeByPhoto(imageData);
+}
+
+// ── ANALYZE BY PHOTO ──────────────────────────
+async function analyzeByPhoto(imageData) {
+  showAnalyzing();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1500,
+        messages:[{role:'user', content:[
+          {type:'image', source:{type:'base64', media_type:'image/jpeg', data:imageData}},
+          {type:'text', text:buildPackPrompt()}
+        ]}]
+      })
+    });
+    const data = await res.json();
+    const text = (data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+    renderResults(JSON.parse(text));
+  } catch(e) {
+    console.warn(e);
+    renderResults(getDemoResult());
+  }
+}
+
+// ── ANALYZE BY TEXT ───────────────────────────
+async function analyzeByText() {
+  const query = document.getElementById('searchInput').value.trim();
+  if (!query) return;
+  document.getElementById('searchBtn').disabled = true;
+  showAnalyzing();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001', max_tokens:1500,
+        messages:[{role:'user', content:'Product: "'+query+'"\n\n'+buildPackPrompt()}]
+      })
+    });
+    const data = await res.json();
+    const text = (data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+    renderResults(JSON.parse(text));
+  } catch(e) {
+    console.warn(e);
+    renderResults(getDemoResult());
+  }
+  document.getElementById('searchBtn').disabled = false;
+}
+
+function buildPackPrompt() {
+  return `You are a Pokemon TCG sealed product expert. Identify this sealed product and provide a complete pack breakdown.
+
+Return ONLY valid JSON:
+{
+  "productName": "Full product name",
+  "set": "Set name",
+  "type": "Booster Box|ETB|Blister|Tin|UPC|Bundle|Other",
+  "marketPrice": 0.00,
+  "packs": [
+    {"name": "Pack name/set name", "qty": 0, "unitValue": 0.00}
+  ],
+  "extras": [
+    {"name": "Promo card / accessory name", "qty": 0, "unitValue": 0.00}
+  ],
+  "totalPackValue": 0.00,
+  "evRatio": 0.00,
+  "perPackCost": 0.00,
+  "verdict": "BUY|FAIR|PASS",
+  "verdictScore": 0,
+  "insight": "2 sentences: why this is or isn't good value right now"
+}
+
+Use current TCGPlayer market prices for pack values. unitValue = current single pack market price.`;
+}
+
+// ── SHOW ANALYZING ────────────────────────────
+function showAnalyzing() {
+  const area = document.getElementById('resultsArea');
+  area.innerHTML = '';
+  const el = document.createElement('div'); el.className='input-card';
+  el.innerHTML='<div class="analyzing-state"><div class="analyzing-spinner"></div><div class="analyzing-text">ANALYZING PRODUCT…</div><div style="font-size:11px;color:var(--muted)">Identifying packs + current market values</div></div>';
+  area.appendChild(el);
+}
+
+// ── RENDER RESULTS ────────────────────────────
+function renderResults(r) {
+  currentProduct = r;
+  currentPacks = [...(r.packs||[]), ...(r.extras||[]).map(e=>({...e, isExtra:true}))];
+  const area = document.getElementById('resultsArea');
+  area.innerHTML = '';
+
+  // Verdict
+  const vc = (r.verdict||'FAIR').toLowerCase();
+  const verdict = document.createElement('div');
+  verdict.className = 'verdict-card '+vc;
+  verdict.innerHTML =
+    '<div class="verdict-label">'+(r.verdict||'FAIR')+'</div>'+
+    '<div class="verdict-sub">VALUE SCORE</div>'+
+    '<div class="verdict-score">'+(r.verdictScore||70)+'</div>';
+  area.appendChild(verdict);
+
+  // Product info + prices
+  const prod = document.createElement('div'); prod.className='product-card';
+  prod.innerHTML = '<div class="product-name">'+(r.productName||'Unknown Product')+'</div>'+
+    '<div class="product-meta">'+(r.set||'')+(r.type?' · '+r.type:'')+'</div>';
+  const prow = document.createElement('div'); prow.className='price-row';
+  const evColor = (r.evRatio||0)>=1?'green':(r.evRatio||0)>=0.7?'gold':'danger';
+  const ppcColor = (r.perPackCost||0)<=4?'green':(r.perPackCost||0)<=6?'gold':'muted';
+  prow.innerHTML =
+    '<div class="price-block"><div class="price-lbl">MARKET</div><div class="price-val muted">$'+(r.marketPrice||0).toFixed(2)+'</div></div>'+
+    '<div class="price-block"><div class="price-lbl">PACK VALUE</div><div class="price-val green">$'+(r.totalPackValue||0).toFixed(2)+'</div></div>'+
+    '<div class="price-block"><div class="price-lbl">EV RATIO</div><div class="price-val '+evColor+'">'+(r.evRatio||0).toFixed(2)+'×</div></div>'+
+    '<div class="price-block"><div class="price-lbl">$/PACK</div><div class="price-val '+ppcColor+'">$'+(r.perPackCost||0).toFixed(2)+'</div></div>';
+  prod.appendChild(prow);
+
+  // Paid input
+  const paidRow = document.createElement('div'); paidRow.className='paid-input-row';
+  paidRow.innerHTML='<div class="paid-lbl">I PAID</div>';
+  const paidInput = document.createElement('input');
+  paidInput.className='paid-input'; paidInput.type='number'; paidInput.step='0.01'; paidInput.placeholder='$0.00';
+  paidInput.oninput = () => updatePaidAnalysis(parseFloat(paidInput.value), r, area);
+  paidRow.appendChild(paidInput);
+  prod.appendChild(paidRow);
+  area.appendChild(prod);
+
+  // Pack list
+  renderPackList(area, r);
+
+  // AI insight
+  if (r.insight) {
+    const ins = document.createElement('div');
+    ins.innerHTML='<div class="insight-lbl">✦ AI ANALYSIS</div><div class="insight-box">'+r.insight+'</div>';
+    area.appendChild(ins);
+  }
+}
+
+function renderPackList(area, r) {
+  // Remove existing pack section
+  const existing = area.querySelector('.pack-section');
+  if (existing) existing.remove();
+
+  const sec = document.createElement('div'); sec.className='pack-section';
+  const allPacks = currentPacks;
+  const packTotal = allPacks.reduce((s,p)=>s+(p.qty||1)*(p.unitValue||0),0);
+
+  const hdr = document.createElement('div'); hdr.className='pack-section-header';
+  hdr.innerHTML='<div class="pack-section-title">PACK CONTENTS</div><div class="pack-total-val">$'+packTotal.toFixed(2)+' total</div>';
+  sec.appendChild(hdr);
+
+  allPacks.forEach((p,i) => {
+    const row = document.createElement('div'); row.className='pack-row';
+    row.innerHTML=
+      '<div class="pack-qty">'+(p.qty||1)+'×</div>'+
+      '<div class="pack-name">'+(p.name||'Pack')+(p.isExtra?' <span style="font-size:10px;color:var(--muted)">(extra)</span>':'')+'</div>'+
+      '<div class="pack-unit">$'+(p.unitValue||0).toFixed(2)+'ea</div>'+
+      '<div class="pack-value">$'+((p.qty||1)*(p.unitValue||0)).toFixed(2)+'</div>'+
+      '<button class="pack-edit-btn" onclick="openEditModal('+i+')">edit</button>';
+    sec.appendChild(row);
+  });
+
+  const addRow = document.createElement('div'); addRow.className='pack-add-row';
+  const addBtn = document.createElement('button'); addBtn.className='pack-add-btn';
+  addBtn.textContent='+ Add pack / item';
+  addBtn.onclick=()=>{ currentPacks.push({name:'New Pack',qty:1,unitValue:0}); renderPackList(area,r); };
+  addRow.appendChild(addBtn); sec.appendChild(addRow);
+
+  // Insert before insight box
+  const insight = area.querySelector('.insight-box')?.parentElement;
+  if (insight) area.insertBefore(sec, insight);
+  else area.appendChild(sec);
+}
+
+// Recalculate when paid price changes
+function updatePaidAnalysis(paid, r, area) {
+  if (!paid || isNaN(paid)) return;
+  const packTotal = currentPacks.reduce((s,p)=>s+(p.qty||1)*(p.unitValue||0),0);
+  const evRatioPaid = packTotal / paid;
+  const perPackPaid = paid / currentPacks.reduce((s,p)=>s+(p.qty||1),0);
+  const verdict = evRatioPaid>=1.1?'BUY':evRatioPaid>=0.85?'FAIR':'PASS';
+  const score = Math.round(Math.min(100,evRatioPaid*70));
+
+  // Update verdict card
+  const vc = area.querySelector('.verdict-card');
+  if (vc) {
+    vc.className = 'verdict-card '+verdict.toLowerCase();
+    vc.querySelector('.verdict-label').textContent = verdict;
+    vc.querySelector('.verdict-score').textContent = score;
+  }
+  // Update market column to show paid
+  const priceBlocks = area.querySelectorAll('.price-block');
+  if (priceBlocks[0]) {
+    priceBlocks[0].innerHTML='<div class="price-lbl">PAID</div><div class="price-val muted">$'+paid.toFixed(2)+'</div>';
+  }
+  if (priceBlocks[2]) {
+    const evColor=evRatioPaid>=1?'green':evRatioPaid>=0.7?'gold':'danger';
+    priceBlocks[2].innerHTML='<div class="price-lbl">EV RATIO</div><div class="price-val '+evColor+'">'+evRatioPaid.toFixed(2)+'×</div>';
+  }
+  if (priceBlocks[3]) {
+    const ppcColor=perPackPaid<=4?'green':perPackPaid<=6?'gold':'muted';
+    priceBlocks[3].innerHTML='<div class="price-lbl">$/PACK</div><div class="price-val '+ppcColor+'">$'+perPackPaid.toFixed(2)+'</div>';
+  }
+}
+
+// ── EDIT MODAL ────────────────────────────────
+function openEditModal(idx) {
+  editingIdx = idx;
+  const p = currentPacks[idx];
+  document.getElementById('editName').value  = p.name||'';
+  document.getElementById('editQty').value   = p.qty||1;
+  document.getElementById('editPrice').value = p.unitValue||0;
+  document.getElementById('editModal').classList.add('active');
+}
+function closeModal() { document.getElementById('editModal').classList.remove('active'); }
+function saveEdit() {
+  if (editingIdx===null) return;
+  currentPacks[editingIdx] = {
+    ...currentPacks[editingIdx],
+    name:  document.getElementById('editName').value,
+    qty:   parseInt(document.getElementById('editQty').value)||1,
+    unitValue: parseFloat(document.getElementById('editPrice').value)||0,
+  };
+  closeModal();
+  renderPackList(document.getElementById('resultsArea'), currentProduct);
+}
+
+// ── PACK INDEX ────────────────────────────────
+async function refreshIndex() {
+  const btn = document.getElementById('indexRefreshBtn');
+  btn.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Loading…';
+
+  // Show skeletons
+  const list = document.getElementById('indexList'); list.innerHTML='';
+  for(let i=0;i<6;i++){
+    const sk=document.createElement('div');sk.className='pack-index-card';
+    sk.innerHTML='<div class="skeleton" style="width:24px;height:20px;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:6px;"><div class="skeleton" style="width:70%;height:13px;"></div><div class="skeleton" style="width:45%;height:11px;"></div></div><div class="skeleton" style="width:40px;height:18px;"></div>';
+    list.appendChild(sk);
+  }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001', max_tokens:2000,
+        messages:[{role:'user', content:`List the current market prices of individual Pokemon TCG booster packs sorted from most recent set to oldest. Start with the newest Scarlet & Violet sets and work back through SWSH, Sun & Moon, XY, BW, and Classic. Include 25 packs across all eras.
+
+Respond ONLY in valid JSON array:
+[{"packName":"Set Name Booster Pack","set":"Set Name","era":"SV|SWSH|SM|XY|BW|Classic","marketValue":0.00,"trend":"up|down|flat","note":"brief note on why this pack is valuable or not"}]`}]
+      })
+    });
+    const data = await res.json();
+    const text = (data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+    indexData = JSON.parse(text);
+    saveIndex(indexData);
+  } catch(e) {
+    indexData = getDemoIndex();
+    saveIndex(indexData);
+  }
+
+  btn.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> REFRESH';
+  renderIndex();
+}
+
+function renderIndex() {
+  buildIndexFilters();
+  const list = document.getElementById('indexList'); list.innerHTML='';
+  const filtered = indexFilter==='ALL' ? indexData : indexData.filter(p=>p.era===indexFilter);
+  if (!filtered.length) {
+    list.innerHTML='<div style="text-align:center;color:var(--muted);padding:32px;font-size:12px;">Tap REFRESH to load pack prices</div>';
+    return;
+  }
+  // Sort by era recency: SV > SWSH > SM > XY > BW > Classic
+  const eraOrder = {'SV':0,'SWSH':1,'SM':2,'XY':3,'BW':4,'Classic':5,'':6};
+  filtered.sort((a,b)=>(eraOrder[a.era]??6)-(eraOrder[b.era]??6));
+  filtered.forEach((p,i)=>{
+    const card = document.createElement('div'); card.className='pack-index-card';
+    const rank = i+1;
+    const tChar = p.trend==='up'?'↑':p.trend==='down'?'↓':'→';
+    const tCls  = p.trend==='up'?'up':p.trend==='down'?'down':'flat';
+    card.innerHTML =
+      '<div class="rank-num'+(rank<=3?' top3':'')+'">'+rank+'</div>'+
+      '<div class="index-info">'+
+        '<div class="index-pack-name">'+(p.packName||p.set||'—')+'</div>'+
+        '<div class="index-set-name">'+(p.era||'')+(p.note?' · '+p.note:'')+'</div>'+
+      '</div>'+
+      '<div class="index-right">'+
+        '<div class="index-price">$'+(p.marketValue||0).toFixed(2)+'</div>'+
+        '<div class="index-trend '+tCls+'">'+tChar+'</div>'+
+      '</div>';
+    list.appendChild(card);
+  });
+}
+
+function buildIndexFilters() {
+  const eras = ['ALL', ...new Set(indexData.map(p=>p.era).filter(Boolean))];
+  const row = document.getElementById('indexFilters'); row.innerHTML='';
+  eras.forEach(e => {
+    const btn = document.createElement('button'); btn.className='index-filter-btn'+(e===indexFilter?' active':'');
+    btn.textContent=e; btn.onclick=()=>{indexFilter=e;renderIndex();};
+    row.appendChild(btn);
+  });
+}
+
+// ── DEMO DATA ─────────────────────────────────
+function getDemoResult() {
+  return {
+    productName:'Pokémon 151 Elite Trainer Box',set:'Pokémon 151',type:'ETB',
+    marketPrice:58.00,totalPackValue:64.80,evRatio:1.12,perPackCost:6.44,
+    verdict:'BUY',verdictScore:82,
+    packs:[
+      {name:'Pokémon 151 Booster Pack',qty:9,unitValue:7.20},
+    ],
+    extras:[
+      {name:'Promo Card (Mew ex)',qty:1,unitValue:6.00,isExtra:true},
+      {name:'Accessories (sleeves, dice)',qty:1,unitValue:2.50,isExtra:true},
+    ],
+    insight:'The 151 ETB is currently trading below EV — at $58 you\'re getting $64.80 in pack value before the promo. With April rotation driving collector demand, this is a strong buy window. Individual packs are trending up as box supply tightens.'
+  };
+}
+
+function getDemoIndex() {
+  return [
+    {packName:'Evolving Skies Booster Pack',set:'Evolving Skies',era:'SWSH',marketValue:72.00,trend:'up',note:'Alt arts, out of print'},
+    {packName:'Base Set Booster Pack',set:'Base Set',era:'Classic',marketValue:500.00,trend:'up',note:'1999 vintage, sealed'},
+    {packName:'Jungle Booster Pack',set:'Jungle',era:'Classic',marketValue:280.00,trend:'up',note:'Vintage sealed'},
+    {packName:'Crown Zenith Booster Pack',set:'Crown Zenith',era:'SWSH',marketValue:28.00,trend:'up',note:'SWSH finale set'},
+    {packName:'Pokémon 151 Booster Pack',set:'Pokémon 151',era:'SV',marketValue:7.20,trend:'up',note:'Rotation boost'},
+    {packName:'Surging Sparks Booster Pack',set:'Surging Sparks',era:'SV',marketValue:8.50,trend:'up',note:'Pikachu SAR demand'},
+    {packName:'Prismatic Evolutions Booster Pack',set:'Prismatic Evolutions',era:'SV',marketValue:22.00,trend:'up',note:'Eevee hype'},
+    {packName:'Temporal Forces Booster Pack',set:'Temporal Forces',era:'SV',marketValue:6.80,trend:'flat',note:'Dragapult meta'},
+    {packName:'Twilight Masquerade Booster Pack',set:'Twilight Masquerade',era:'SV',marketValue:5.50,trend:'flat',note:'Ogerpon cards'},
+    {packName:'Obsidian Flames Booster Pack',set:'Obsidian Flames',era:'SV',marketValue:6.20,trend:'down',note:'Rotating Apr 10'},
+    {packName:'Silver Tempest Booster Pack',set:'Silver Tempest',era:'SWSH',marketValue:8.80,trend:'up',note:'Lugia V Alt Art'},
+    {packName:'Lost Origin Booster Pack',set:'Lost Origin',era:'SWSH',marketValue:9.50,trend:'up',note:'Lost Zone mechanic'},
+    {packName:'Astral Radiance Booster Pack',set:'Astral Radiance',era:'SWSH',marketValue:10.20,trend:'up',note:'Origin Dialga/Palkia'},
+    {packName:'Brilliant Stars Booster Pack',set:'Brilliant Stars',era:'SWSH',marketValue:11.00,trend:'up',note:'VSTAR debut'},
+    {packName:'Vivid Voltage Booster Pack',set:'Vivid Voltage',era:'SWSH',marketValue:7.50,trend:'flat',note:'Amazing Rares'},
+  ];
+}
+
+// ── INIT ──────────────────────────────────────
+if (!indexData.length) indexData = getDemoIndex();
+</script>
+
+</body>
+</html>

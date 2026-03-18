@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sable — Market Pulse</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0d;--surface:#13131a;--surface2:#1a1a24;--surface3:#1f1f2e;
+  --border:#252535;--accent:#7c6aff;--green:#4ade80;--text:#f0f0f8;
+  --muted:#5a5a72;--danger:#ff4d6d;--gold:#f5c842;--orange:#fb923c;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+.phone{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* NAV */
+.top-nav{display:flex;align-items:center;background:var(–surface);border-bottom:1px solid var(–border);padding:13px 18px;flex-shrink:0;gap:10px;}
+.back-btn{background:none;border:none;cursor:pointer;color:var(–accent);display:flex;align-items:center;gap:5px;font-family:‘DM Sans’,sans-serif;font-size:13px;font-weight:500;padding:0;}
+.nav-title{font-family:‘Bebas Neue’,sans-serif;font-size:16px;letter-spacing:2px;color:var(–text);flex:1;text-align:center;}
+.wl-nav-btn{background:none;border:none;cursor:pointer;color:var(–muted);font-size:20px;padding:2px;transition:color .2s;}
+.wl-nav-btn.active{color:var(–danger);}
+
+/* TABS */
+.tab-bar{display:flex;background:var(–surface);border-bottom:1px solid var(–border);flex-shrink:0;}
+.tab{flex:1;padding:11px 0;text-align:center;font-family:‘Bebas Neue’,sans-serif;font-size:13px;letter-spacing:1.5px;color:var(–muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .2s;}
+.tab.active{color:var(–accent);border-bottom-color:var(–accent);}
+
+/* REFRESH BAR */
+.refresh-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;flex-shrink:0;border-bottom:1px solid var(–border);background:var(–surface2);}
+.refresh-left{display:flex;flex-direction:column;gap:1px;}
+.refresh-title{font-family:‘Bebas Neue’,sans-serif;font-size:12px;letter-spacing:2px;color:var(–text);}
+.refresh-note{font-family:‘DM Mono’,monospace;font-size:9px;color:var(–muted);}
+.refresh-btn{background:none;border:1px solid var(–border);border-radius:8px;color:var(–muted);font-family:‘DM Mono’,monospace;font-size:11px;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:border-color .2s,color .2s;flex-shrink:0;}
+.refresh-btn:hover{border-color:var(–accent);color:var(–accent);}
+.refresh-btn.loading{border-color:var(–accent);color:var(–accent);pointer-events:none;}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+/* SCROLL */
+.scrollbody{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:10px;padding-bottom:24px;}
+.scrollbody::-webkit-scrollbar{width:3px;}
+.scrollbody::-webkit-scrollbar-thumb{background:var(–border);border-radius:2px;}
+
+/* ══════════════════════════════════
+SET INVESTMENT CARDS
+══════════════════════════════════ */
+.set-invest-card{background:var(–surface);border:1px solid var(–border);border-radius:16px;overflow:hidden;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.set-invest-card.phase-bottom {border-color:rgba(74,222,128,.25);}
+.set-invest-card.phase-cooling {border-color:rgba(245,200,66,.2);}
+.set-invest-card.phase-climbing{border-color:rgba(124,106,255,.2);}
+
+.set-header{padding:14px 16px 10px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.set-name{font-family:‘Bebas Neue’,sans-serif;font-size:22px;letter-spacing:1.5px;line-height:1;}
+.set-sub{font-family:‘DM Mono’,monospace;font-size:10px;color:var(–muted);margin-top:3px;}
+.set-tag-col{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.phase-tag{font-family:‘Bebas Neue’,sans-serif;font-size:11px;letter-spacing:1px;padding:3px 8px;border-radius:6px;}
+.phase-tag.bottom  {background:rgba(74,222,128,.12);color:var(–green);  border:1px solid rgba(74,222,128,.3);}
+.phase-tag.cooling {background:rgba(245,200,66,.1); color:var(–gold);   border:1px solid rgba(245,200,66,.3);}
+.phase-tag.climbing{background:rgba(124,106,255,.1);color:var(–accent);  border:1px solid rgba(124,106,255,.3);}
+.sent-tag{font-family:‘DM Mono’,monospace;font-size:10px;padding:2px 7px;border-radius:5px;}
+.sent-tag.bullish{background:rgba(74,222,128,.1);color:var(–green);}
+.sent-tag.neutral {background:rgba(107,107,128,.1);color:var(–muted);}
+.sent-tag.bearish {background:rgba(255,77,109,.1);color:var(–danger);}
+
+/* VALUE SNAPSHOT — key numbers at a glance */
+.value-snap{display:flex;gap:0;margin:0 16px 10px;border:1px solid var(–border);border-radius:10px;overflow:hidden;}
+.snap-item{flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:3px;border-right:1px solid var(–border);}
+.snap-item:last-child{border-right:none;}
+.snap-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:9px;letter-spacing:1.5px;color:var(–muted);}
+.snap-val{font-family:‘DM Mono’,monospace;font-size:14px;font-weight:500;}
+.snap-val.good{color:var(–green);}
+.snap-val.warn{color:var(–gold);}
+.snap-val.bad {color:var(–danger);}
+.snap-val.neu {color:var(–text);}
+
+/* SIGNAL BARS */
+.sig-section{padding:4px 16px 10px;}
+.sig-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.sig-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:9px;letter-spacing:1.5px;color:var(–muted);width:88px;flex-shrink:0;}
+.sig-track{flex:1;height:5px;background:var(–surface2);border-radius:3px;position:relative;overflow:visible;}
+.sig-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1);}
+.sig-dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:9px;height:9px;border-radius:50%;border:2px solid var(–surface);transition:left .8s cubic-bezier(.4,0,.2,1);}
+.sig-val{font-family:‘DM Mono’,monospace;font-size:10px;width:26px;text-align:right;flex-shrink:0;}
+
+/* CHASE CARDS */
+.chase-row{margin:0 16px 12px;padding:10px 12px;background:var(–surface2);border-radius:8px;display:flex;flex-direction:column;gap:5px;}
+.chase-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:9px;letter-spacing:2px;color:var(–muted);}
+.chase-item{font-size:12px;color:var(–text);}
+
+/* WHY BOX */
+.why-box{margin:0 16px 16px;padding:12px 14px;background:var(–surface2);border-left:2px solid var(–accent);border-radius:0 8px 8px 0;font-size:12px;color:var(–text);line-height:1.7;}
+
+/* ══════════════════════════════════
+SINGLES / GRADED / SEALED CARDS
+══════════════════════════════════ */
+.pulse-card{background:var(–surface);border:1px solid var(–border);border-radius:14px;overflow:visible;animation:fadeUp .25s ease;}
+.pulse-card-inner{display:flex;gap:12px;padding:12px 14px 10px;}
+.thumb-wrap{width:52px;height:72px;border-radius:6px;overflow:hidden;background:var(–surface2);border:1px solid var(–border);flex-shrink:0;cursor:pointer;transition:transform .15s;}
+.thumb-wrap:active{transform:scale(.94);}
+.thumb-img{width:100%;height:100%;object-fit:cover;}
+.thumb-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(–muted);font-size:18px;}
+.card-content{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;}
+.card-name{font-size:15px;font-weight:600;line-height:1.2;flex:1;}
+.heart-btn{background:none;border:none;cursor:pointer;font-size:17px;padding:0;line-height:1;flex-shrink:0;transition:transform .15s;}
+.heart-btn:active{transform:scale(.8);}
+.card-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.meta-tag{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–muted);}
+.variant-tag{font-family:‘DM Mono’,monospace;font-size:11px;background:rgba(124,106,255,.1);color:var(–accent);border-radius:4px;padding:2px 6px;}
+.grade-badge{font-family:‘Bebas Neue’,sans-serif;font-size:9px;letter-spacing:1px;background:rgba(245,200,66,.1);color:var(–gold);border:1px solid rgba(245,200,66,.3);border-radius:4px;padding:1px 5px;}
+.rotation-badge{font-family:‘Bebas Neue’,sans-serif;font-size:9px;letter-spacing:1px;background:rgba(255,77,109,.1);color:var(–danger);border:1px solid rgba(255,77,109,.3);border-radius:4px;padding:1px 5px;}
+
+/* VALUE ROW */
+.value-row{display:flex;align-items:center;gap:0;margin-top:2px;}
+.val-block{display:flex;flex-direction:column;gap:1px;flex:1;}
+.val-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:10px;letter-spacing:1.5px;color:var(–muted);}
+.val-num{font-family:‘DM Mono’,monospace;font-size:15px;font-weight:500;}
+.val-num.market{color:var(–text);}
+.val-num.target{color:var(–green);}
+.val-num.ratio{color:var(–accent);}
+.val-divider{width:1px;height:26px;background:var(–border);margin:0 8px;flex-shrink:0;}
+.trend-arrow{font-size:14px;margin-left:2px;}
+.trend-up{color:var(–green);}
+.trend-down{color:var(–danger);}
+.trend-flat{color:var(–muted);}
+
+/* MINI SIGNAL BARS (2 bars) */
+.mini-sigs{padding:6px 14px 10px;display:flex;flex-direction:column;gap:5px;border-top:1px solid var(–border);}
+.mini-sig-row{display:flex;align-items:center;gap:8px;}
+.mini-sig-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:10px;letter-spacing:1px;color:var(–muted);width:76px;flex-shrink:0;}
+
+/* WHY TEXT */
+.why-text{font-size:12px;color:var(–muted);line-height:1.5;padding:6px 14px 12px;display:block;}
+
+/* CARD FLIP */
+.pulse-card{background:var(–surface);border:1px solid var(–border);border-radius:14px;overflow:hidden;animation:fadeUp .25s ease;cursor:pointer;transition:border-color .2s;}
+.pulse-card.flipped .card-front{display:none;}
+.pulse-card.flipped .card-back{display:flex;}
+.card-front{display:flex;flex-direction:column;}
+.card-back{display:none;flex-direction:column;background:var(–surface2);border-radius:14px;min-height:100%;}
+.card-back-nav{display:flex;align-items:center;gap:8px;padding:10px 14px 6px;border-bottom:1px solid var(–border);}
+.card-back-title{font-family:“Bebas Neue”,sans-serif;font-size:12px;letter-spacing:2px;color:var(–muted);flex:1;}
+.card-back-close{background:none;border:none;cursor:pointer;color:var(–muted);font-size:18px;padding:0;line-height:1;transition:color .15s;}
+.card-back-close:hover{color:var(–text);}
+.card-back-body{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px;}
+
+/* MORE BUTTON - remove old style */
+
+.more-btn:hover{border-color:var(–accent);color:var(–accent);}
+.more-btn.active{border-color:var(–accent);color:var(–accent);background:rgba(124,106,255,.08);}
+
+/* EXPAND PANEL */
+.expand-panel{max-height:0;overflow:hidden;transition:max-height .35s ease;background:var(–surface2);border-top:0px solid var(–border);}
+.expand-panel.open{max-height:500px;border-top:1px solid var(–border);}
+.expand-inner{padding:12px 14px;display:flex;flex-direction:column;gap:6px;}
+.expand-section-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:9px;letter-spacing:2px;color:var(–muted);margin-top:4px;}
+.expand-chip-row{display:flex;gap:6px;flex-wrap:wrap;}
+.expand-chip{background:var(–surface);border:1px solid var(–border);border-radius:7px;padding:5px 8px;display:flex;flex-direction:column;gap:1px;min-width:70px;}
+.expand-chip-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:8px;letter-spacing:1.5px;color:var(–muted);}
+.expand-chip-val{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–text);}
+
+/* PULSE BAR */
+.pulse-row{display:flex;align-items:center;gap:8px;padding:0 14px 10px;}
+.pulse-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:10px;letter-spacing:1.5px;color:var(–muted);flex-shrink:0;}
+.pulse-track{flex:1;height:4px;background:var(–surface2);border-radius:2px;overflow:hidden;}
+.pulse-fill{height:100%;border-radius:2px;transition:width .6s ease;}
+
+/* LOAD MORE */
+.load-more-btn{background:var(–surface);border:1px solid var(–border);border-radius:12px;color:var(–muted);font-family:‘Bebas Neue’,sans-serif;font-size:13px;letter-spacing:2px;padding:12px;cursor:pointer;width:100%;transition:border-color .2s,color .2s;}
+.load-more-btn:hover{border-color:var(–accent);color:var(–accent);}
+
+/* EMPTY */
+.empty-state{text-align:center;color:var(–muted);padding:40px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;font-size:12px;line-height:1.7;}
+
+/* SKELETON */
+.skeleton{background:linear-gradient(90deg,var(–surface2) 25%,var(–surface3) 50%,var(–surface2) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:4px;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* FULLSCREEN IMG */
+.img-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;}
+.img-overlay.active{display:flex;}
+.img-overlay img{max-width:85vw;max-height:80vh;border-radius:12px;}
+.img-close{position:absolute;top:20px;right:20px;background:rgba(255,255,255,.1);border:none;color:white;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* WATCHLIST */
+.wl-screen{position:fixed;inset:0;z-index:150;background:var(–bg);display:none;flex-direction:column;}
+.wl-screen.active{display:flex;}
+.wl-nav{display:flex;align-items:center;background:var(–surface);border-bottom:1px solid var(–border);padding:13px 18px;gap:10px;flex-shrink:0;}
+.wl-title{font-family:‘Bebas Neue’,sans-serif;font-size:16px;letter-spacing:2px;flex:1;text-align:center;}
+
+/* ── DETAIL OVERLAY ──────────────────────────── */
+.detail-overlay{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;pointer-events:none;transition:transform .35s cubic-bezier(.32,0,.67,0);}
+.detail-overlay.open{pointer-events:all;transform:translateY(0)!important;}
+.detail-overlay-bg{position:absolute;inset:0;background:rgba(0,0,0,.7);opacity:0;transition:opacity .35s ease;}
+.detail-overlay.open .detail-overlay-bg{opacity:1;}
+.detail-sheet{position:absolute;bottom:0;left:0;right:0;max-height:92vh;background:var(–surface);border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,0,.67,0);}
+.detail-overlay.open .detail-sheet{transform:translateY(0);}
+.detail-handle{width:36px;height:4px;background:var(–border);border-radius:2px;margin:12px auto 0;flex-shrink:0;}
+.detail-nav{display:flex;align-items:center;padding:12px 18px 8px;flex-shrink:0;}
+.detail-title{font-family:‘Bebas Neue’,sans-serif;font-size:18px;letter-spacing:2px;color:var(–text);flex:1;}
+.detail-close{background:none;border:none;cursor:pointer;color:var(–muted);font-size:22px;padding:4px;line-height:1;transition:color .15s;}
+.detail-close:hover{color:var(–text);}
+.detail-body{flex:1;overflow-y:auto;padding:4px 18px 32px;}
+.detail-body::-webkit-scrollbar{width:3px;}
+.detail-body::-webkit-scrollbar-thumb{background:var(–border);}
+.detail-section{margin-bottom:16px;}
+.detail-section-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:10px;letter-spacing:2.5px;color:var(–muted);margin-bottom:8px;}
+.detail-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+.detail-chip{background:var(–surface2);border:1px solid var(–border);border-radius:8px;padding:7px 10px;display:flex;flex-direction:column;gap:2px;min-width:80px;flex:1;}
+.detail-chip-lbl{font-family:‘Bebas Neue’,sans-serif;font-size:9px;letter-spacing:1.5px;color:var(–muted);}
+.detail-chip-val{font-family:‘DM Mono’,monospace;font-size:13px;color:var(–text);}
+.detail-chip-val.green{color:var(–green);}
+.detail-chip-val.gold{color:var(–gold);}
+.detail-chip-val.danger{color:var(–danger);}
+.detail-chip-val.accent{color:var(–accent);}
+.detail-why{font-size:12px;color:var(–text);line-height:1.7;background:var(–surface2);border-left:2px solid var(–accent);padding:10px 12px;border-radius:0 8px 8px 0;}
+/* Make cards look tappable */
+.pulse-card{cursor:pointer;overflow:visible;}
+.pulse-card:active{opacity:.85;}
+.set-invest-card{cursor:pointer;overflow:visible;}
+.set-invest-card:active{opacity:.85;}
+</style>
+
+</head>
+<body>
+<div class="phone">
+  <div class="top-nav">
+    <button class="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="nav-title">MARKET PULSE</div>
+    <button class="wl-nav-btn" id="wlBtn" onclick="showWatchlist()">♡</button>
+  </div>
+  <div class="tab-bar" id="tabBar"></div>
+  <div class="refresh-bar">
+    <div class="refresh-left">
+      <div class="refresh-title" id="refreshTitle">SET INTELLIGENCE</div>
+      <div class="refresh-note" id="refreshNote">AI researches market — ~$0.01 per refresh</div>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" onclick="refreshPulse()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      REFRESH
+    </button>
+  </div>
+  <div class="scrollbody" id="pulseBody"></div>
+</div>
+
+<div class="img-overlay" id="imgOverlay">
+  <button class="img-close" onclick="closeImg()">×</button>
+  <img id="imgFull" src="" alt="">
+</div>
+
+<div class="wl-screen" id="wlScreen">
+  <div class="wl-nav">
+    <button class="back-btn" onclick="hideWatchlist()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="wl-title">WATCHLIST</div>
+  </div>
+  <div class="scrollbody" id="wlBody"></div>
+</div>
+
+<script>
+const WL_KEY='sable_watchlist_v2', DATA_KEY='sable_pulse_v2';
+const loadWL=()=>{try{return JSON.parse(localStorage.getItem(WL_KEY)||'[]');}catch(e){return [];}};
+
+const ARBS_SIGS = [
+  {key:'priceGap',    label:'PRICE GAP',    color:'var(--green)'},
+  {key:'popScarcity', label:'POP SCARCITY',  color:'var(--gold)'},
+  {key:'momentum',    label:'MOMENTUM',      color:'var(--accent)'},
+];
+const saveWL=d=>localStorage.setItem(WL_KEY,JSON.stringify(d));
+const loadData=()=>{try{return JSON.parse(localStorage.getItem(DATA_KEY)||'{}');}catch(e){return {};}};
+const saveData=d=>localStorage.setItem(DATA_KEY,JSON.stringify(d));
+
+const TABS=['SETS','SINGLES','GRADED','SEALED','ARBS'];
+let activeTab='SETS';
+let pulseData=loadData();
+let watchlist=loadWL();
+let shownCount={};
+const PAGE=5;
+
+const TAB_META={
+  SETS:   {title:'SET INTELLIGENCE',   note:'Top 3 sets to invest in — AI market research · ~$0.015'},
+  SINGLES:{title:'VALUE SINGLES',      note:'Cards trading below fair value · buy low · ~$0.01'},
+  GRADED: {title:'GRADING OPPORTUNITY',note:'Best raw→graded ROI targets · ~$0.01'},
+  SEALED: {title:'SEALED VALUE',       note:'Best per-pack cost + EV · ~$0.01'},
+  ARBS:   {title:'GRADING ARBITRAGE',   note:'Cross-company price gaps · AI web search · ~$0.02'},
+};
+
+const TAB_SIGS={
+  SETS:[
+    {key:'dipDepth',      label:'BUY THE DIP',    color:'var(--green)'},
+    {key:'supplyPressure',label:'SUPPLY PRESSURE', color:'var(--orange)'},
+    {key:'communityHype', label:'SENTIMENT',       color:'var(--accent)'},
+  ],
+  SINGLES:[
+    {key:'dipPct',        label:'BUY THE DIP',    color:'var(--green)',   scale:v=>Math.min(100,Math.abs(v||0)*2)},
+    {key:'sig2',          label:'SUPPLY PRESSURE', color:'var(--orange)'},
+    {key:'sig1',          label:'SENTIMENT',       color:'var(--accent)'},
+  ],
+  GRADED:[
+    {key:'sig1',          label:'BUY THE DIP',    color:'var(--green)'},
+    {key:'sig2',          label:'SUPPLY PRESSURE', color:'var(--orange)'},
+    {key:'pulseScore',    label:'SENTIMENT',       color:'var(--accent)'},
+  ],
+  SEALED:[
+    {key:'sig1',          label:'BUY THE DIP',    color:'var(--green)'},
+    {key:'sig2',          label:'SUPPLY PRESSURE', color:'var(--orange)'},
+    {key:'pulseScore',    label:'SENTIMENT',       color:'var(--accent)'},
+  ],
+};
+
+const EXT_SIGS={
+  SINGLES:[
+    {key:'sig1',      label:'MOMENTUM',       color:'var(--accent)'},
+    {key:'sig2',      label:'LIQUIDITY',       color:'var(--green)'},
+    {key:'dipPct',    label:'DIP DEPTH',       color:'var(--gold)',   scale:v=>Math.min(100,Math.abs(v||0)*2)},
+    {key:'pulseScore',label:'OVERALL PULSE',   color:'var(--accent)'},
+    {key:'gradingPotential',label:'GRADE UPSIDE',color:'var(--gold)', bool:true},
+    {key:'rotationFlag',   label:'ROTATION BOOST',color:'var(--danger)',bool:true},
+  ],
+  GRADED:[
+    {key:'sig1',      label:'SCARCITY',        color:'var(--gold)'},
+    {key:'sig2',      label:'PREMIUM',         color:'var(--accent)'},
+    {key:'gradingMultiplier',label:'MULTIPLIER',color:'var(--green)', scale:v=>Math.min(100,(v||0)/5*100)},
+    {key:'pulseScore',label:'OVERALL PULSE',   color:'var(--accent)'},
+  ],
+  SEALED:[
+    {key:'sig1',      label:'EV RATIO',        color:'var(--green)'},
+    {key:'sig2',      label:'SUPPLY',          color:'var(--orange)'},
+    {key:'evRatio',   label:'EV ×',            color:'var(--green)', scale:v=>Math.min(100,(v||0)*60)},
+    {key:'pulseScore',label:'OVERALL PULSE',   color:'var(--accent)'},
+    {key:'rotationFlag',label:'ROTATION BOOST',color:'var(--danger)',bool:true},
+  ],
+};
+
+
+// ── DETAIL OVERLAY ────────────────────────────
+function openDetail(item, tab) {
+  const overlay = document.getElementById('detailOverlay');
+  const title   = document.getElementById('detailTitle');
+  const body    = document.getElementById('detailBody');
+  title.textContent = item.name || item.set || '—';
+  body.innerHTML = '';
+
+  const t = tab || activeTab;
+
+  // ── SIGNAL BARS SECTION ──
+  const extSigMap = {
+    SINGLES:[
+      {key:'sig1',      label:'MOMENTUM',     color:'var(--accent)'},
+      {key:'sig2',      label:'LIQUIDITY',     color:'var(--green)'},
+      {key:'dipPct',    label:'DIP DEPTH',     color:'var(--gold)',  scale:v=>Math.min(100,Math.abs(v||0)*2)},
+      {key:'pulseScore',label:'OVERALL PULSE', color:'var(--accent)'},
+      {key:'gradingPotential',label:'GRADE UPSIDE',color:'var(--gold)',bool:true},
+      {key:'rotationFlag',   label:'ROTATION BOOST',color:'var(--danger)',bool:true},
+    ],
+    GRADED:[
+      {key:'sig1',      label:'SCARCITY',      color:'var(--gold)'},
+      {key:'sig2',      label:'PREMIUM',       color:'var(--accent)'},
+      {key:'gradingMultiplier',label:'MULTIPLIER',color:'var(--green)',scale:v=>Math.min(100,(v||0)/5*100)},
+      {key:'pulseScore',label:'OVERALL PULSE', color:'var(--accent)'},
+    ],
+    ARBS:[
+      {id:'arb1',name:'Charizard ex',number:'199/165',set:'151',variant:'SAR',rawPrice:88,psa10:185,cgc10:95,bgs10:null,psa9:110,cgc9:65,psaPop:340,cgcPop:42,bestPlay:'BUY CGC',gapPct:49,priceGap:90,popScarcity:85,momentum:78,pulseScore:88,why:'CGC 10 is 49% cheaper than PSA 10 — CGC population is low and growing toward PSA premium pricing.',gradingNote:'Grade with CGC now while pop is low. PSA 10 at $185 vs CGC 10 at $95 — gap will close as CGC gains market trust.'},
+      {id:'arb2',name:'Umbreon VMAX',number:'215/264',set:'Evolving Skies',variant:'Alt Art',rawPrice:92,psa10:3500,cgc10:2100,bgs10:1800,psa9:1200,cgc9:800,psaPop:580,cgcPop:95,bestPlay:'BUY CGC',gapPct:40,priceGap:1400,popScarcity:90,momentum:85,pulseScore:92,why:'CGC 10 at $2,100 vs PSA 10 at $3,500 — $1,400 gap on same card. CGC pop is 95 vs PSA 580. Scarcity premium incoming.',gradingNote:'CGC pop is extremely low at 95. Buy CGC 10 now — gap to PSA will compress as collectors recognize scarcity.'},
+      {id:'arb3',name:'Mew ex',number:'232/165',set:'151',variant:'SAR',rawPrice:85,psa10:380,cgc10:195,bgs10:null,psa9:220,cgc9:130,psaPop:210,cgcPop:28,bestPlay:'GRADE CGC',gapPct:49,priceGap:185,popScarcity:92,momentum:80,pulseScore:85,why:'Raw at $85, CGC 10 at $195 — 2.3× multiplier with only 28 CGC 10s in existence. Grade now before pop climbs.',gradingNote:'Only 28 CGC 10 copies vs 210 PSA 10. Send raw copies for CGC grading immediately — pop will grow but you get early advantage.'},
+      {id:'arb4',name:'Pikachu ex',number:'066/091',set:'Surging Sparks',variant:'SAR',rawPrice:245,psa10:580,cgc10:310,bgs10:null,psa9:380,cgc9:220,psaPop:145,cgcPop:18,bestPlay:'BUY CGC',gapPct:47,priceGap:270,popScarcity:95,momentum:82,pulseScore:87,why:'CGC 10 at $310 vs PSA 10 at $580. Only 18 CGC 10s exist. Electric meta dominance keeps demand high for both.',gradingNote:'18 CGC 10 copies is extraordinarily low for a modern chase card. This gap will compress fast.'},
+      {id:'arb5',name:'Charizard Base Set',number:'4/102',set:'Base Set',variant:'Holo',rawPrice:380,psa10:168000,cgc10:85000,bgs10:72000,psa9:8000,cgc9:5500,psaPop:5200,cgcPop:320,bestPlay:'BUY BGS',gapPct:57,priceGap:96000,popScarcity:88,momentum:90,pulseScore:90,why:'BGS 10 at $72K vs PSA 10 at $168K — BGS Pristine 10 is rarer and increasingly recognized. 30th anniversary driving all grades.',gradingNote:'BGS Pristine 10 population is very low. For vintage, BGS is gaining on PSA especially with high-end collectors.'},
+    ],
+    ARBS:[
+      {key:'priceGap',   label:'PRICE GAP',     color:'var(--green)'},
+      {key:'popScarcity',label:'POP SCARCITY',   color:'var(--gold)'},
+      {key:'momentum',   label:'MOMENTUM',       color:'var(--accent)'},
+      {key:'pulseScore', label:'OVERALL PULSE',  color:'var(--accent)'},
+    ],
+    SEALED:[
+      {key:'sig1',      label:'EV RATIO',      color:'var(--green)'},
+      {key:'sig2',      label:'SUPPLY',        color:'var(--orange)'},
+      {key:'evRatio',   label:'EV ×',          color:'var(--green)', scale:v=>Math.min(100,(v||0)*60)},
+      {key:'pulseScore',label:'OVERALL PULSE', color:'var(--accent)'},
+      {key:'rotationFlag',label:'ROTATION BOOST',color:'var(--danger)',bool:true},
+    ],
+    SETS:[
+      {key:'dipDepth',       label:'BUY THE DIP',    color:'var(--green)'},
+      {key:'supplyPressure', label:'SUPPLY PRESSURE', color:'var(--orange)'},
+      {key:'collectibility', label:'COLLECTIBILITY',  color:'var(--gold)'},
+      {key:'reprintRisk',    label:'REPRINT RISK',    color:'var(--danger)',invert:true},
+      {key:'communityHype',  label:'COMMUNITY HYPE',  color:'var(--accent)'},
+      {key:'chaseValue',     label:'CHASE VALUE',     color:'#a78bfa'},
+      {key:'rotationBenefit',label:'ROTATION BOOST',  color:'var(--green)'},
+    ],
+  };
+  const sigs = extSigMap[t] || [];
+  if (sigs.length) {
+    const sec = document.createElement('div'); sec.className = 'detail-section';
+    const lbl = document.createElement('div'); lbl.className = 'detail-section-lbl'; lbl.textContent = 'SIGNAL ANALYSIS';
+    sec.appendChild(lbl);
+    sigs.forEach((sig, idx) => {
+      const raw = item[sig.key];
+      const dv  = sig.bool?(raw?100:0):sig.invert?(100-(raw||0)):sig.scale?sig.scale(raw):(raw||0);
+      const sv  = sig.bool?(raw?'YES':'NO'):(raw||0);
+      const row = document.createElement('div'); row.className = 'sig-row';
+      const rl  = document.createElement('div'); rl.className = 'sig-lbl'; rl.textContent = sig.label;
+      const tr  = document.createElement('div'); tr.className = 'sig-track';
+      const fi  = document.createElement('div'); fi.className = 'sig-fill'; fi.style.cssText = 'width:0%;background:'+sig.color+';';
+      const dt  = document.createElement('div'); dt.className = 'sig-dot';  dt.style.cssText = 'background:'+sig.color+';border-color:var(--surface);left:0%;';
+      tr.append(fi,dt);
+      const ve  = document.createElement('div'); ve.className = 'sig-val'; ve.style.color = sig.color; ve.textContent = sv;
+      row.append(rl,tr,ve); sec.appendChild(row);
+      setTimeout(()=>{ fi.style.width=dv+'%'; dt.style.left=dv+'%'; }, 80+idx*50);
+    });
+    body.appendChild(sec);
+  }
+
+  // ── DATA CHIPS SECTION ──
+  const chips = [];
+  if (t==='SINGLES') {
+    if(item.avg30d)          chips.push({l:'30D AVG',    v:'$'+item.avg30d.toFixed(2),         cls:'neu'});
+    if(item.dipPct)          chips.push({l:'DIP FROM AVG',v:'-'+Math.abs(item.dipPct).toFixed(0)+'%', cls:'gold'});
+    if(item.marketPrice)     chips.push({l:'MARKET',     v:'$'+item.marketPrice.toFixed(2),    cls:'neu'});
+    if(item.buyTarget)       chips.push({l:'BUY TARGET', v:'$'+item.buyTarget.toFixed(2),      cls:'green'});
+    if(item.gradingNote)     chips.push({l:'GRADE NOTE', v:item.gradingNote,                   cls:'gold'});
+    chips.push({l:'TREND',   v:(item.trend||'—').toUpperCase(),  cls:'neu'});
+  } else if (t==='GRADED') {
+    if(item.rawPrice)        chips.push({l:'RAW NM',     v:'$'+item.rawPrice.toFixed(2),       cls:'neu'});
+    if(item.psa10Price)      chips.push({l:'PSA 10',     v:'$'+item.psa10Price.toLocaleString(),cls:'green'});
+    if(item.gradingMultiplier) chips.push({l:'MULTIPLIER',v:item.gradingMultiplier.toFixed(1)+'×',cls:'accent'});
+    if(item.gradingCost)     chips.push({l:'GRADE FEE',  v:'$'+item.gradingCost,               cls:'neu'});
+    if(item.netROI)          chips.push({l:'NET ROI',    v:'$'+Math.round(item.netROI).toLocaleString(),cls:'green'});
+    chips.push({l:'TREND',   v:(item.trend||'—').toUpperCase(),  cls:'neu'});
+  } else if (t==='SEALED') {
+    if(item.sealedPrice)     chips.push({l:'SEALED',     v:'$'+item.sealedPrice.toFixed(2),    cls:'neu'});
+    if(item.packCount)       chips.push({l:'PACKS',      v:item.packCount,                     cls:'neu'});
+    if(item.perPackCost)     chips.push({l:'$/PACK',     v:'$'+item.perPackCost.toFixed(2),    cls:item.perPackCost<=4?'green':item.perPackCost<=6?'gold':'danger'});
+    if(item.evPerPack)       chips.push({l:'EV/PACK',    v:'$'+item.evPerPack.toFixed(2),      cls:'green'});
+    if(item.evRatio)         chips.push({l:'EV RATIO',   v:item.evRatio.toFixed(2)+'×',        cls:item.evRatio>=1?'green':item.evRatio>=0.7?'gold':'danger'});
+    chips.push({l:'TYPE',    v:item.type||'—',                   cls:'neu'});
+    const sHold=item.rotationFlag?'BUY NOW':item.trend==='up'?'6-12 MO':'12-18 MO';
+    chips.push({l:'HOLD',    v:sHold, cls:'accent'});
+  } else if (t==='ARBS') {
+    if(item.rawPrice)  chips.push({l:'RAW NM',   v:'$'+item.rawPrice.toFixed(0),  cls:'neu'});
+    if(item.psa10)     chips.push({l:'PSA 10',   v:'$'+item.psa10.toFixed(0),     cls:item.bestPlay?.includes('PSA')?'green':'neu'});
+    if(item.cgc10)     chips.push({l:'CGC 10',   v:'$'+item.cgc10.toFixed(0),     cls:item.bestPlay?.includes('CGC')?'green':'neu'});
+    if(item.bgs10)     chips.push({l:'BGS 10',   v:'$'+item.bgs10.toFixed(0),     cls:item.bestPlay?.includes('BGS')?'green':'neu'});
+    if(item.psa9)      chips.push({l:'PSA 9',    v:'$'+item.psa9.toFixed(0),      cls:'neu'});
+    if(item.cgc9)      chips.push({l:'CGC 9',    v:'$'+item.cgc9.toFixed(0),      cls:'neu'});
+    if(item.psaPop)    chips.push({l:'PSA POP',  v:item.psaPop,                   cls:'neu'});
+    if(item.cgcPop)    chips.push({l:'CGC POP',  v:item.cgcPop,                   cls:item.cgcPop<50?'gold':'neu'});
+    if(item.gapPct)    chips.push({l:'GAP',      v:item.gapPct+'%',               cls:'green'});
+    if(item.gradingNote) chips.push({l:'RECOMMENDATION', v:item.gradingNote,      cls:'accent'});
+  } else if (t==='SETS') {
+    chips.push({l:'SCORE',     v:item.overallScore,              cls:item.overallScore>=75?'green':item.overallScore>=50?'gold':'danger'});
+    chips.push({l:'PHASE',     v:(item.trendPhase||'—').toUpperCase(), cls:'neu'});
+    chips.push({l:'SENTIMENT', v:(item.sentiment||'—').toUpperCase(), cls:item.sentiment==='bullish'?'green':item.sentiment==='bearish'?'danger':'neu'});
+    if(item.reprintRisk!=null) chips.push({l:'REPRINT RISK',v:item.reprintRisk<=30?'LOW':item.reprintRisk<=60?'MED':'HIGH', cls:item.reprintRisk<=30?'green':item.reprintRisk<=60?'gold':'danger'});
+    if(item.releaseDate)       chips.push({l:'RELEASED',   v:item.releaseDate,                 cls:'neu'});
+    if(item.era)               chips.push({l:'ERA',         v:item.era,                         cls:'neu'});
+    const holdMap={bottom:'6-18 MO',cooling:'12-24 MO',climbing:'3-12 MO',peak:'SHORT TERM'};
+    chips.push({l:'HOLD HORIZON', v:holdMap[item.trendPhase]||'12-18 MO', cls:'accent'});
+  }
+  if (chips.length) {
+    const sec2 = document.createElement('div'); sec2.className = 'detail-section';
+    const lbl2 = document.createElement('div'); lbl2.className = 'detail-section-lbl'; lbl2.textContent = 'DATA';
+    sec2.appendChild(lbl2);
+    const cr = document.createElement('div'); cr.className = 'detail-chip-row';
+    chips.forEach(c => {
+      const chip = document.createElement('div'); chip.className = 'detail-chip';
+      const cl = document.createElement('div'); cl.className = 'detail-chip-lbl'; cl.textContent = c.l;
+      const cv = document.createElement('div'); cv.className = 'detail-chip-val '+(c.cls||''); cv.textContent = c.v;
+      chip.append(cl,cv); cr.appendChild(chip);
+    });
+    sec2.appendChild(cr); body.appendChild(sec2);
+  }
+
+  // Chase cards (sets)
+  if (t==='SETS' && item.chaseCards?.length) {
+    const sec3 = document.createElement('div'); sec3.className = 'detail-section';
+    const lbl3 = document.createElement('div'); lbl3.className = 'detail-section-lbl'; lbl3.textContent = '🔥 CHASE CARDS';
+    sec3.appendChild(lbl3);
+    item.chaseCards.slice(0,2).forEach(c => {
+      const ci=document.createElement('div');
+      ci.style.cssText='font-size:12px;color:var(--text);padding:4px 0;display:flex;align-items:baseline;justify-content:space-between;gap:8px;';
+      const nm=document.createElement('span');nm.textContent='· '+(c.name||c);
+      const ls=document.createElement('span');ls.textContent=c.lastSold||'';
+      ls.style.cssText='font-family:DM Mono,monospace;font-size:11px;color:var(--green);flex-shrink:0;';
+      ci.append(nm,ls);sec3.appendChild(ci);
+    });
+    body.appendChild(sec3);
+  }
+
+  // Why
+  if (item.why) {
+    const sec4 = document.createElement('div'); sec4.className = 'detail-section';
+    const lbl4 = document.createElement('div'); lbl4.className = 'detail-section-lbl'; lbl4.textContent = 'ANALYSIS';
+    const why  = document.createElement('div'); why.className = 'detail-why'; why.textContent = item.why;
+    sec4.append(lbl4, why); body.appendChild(sec4);
+  }
+
+  // Animate open
+  overlay.style.transform = '';
+  requestAnimationFrame(()=> overlay.classList.add('open'));
+}
+
+function closeDetail() {
+  const overlay = document.getElementById('detailOverlay');
+  overlay.classList.remove('open');
+}
+
+// ── TABS ──────────────────────────────────────
+function buildTabs(){
+  const bar=document.getElementById('tabBar');
+  bar.innerHTML='';
+  TABS.forEach(t=>{
+    const btn=document.createElement('div');
+    btn.className='tab'+(t===activeTab?' active':'');
+    btn.textContent=t;
+    btn.onclick=()=>switchTab(t);
+    bar.appendChild(btn);
+  });
+  const m=TAB_META[activeTab];
+  document.getElementById('refreshTitle').textContent=m.title;
+  document.getElementById('refreshNote').textContent=m.note;
+}
+function switchTab(t){activeTab=t;buildTabs();if(t==='ARBS')renderArbs();else renderTab();}
+
+// ── WATCHLIST ─────────────────────────────────
+const isWatched=id=>watchlist.some(x=>x.id===id);
+function toggleWatch(item,btn){
+  if(isWatched(item.id)) watchlist=watchlist.filter(x=>x.id!==item.id);
+  else watchlist.unshift(item);
+  saveWL(watchlist);
+  if(btn){btn.textContent=isWatched(item.id)?'♥':'♡';btn.style.color=isWatched(item.id)?'var(--danger)':'var(--muted)';}
+  document.getElementById('wlBtn').classList.toggle('active',watchlist.length>0);
+}
+function showWatchlist(){
+  const body=document.getElementById('wlBody');
+  body.innerHTML='';
+  if(!watchlist.length){body.innerHTML='<div class="empty-state">♡<br>No cards saved yet.<br>Tap ♡ on any item to save it.</div>';return;}
+  watchlist.forEach(item=>body.appendChild(buildPulseCard(item)));
+  document.getElementById('wlScreen').classList.add('active');
+}
+function hideWatchlist(){document.getElementById('wlScreen').classList.remove('active');}
+
+// ── REFRESH ───────────────────────────────────
+async function refreshPulse(){
+  const btn=document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+  btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Loading…';
+  showSkeletons();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(Object.assign(
+        {model: activeTab==='ARBS'?'claude-sonnet-4-20250514':'claude-haiku-4-5-20251001',
+         max_tokens:2500,
+         messages:[{role:'user',content:activeTab==='ARBS'?buildArbsPrompt():buildPrompt(activeTab)}]},
+        activeTab==='ARBS'?{tools:[{type:'web_search_20250305',name:'web_search'}]}:{}
+      ))
+    });
+    const data=await res.json();
+    let text;
+    if (activeTab==='ARBS') {
+      text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text||'').join('');
+    } else {
+      text = (data.content?.[0]?.text||'');
+    }
+    text = text.replace(/```json|```/g,'').trim();
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    pulseData[activeTab] = jsonMatch ? JSON.parse(jsonMatch[0]) : getDemoData(activeTab);
+    saveData(pulseData);
+  }catch(e){
+    console.warn('Pulse error:',e);
+    pulseData[activeTab]=getDemoData(activeTab);
+  }
+  shownCount[activeTab]=activeTab==='SETS'?3:PAGE;
+  btn.classList.remove('loading');
+  btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> REFRESH';
+  renderTab();
+}
+function showSkeletons(){
+  const body=document.getElementById('pulseBody');body.innerHTML='';
+  for(let i=0;i<3;i++){
+    const sk=document.createElement('div');sk.className='pulse-card';
+    sk.innerHTML='<div style="display:flex;gap:12px;padding:12px 14px;"><div class="skeleton" style="width:52px;height:72px;border-radius:6px;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:8px;padding-top:4px;"><div class="skeleton" style="width:65%;height:13px;"></div><div class="skeleton" style="width:45%;height:11px;"></div><div class="skeleton" style="width:85%;height:11px;"></div></div></div>';
+    body.appendChild(sk);
+  }
+}
+
+// ── PROMPTS ───────────────────────────────────
+function buildArbsPrompt() {
+  return `You are a Pokemon TCG grading arbitrage expert. Search recent eBay completed sales to find cards where significant price gaps exist between PSA, CGC, and BGS graded slabs at the same grade.
+
+Look for:
+1. Cards where CGC 10 or BGS 10 sells significantly cheaper than PSA 10 (buy opportunity)
+2. Cards with very low CGC or BGS population counts creating scarcity premiums
+3. Cards where the grade 9 to grade 10 multiplier is unusually high
+4. Recent market inefficiencies from new graded copies hitting the market
+
+Return 8-10 opportunities. Respond ONLY in valid JSON array:
+[{"id":"slug","name":"","number":"","set":"","variant":"","rawPrice":0,"psa10":0,"cgc10":0,"bgs10":0,"psa9":0,"cgc9":0,"psaPop":0,"cgcPop":0,"bestPlay":"BUY PSA|BUY CGC|BUY BGS|GRADE PSA|GRADE CGC","gapPct":0,"priceGap":0,"popScarcity":0,"momentum":0,"pulseScore":0,"why":"one sentence","gradingNote":"recommendation"}]`;
+}
+
+function buildPrompt(tab){
+  if(tab==='SETS') return `You are a Pokemon TCG investment analyst. March 2026: 30th anniversary, April 10 rotation removes G-regulation sets, Mega Evolution era active. Identify the 3 best sets to invest in RIGHT NOW — value-first. Score each 0-100: dipDepth, supplyPressure, collectibility, reprintRisk (high=bad), communityHype, chaseValue, rotationBenefit, overallScore. Respond ONLY in valid JSON array: [{"name":"","releaseDate":"","era":"","trendPhase":"bottom|cooling|climbing|peak","sentiment":"bullish|neutral|bearish","overallScore":0,"dipDepth":0,"supplyPressure":0,"collectibility":0,"reprintRisk":0,"communityHype":0,"chaseValue":0,"rotationBenefit":0,"chaseCards":[{"name":"card name","lastSold":"$X · Mon DD"},{"name":"card name","lastSold":"$X · Mon DD"}],"why":"3 sentences"}]`;
+  if(tab==='SINGLES') return `Pokemon TCG value analyst. Find 15 undervalued singles — buy low sell high. Score: sig1=momentum(0-100), sig2=liquidity(0-100). Respond ONLY in valid JSON array: [{"id":"unique","name":"","number":"","set":"","variant":"","marketPrice":0,"buyTarget":0,"avg30d":0,"dipPct":0,"trend":"up|down|flat","why":"one sentence","pulseScore":0,"sig1":0,"sig2":0,"gradingPotential":false,"gradingNote":null,"rotationFlag":false}]`;
+  if(tab==='GRADED') return `Pokemon TCG grading ROI analyst. Find 15 best raw-to-graded opportunities. sig1=scarcity(0-100), sig2=premium(0-100). Respond ONLY in valid JSON array: [{"id":"unique","name":"","number":"","set":"","variant":"","rawPrice":0,"psa10Price":0,"gradingMultiplier":0,"gradingCost":15,"netROI":0,"trend":"up|down|flat","why":"one sentence","pulseScore":0,"sig1":0,"sig2":0}]`;
+  return `Pokemon TCG sealed analyst. Find 15 best value sealed products. Include per-pack math. sig1=EV score(0-100), sig2=supply(0-100). Respond ONLY in valid JSON array: [{"id":"unique","name":"","set":"","type":"Booster Box|ETB|Blister|Tin|UPC","sealedPrice":0,"packCount":0,"perPackCost":0,"evPerPack":0,"evRatio":0,"trend":"up|down|flat","why":"one sentence","pulseScore":0,"sig1":0,"sig2":0,"rotationFlag":false}]`;
+}
+
+// ── RENDER ARBS ───────────────────────────────
+function renderArbs() {
+  const body = document.getElementById('pulseBody');
+  body.innerHTML = '';
+  const items = pulseData['ARBS'];
+  if (!items || !items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.innerHTML = '<div style="font-size:32px;opacity:.4;margin-bottom:8px">🔍</div><div style="font-size:13px;line-height:1.8">Tap REFRESH to search for<br>grading arbitrage opportunities.</div>';
+    body.appendChild(empty);
+    return;
+  }
+  items.forEach((item, i) => {
+    try {
+      const card = buildArbCard(item);
+      card.style.animationDelay = (i * 0.05) + 's';
+      body.appendChild(card);
+    } catch(e) { console.warn('buildArbCard error:', e); }
+  });
+}
+
+function buildArbCard(item) {
+  const watched = isWatched(item.id);
+  const pulseColor = item.pulseScore>=75?'var(--green)':item.pulseScore>=50?'var(--gold)':'var(--muted)';
+  const card = document.createElement('div');
+  card.className = 'pulse-card';
+  card.onclick = () => openDetail(item, 'ARBS');
+  const inner = document.createElement('div'); inner.className = 'pulse-card-inner';
+  const thumb = document.createElement('div'); thumb.className = 'thumb-wrap';
+  thumb.onclick = e => { e.stopPropagation(); openImg(item); };
+  thumb.innerHTML = '<div class="thumb-placeholder">🏆</div>';
+  inner.appendChild(thumb);
+  const content = document.createElement('div'); content.className = 'card-content';
+  const top = document.createElement('div'); top.className = 'card-top';
+  const nameEl = document.createElement('div'); nameEl.className = 'card-name'; nameEl.textContent = item.name;
+  const hBtn = document.createElement('button'); hBtn.className = 'heart-btn';
+  hBtn.textContent = watched ? '♥' : '♡'; hBtn.style.color = watched ? 'var(--danger)' : 'var(--muted)';
+  hBtn.onclick = e => { e.stopPropagation(); toggleWatch(item, hBtn); };
+  top.append(nameEl, hBtn); content.appendChild(top);
+  const meta = document.createElement('div'); meta.className = 'card-meta';
+  if (item.number) { const n=document.createElement('span');n.className='meta-tag';n.textContent=item.number;meta.appendChild(n); }
+  if (item.set)    { const s=document.createElement('span');s.className='meta-tag';s.textContent=item.set;meta.appendChild(s); }
+  if (item.variant){ const v=document.createElement('span');v.className='variant-tag';v.textContent=item.variant;meta.appendChild(v); }
+  if (item.bestPlay) {
+    const bp = document.createElement('span');
+    bp.style.cssText = 'font-family:Bebas Neue,sans-serif;font-size:10px;letter-spacing:1px;padding:2px 7px;border-radius:5px;background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.3);';
+    bp.textContent = item.bestPlay; meta.appendChild(bp);
+  }
+  content.appendChild(meta);
+  const compRow = document.createElement('div');
+  compRow.style.cssText = 'display:flex;gap:0;margin-top:4px;border:1px solid var(--border);border-radius:8px;overflow:hidden;';
+  [{lbl:'RAW',val:item.rawPrice,best:false},{lbl:'PSA 10',val:item.psa10,best:item.bestPlay&&item.bestPlay.includes('PSA')},{lbl:'CGC 10',val:item.cgc10,best:item.bestPlay&&item.bestPlay.includes('CGC')},{lbl:'BGS 10',val:item.bgs10,best:item.bestPlay&&item.bestPlay.includes('BGS')}].filter(p=>p.val).forEach((p,i,arr)=>{
+    const block=document.createElement('div');
+    block.style.cssText='flex:1;padding:6px 4px;display:flex;flex-direction:column;gap:1px;text-align:center;'+(i<arr.length-1?'border-right:1px solid var(--border);':'');
+    const lbl2=document.createElement('div');lbl2.style.cssText='font-family:Bebas Neue,sans-serif;font-size:8px;letter-spacing:1.5px;color:var(--muted);';lbl2.textContent=p.lbl;
+    const val2=document.createElement('div');val2.style.cssText='font-family:DM Mono,monospace;font-size:12px;color:'+(p.best?'var(--green)':'var(--text)')+';';val2.textContent='$'+p.val.toFixed(0);
+    block.append(lbl2,val2);compRow.appendChild(block);
+  });
+  content.appendChild(compRow);
+  if (item.gapPct) { const gap=document.createElement('div');gap.style.cssText='font-size:11px;color:var(--green);margin-top:4px;font-family:DM Mono,monospace;';gap.textContent=item.gapPct+'% price gap';content.appendChild(gap); }
+  inner.appendChild(content); card.appendChild(inner);
+  const why=document.createElement('div');why.className='why-text';why.textContent=item.why||'';card.appendChild(why);
+  const ms=document.createElement('div');ms.className='mini-sigs';
+  ARBS_SIGS.forEach((sig,idx2)=>{
+    const val=item[sig.key]||0;
+    const row=document.createElement('div');row.className='mini-sig-row';
+    const lbl3=document.createElement('div');lbl3.className='mini-sig-lbl';lbl3.textContent=sig.label;
+    const track=document.createElement('div');track.className='sig-track';
+    const fill=document.createElement('div');fill.className='sig-fill';fill.style.cssText='width:0%;background:'+sig.color+';';
+    const dot=document.createElement('div');dot.className='sig-dot';dot.style.cssText='background:'+sig.color+';border-color:var(--surface2);left:0%;';
+    track.append(fill,dot);
+    const ve=document.createElement('div');ve.className='sig-val';ve.style.color=sig.color;ve.textContent=val;
+    row.append(lbl3,track,ve);ms.appendChild(row);
+    setTimeout(()=>{fill.style.width=val+'%';dot.style.left=val+'%';},60+idx2*60);
+  });
+  card.appendChild(ms);
+  const pr=document.createElement('div');pr.className='pulse-row';
+  const pfId='pf-'+item.id;
+  pr.innerHTML='<div class="pulse-lbl">PULSE</div><div class="pulse-track"><div class="pulse-fill" id="'+pfId+'" style="width:0%;background:'+pulseColor+';"></div></div>';
+  card.appendChild(pr);
+  setTimeout(()=>{const el=document.getElementById(pfId);if(el)el.style.width=item.pulseScore+'%';},200);
+  const hint=document.createElement('div');hint.style.cssText='text-align:center;font-family:Bebas Neue,sans-serif;font-size:9px;letter-spacing:2px;color:var(--border);padding:0 0 8px;';hint.textContent='TAP FOR MORE';card.appendChild(hint);
+  return card;
+}
+
+
+// ── RENDER TAB ────────────────────────────────
+function renderTab(){
+  if (activeTab==='ARBS') { renderArbs(); return; }
+  const body=document.getElementById('pulseBody');
+  body.innerHTML='';
+  const items=pulseData[activeTab];
+  if(!items||!items.length){
+    body.innerHTML='<div class="empty-state">📡<br>Tap REFRESH to get AI-powered<br>value analysis for this category</div>';
+    return;
+  }
+  const max=activeTab==='SETS'?3:(shownCount[activeTab]||PAGE);
+  items.slice(0,max).forEach((item,i)=>{
+    const card=activeTab==='SETS'?buildSetCard(item):buildPulseCard(item);
+    card.style.animationDelay=(i*.05)+'s';
+    body.appendChild(card);
+  });
+  if(activeTab!=='SETS'&&max<items.length){
+    const more=document.createElement('button');more.className='load-more-btn';
+    more.textContent='LOAD MORE ('+(items.length-max)+' remaining)';
+    more.onclick=()=>{shownCount[activeTab]=(shownCount[activeTab]||PAGE)+PAGE;renderTab();};
+    body.appendChild(more);
+  }
+}
+
+// ── BUILD SET CARD ────────────────────────────
+function buildSetCard(s){
+  const SIGS=[
+    {key:'dipDepth',      label:'BUY THE DIP',    color:'var(--green)'},
+    {key:'supplyPressure',label:'SUPPLY PRESSURE', color:'var(--orange)'},
+    {key:'collectibility',label:'COLLECTIBILITY',  color:'var(--gold)'},
+    {key:'reprintRisk',   label:'REPRINT RISK',    color:'var(--danger)',invert:true},
+    {key:'communityHype', label:'COMMUNITY HYPE',  color:'var(--accent)'},
+    {key:'chaseValue',    label:'CHASE VALUE',     color:'#a78bfa'},
+    {key:'rotationBenefit',label:'ROTATION BOOST', color:'var(--green)'},
+  ];
+  const phaseLbls={bottom:'TREND BOTTOM',cooling:'COOLING OFF',climbing:'CLIMBING',peak:'NEAR PEAK'};
+  const card=document.createElement('div');
+  card.className='set-invest-card phase-'+(s.trendPhase||'bottom');
+
+  // Header
+  const hdr=document.createElement('div');hdr.className='set-header';
+  const left=document.createElement('div');
+  const nameEl=document.createElement('div');nameEl.className='set-name';nameEl.textContent=s.name;
+  const sub=document.createElement('div');sub.className='set-sub';sub.textContent=(s.releaseDate||'')+' · '+(s.era||'');
+  left.append(nameEl,sub);
+  const tags=document.createElement('div');tags.className='set-tag-col';
+  // Trending now badge — short term direction from trendPhase
+  const trendNowMap={bottom:'↗ TRENDING UP',cooling:'↘ COOLING',climbing:'↑ CLIMBING',peak:'→ NEAR PEAK'};
+  const trendNowColor={bottom:'var(--green)',cooling:'var(--gold)',climbing:'var(--green)',peak:'var(--muted)'};
+  const pt=document.createElement('span');pt.className='phase-tag '+(s.trendPhase||'bottom');
+  pt.textContent=trendNowMap[s.trendPhase]||'↗ TRENDING UP';
+  pt.style.color=trendNowColor[s.trendPhase]||'var(--green)';
+  const st=document.createElement('span');st.className='sent-tag '+(s.sentiment||'neutral');st.textContent=(s.sentiment||'neutral').toUpperCase();
+  tags.append(pt,st);hdr.append(left,tags);card.appendChild(hdr);
+
+  // Score snap
+  const snap=document.createElement('div');snap.className='value-snap';
+  const sc=s.overallScore>=75?'good':s.overallScore>=50?'warn':'bad';
+  [{lbl:'SCORE',val:s.overallScore,cls:sc},{lbl:'PHASE',val:(phaseLbls[s.trendPhase]||'—').split(' ')[0],cls:'neu'},{lbl:'REPRINT',val:s.reprintRisk<=30?'LOW':s.reprintRisk<=60?'MED':'HIGH',cls:s.reprintRisk<=30?'good':s.reprintRisk<=60?'warn':'bad'}].forEach(({lbl,val,cls})=>{
+    const item=document.createElement('div');item.className='snap-item';
+    item.innerHTML='<div class="snap-lbl">'+lbl+'</div><div class="snap-val '+cls+'">'+val+'</div>';
+    snap.appendChild(item);
+  });
+  card.appendChild(snap);
+
+
+
+  // Chase cards
+  if(s.chaseCards?.length){
+    const cc=document.createElement('div');cc.className='chase-row';
+    const cl=document.createElement('div');cl.className='chase-lbl';cl.textContent='🔥 CHASE CARDS';
+    cc.appendChild(cl);
+    s.chaseCards.slice(0,2).forEach(c=>{
+      const ci=document.createElement('div');ci.className='chase-item';
+      ci.style.cssText='display:flex;align-items:baseline;justify-content:space-between;gap:8px;';
+      const nm=document.createElement('span');nm.textContent='· '+(c.name||c);
+      const ls=document.createElement('span');ls.textContent=c.lastSold||'';
+      ls.style.cssText='font-family:DM Mono,monospace;font-size:11px;color:var(--green);flex-shrink:0;';
+      ci.append(nm,ls);cc.appendChild(ci);
+    });
+    card.appendChild(cc);
+  }
+
+  // 3 signal bars on set card front
+  const setMs=document.createElement('div');setMs.style.cssText='padding:4px 16px 10px;display:flex;flex-direction:column;gap:6px;';
+  TAB_SIGS.SETS.forEach((sig,idx)=>{
+    const val=s[sig.key]||0;
+    const row=document.createElement('div');row.className='mini-sig-row';
+    const lbl=document.createElement('div');lbl.className='mini-sig-lbl';lbl.textContent=sig.label;
+    const track=document.createElement('div');track.className='sig-track';
+    const fill=document.createElement('div');fill.className='sig-fill';fill.style.cssText='width:0%;background:'+sig.color+';';
+    const dot=document.createElement('div');dot.className='sig-dot';dot.style.cssText='background:'+sig.color+';border-color:var(--surface2);left:0%;';
+    track.append(fill,dot);
+    const ve=document.createElement('div');ve.className='sig-val';ve.style.color=sig.color;ve.textContent=val;
+    row.append(lbl,track,ve);setMs.appendChild(row);
+    setTimeout(()=>{fill.style.width=val+'%';dot.style.left=val+'%';},80+idx*60);
+  });
+  card.appendChild(setMs);
+
+  const why=document.createElement('div');why.className='why-box';why.textContent=s.why;
+  card.appendChild(why);
+  card.onclick=()=>openDetail(s,'SETS');
+  return card;
+}
+
+// ── BUILD PULSE CARD ──────────────────────────
+function buildPulseCard(item){
+  const watched=isWatched(item.id);
+  const pulseColor=item.pulseScore>=75?'var(--green)':item.pulseScore>=50?'var(--gold)':'var(--muted)';
+  const tChar=item.trend==='up'?'↑':item.trend==='down'?'↓':'→';
+  const tCls='trend-'+(item.trend==='up'?'up':item.trend==='down'?'down':'flat');
+
+  const card=document.createElement('div');
+  card.className='pulse-card';
+  card.onclick=()=>openDetail(item, activeTab);
+
+  // Card content (direct — detail handled by overlay)
+
+  // Inner row: thumb + content
+  const inner=document.createElement('div');inner.className='pulse-card-inner';
+  const thumb=document.createElement('div');thumb.className='thumb-wrap';
+  thumb.onclick=e=>{e.stopPropagation();openImg(item);};
+  thumb.innerHTML='<div class="thumb-placeholder">🃏</div>';
+  inner.appendChild(thumb);
+
+  const content=document.createElement('div');content.className='card-content';
+  // name + heart
+  const top=document.createElement('div');top.className='card-top';
+  const nameEl=document.createElement('div');nameEl.className='card-name';nameEl.textContent=item.name;
+  const hBtn=document.createElement('button');hBtn.className='heart-btn';
+  hBtn.textContent=watched?'♥':'♡';hBtn.style.color=watched?'var(--danger)':'var(--muted)';
+  hBtn.onclick=e=>{e.stopPropagation();toggleWatch(item,hBtn);};
+  top.append(nameEl,hBtn);content.appendChild(top);
+  // meta tags
+  const meta=document.createElement('div');meta.className='card-meta';
+  if(item.number){const n=document.createElement('span');n.className='meta-tag';n.textContent=item.number;meta.appendChild(n);}
+  if(item.set){const s=document.createElement('span');s.className='meta-tag';s.textContent=item.set;meta.appendChild(s);}
+  if(item.variant&&item.variant!=='null'){const v=document.createElement('span');v.className='variant-tag';v.textContent=item.variant;meta.appendChild(v);}
+  if(item.gradingPotential){const g=document.createElement('span');g.className='grade-badge';g.textContent='🏆 GRADE';meta.appendChild(g);}
+  if(item.rotationFlag){const r=document.createElement('span');r.className='rotation-badge';r.textContent='⚡ ROTATION';meta.appendChild(r);}
+  content.appendChild(meta);
+  // value row
+  const valRow=document.createElement('div');valRow.className='value-row';
+  if(activeTab==='SINGLES'||(!activeTab&&item.marketPrice)){
+    valRow.innerHTML='<div class="val-block"><div class="val-lbl">MARKET</div><div class="val-num market"><span class="'+tCls+'">'+tChar+'</span> $'+(item.marketPrice||0).toFixed(2)+'</div></div><div class="val-divider"></div><div class="val-block"><div class="val-lbl">BUY TARGET</div><div class="val-num target">$'+(item.buyTarget||0).toFixed(2)+'</div></div>'+(item.dipPct?'<div class="val-divider"></div><div class="val-block"><div class="val-lbl">DIP</div><div class="val-num ratio">-'+Math.abs(item.dipPct).toFixed(0)+'%</div></div>':'');
+  } else if(activeTab==='GRADED'){
+    valRow.innerHTML='<div class="val-block"><div class="val-lbl">RAW NM</div><div class="val-num market">$'+(item.rawPrice||0).toFixed(2)+'</div></div><div class="val-divider"></div><div class="val-block"><div class="val-lbl">PSA 10</div><div class="val-num target">$'+(item.psa10Price||0).toFixed(2)+'</div></div><div class="val-divider"></div><div class="val-block"><div class="val-lbl">MULT</div><div class="val-num ratio">'+(item.gradingMultiplier||0).toFixed(1)+'×</div></div>';
+  } else if(activeTab==='SEALED'){
+    const ppc=item.perPackCost||0; const ev=item.evRatio||0;
+    valRow.innerHTML='<div class="val-block"><div class="val-lbl">SEALED</div><div class="val-num market"><span class="'+tCls+'">'+tChar+'</span> $'+(item.sealedPrice||0).toFixed(2)+'</div></div><div class="val-divider"></div><div class="val-block"><div class="val-lbl">$/PACK</div><div class="val-num '+(ppc<=4?'target':ppc<=6?'warn':'bad')+'">$'+ppc.toFixed(2)+'</div></div><div class="val-divider"></div><div class="val-block"><div class="val-lbl">EV RATIO</div><div class="val-num '+(ev>=1?'target':ev>=0.7?'warn':'bad')+'">'+ev.toFixed(2)+'×</div></div>';
+  } else {
+    valRow.innerHTML='<div class="val-block"><div class="val-lbl">PRICE</div><div class="val-num market">$'+((item.marketPrice||item.rawPrice||item.sealedPrice||0)).toFixed(2)+'</div></div>';
+  }
+  content.appendChild(valRow);
+  inner.appendChild(content);
+  card.appendChild(inner);
+
+  const why=document.createElement('div');why.className='why-text';why.textContent=item.why;
+  card.appendChild(why);
+
+
+
+  // pulse bar
+  const pr=document.createElement('div');pr.className='pulse-row';
+  const pfId='pf-'+item.id;
+  pr.innerHTML='<div class="pulse-lbl">PULSE</div><div class="pulse-track"><div class="pulse-fill" id="'+pfId+'" style="width:0%;background:'+pulseColor+';"></div></div>';
+  card.appendChild(pr);
+  setTimeout(()=>{const el=document.getElementById(pfId);if(el)el.style.width=item.pulseScore+'%';},200);
+
+  
+
+  // Tap hint
+  const hint=document.createElement('div');
+  hint.style.cssText='text-align:center;font-family:Bebas Neue,sans-serif;font-size:9px;letter-spacing:2px;color:var(--border);padding:0 0 8px;';
+  hint.textContent='TAP FOR MORE';
+  card.appendChild(hint);
+  return card;
+}
+
+// ── IMAGE ─────────────────────────────────────
+function openImg(item){document.getElementById('imgFull').alt=item.name||'';document.getElementById('imgOverlay').classList.add('active');}
+function closeImg(){document.getElementById('imgOverlay').classList.remove('active');}
+
+// ── DEMO DATA ─────────────────────────────────
+function getDemoData(tab){
+  const d={
+    SETS:[
+      {name:'Pokémon 151',releaseDate:'Sep 2023',era:'Scarlet & Violet',trendPhase:'bottom',sentiment:'bullish',overallScore:88,dipDepth:82,supplyPressure:68,collectibility:95,reprintRisk:28,communityHype:85,chaseValue:88,rotationBenefit:90,chaseCards:[{name:'Charizard ex SAR',lastSold:'$84 · Mar 14'},{name:'Mew ex SAR',lastSold:'$72 · Mar 12'}],why:'151 has fully cooled from release hype and sits at trend bottom — April 10 rotation removes it from standard format which paradoxically drives sealed scarcity and singles demand from collectors. The Generation 1 nostalgia moat is structurally unbreakable, making this the highest-conviction dip buy in the current market.'},
+      {name:'Evolving Skies',releaseDate:'Aug 2021',era:'Sword & Shield',trendPhase:'climbing',sentiment:'bullish',overallScore:85,dipDepth:35,supplyPressure:93,collectibility:97,reprintRisk:12,communityHype:82,chaseValue:96,rotationBenefit:45,chaseCards:[{name:'Umbreon VMAX Alt Art',lastSold:'$92 · Mar 15'},{name:'Rayquaza VMAX Alt Art',lastSold:'$145 · Mar 13'}],why:'Out of print with zero reprint signals — booster boxes have climbed from $144 retail to $2,600+ and are still moving. This set already passed its bottom but has significant runway as SWSH era boxes become museum-grade pieces.'},
+      {name:'Silver Tempest',releaseDate:'Nov 2022',era:'Sword & Shield',trendPhase:'bottom',sentiment:'neutral',overallScore:72,dipDepth:78,supplyPressure:58,collectibility:74,reprintRisk:32,communityHype:55,chaseValue:68,rotationBenefit:42,chaseCards:[{name:'Lugia V Alt Art',lastSold:'$28 · Mar 11'},{name:'Regieleki VMAX Alt Art',lastSold:'$18 · Mar 9'}],why:'Post-rotation cooldown complete and sealed near all-time low. Lugia V Alt Art meaningfully undervalued vs comparable alt arts. Patient 18-month hold as Sword and Shield supply tightens.'},
+    ],
+    SINGLES:[
+      {id:'sg1',name:'Charizard ex',number:'199/165',set:'151',variant:'Holo',marketPrice:44.00,buyTarget:36.00,avg30d:51.00,dipPct:14,trend:'up',why:'14% below 30-day avg — rotation makes this a collector piece, demand floor is structural.',pulseScore:86,sig1:78,sig2:88,gradingPotential:true,gradingNote:'PSA 10 at $180+',rotationFlag:true},
+      {id:'sg2',name:'Roaring Moon ex',number:'162/182',set:'Paradox Rift',variant:'Alt Art',marketPrice:22.00,buyTarget:17.00,avg30d:28.00,dipPct:21,trend:'flat',why:'21% below 30-day average — Ancient hype faded but underlying card quality remains strong.',pulseScore:74,sig1:55,sig2:72,gradingPotential:false,gradingNote:null,rotationFlag:true},
+      {id:'sg3',name:'Umbreon VMAX',number:'215/264',set:'Evolving Skies',variant:'Alt Art',marketPrice:92.00,buyTarget:80.00,avg30d:95.00,dipPct:3,trend:'up',why:'Small dip on an asset with structurally shrinking supply. No reprint risk.',pulseScore:82,sig1:88,sig2:76,gradingPotential:true,gradingNote:'PSA 10 at $3,500+',rotationFlag:false},
+      {id:'sg4',name:'Lana\'s Aid',number:'219/167',set:'Twilight Masquerade',variant:'Full Art',marketPrice:21.00,buyTarget:15.00,avg30d:26.00,dipPct:19,trend:'down',why:'19% below 30d avg — Alolan nostalgia angle not yet priced in, stunning artwork.',pulseScore:65,sig1:42,sig2:68,gradingPotential:false,gradingNote:null,rotationFlag:false},
+      {id:'sg5',name:'Pikachu ex',number:'066/091',set:'Surging Sparks',variant:'SAR',marketPrice:245.00,buyTarget:200.00,avg30d:265.00,dipPct:8,trend:'up',why:'Slight pullback on a card with enormous collector floor driven by electric meta dominance.',pulseScore:79,sig1:82,sig2:70,gradingPotential:true,gradingNote:'PSA 10 projected $600+',rotationFlag:false},
+    ],
+    GRADED:[
+      {id:'gr1',name:'Charizard Base Set',number:'4/102',set:'Base Set',variant:'Holo',rawPrice:380,psa10Price:168000,gradingMultiplier:442,gradingCost:150,netROI:167470,trend:'up',why:'30th anniversary driving unprecedented demand — PSA 8 alone at $8,000+ offers real upside.',pulseScore:90,sig1:95,sig2:85},
+      {id:'gr2',name:'Umbreon VMAX',number:'215/264',set:'Evolving Skies',variant:'Alt Art',rawPrice:92,psa10Price:3500,gradingMultiplier:38,gradingCost:25,netROI:3383,trend:'up',why:'PSA 10 pop still low. 38× raw-to-graded multiplier among the best in modern sets.',pulseScore:87,sig1:82,sig2:78},
+      {id:'gr3',name:'Mew ex',number:'232/165',set:'151',variant:'SAR',rawPrice:88,psa10Price:380,gradingMultiplier:4.3,gradingCost:20,netROI:272,trend:'up',why:'Rotation drives PSA 10 demand as this becomes a collector piece. Multiplier expected to double.',pulseScore:80,sig1:72,sig2:82},
+    ],
+    ARBS:[
+      {id:'arb1',name:'Charizard ex',number:'199/165',set:'151',variant:'SAR',rawPrice:88,psa10:185,cgc10:95,bgs10:null,psa9:110,cgc9:65,psaPop:340,cgcPop:42,bestPlay:'BUY CGC',gapPct:49,priceGap:90,popScarcity:85,momentum:78,pulseScore:88,why:'CGC 10 is 49% cheaper than PSA 10 — CGC population is low and growing toward PSA premium pricing.',gradingNote:'Grade with CGC now while pop is low. PSA 10 at $185 vs CGC 10 at $95 — gap will close as CGC gains market trust.'},
+      {id:'arb2',name:'Umbreon VMAX',number:'215/264',set:'Evolving Skies',variant:'Alt Art',rawPrice:92,psa10:3500,cgc10:2100,bgs10:1800,psa9:1200,cgc9:800,psaPop:580,cgcPop:95,bestPlay:'BUY CGC',gapPct:40,priceGap:1400,popScarcity:90,momentum:85,pulseScore:92,why:'CGC 10 at $2,100 vs PSA 10 at $3,500 — $1,400 gap on same card. CGC pop is 95 vs PSA 580. Scarcity premium incoming.',gradingNote:'CGC pop is extremely low at 95. Buy CGC 10 now — gap to PSA will compress as collectors recognize scarcity.'},
+      {id:'arb3',name:'Mew ex',number:'232/165',set:'151',variant:'SAR',rawPrice:85,psa10:380,cgc10:195,bgs10:null,psa9:220,cgc9:130,psaPop:210,cgcPop:28,bestPlay:'GRADE CGC',gapPct:49,priceGap:185,popScarcity:92,momentum:80,pulseScore:85,why:'Raw at $85, CGC 10 at $195 — 2.3× multiplier with only 28 CGC 10s in existence. Grade now before pop climbs.',gradingNote:'Only 28 CGC 10 copies vs 210 PSA 10. Send raw copies for CGC grading immediately — pop will grow but you get early advantage.'},
+      {id:'arb4',name:'Pikachu ex',number:'066/091',set:'Surging Sparks',variant:'SAR',rawPrice:245,psa10:580,cgc10:310,bgs10:null,psa9:380,cgc9:220,psaPop:145,cgcPop:18,bestPlay:'BUY CGC',gapPct:47,priceGap:270,popScarcity:95,momentum:82,pulseScore:87,why:'CGC 10 at $310 vs PSA 10 at $580. Only 18 CGC 10s exist. Electric meta dominance keeps demand high for both.',gradingNote:'18 CGC 10 copies is extraordinarily low for a modern chase card. This gap will compress fast.'},
+      {id:'arb5',name:'Charizard Base Set',number:'4/102',set:'Base Set',variant:'Holo',rawPrice:380,psa10:168000,cgc10:85000,bgs10:72000,psa9:8000,cgc9:5500,psaPop:5200,cgcPop:320,bestPlay:'BUY BGS',gapPct:57,priceGap:96000,popScarcity:88,momentum:90,pulseScore:90,why:'BGS 10 at $72K vs PSA 10 at $168K — BGS Pristine 10 is rarer and increasingly recognized. 30th anniversary driving all grades.',gradingNote:'BGS Pristine 10 population is very low. For vintage, BGS is gaining on PSA especially with high-end collectors.'},
+    ],
+    ARBS:[
+      {id:'arb1',name:'Charizard ex',number:'199/165',set:'151',variant:'SAR',rawPrice:88,psa10:185,cgc10:95,bgs10:null,psa9:110,cgc9:65,psaPop:340,cgcPop:42,bestPlay:'BUY CGC',gapPct:49,priceGap:90,popScarcity:85,momentum:78,pulseScore:88,why:'CGC 10 is 49% cheaper than PSA 10 — CGC population is low and growing toward PSA premium pricing.',gradingNote:'Grade with CGC now while pop is low. PSA 10 at $185 vs CGC 10 at $95 — gap will close as CGC gains market trust.'},
+      {id:'arb2',name:'Umbreon VMAX',number:'215/264',set:'Evolving Skies',variant:'Alt Art',rawPrice:92,psa10:3500,cgc10:2100,bgs10:1800,psa9:1200,cgc9:800,psaPop:580,cgcPop:95,bestPlay:'BUY CGC',gapPct:40,priceGap:1400,popScarcity:90,momentum:85,pulseScore:92,why:'CGC 10 at $2,100 vs PSA 10 at $3,500 — $1,400 gap on same card. CGC pop is 95 vs PSA 580. Scarcity premium incoming.',gradingNote:'CGC pop is extremely low at 95. Buy CGC 10 now — gap to PSA will compress as collectors recognize scarcity.'},
+      {id:'arb3',name:'Mew ex',number:'232/165',set:'151',variant:'SAR',rawPrice:85,psa10:380,cgc10:195,bgs10:null,psa9:220,cgc9:130,psaPop:210,cgcPop:28,bestPlay:'GRADE CGC',gapPct:49,priceGap:185,popScarcity:92,momentum:80,pulseScore:85,why:'Raw at $85, CGC 10 at $195 — 2.3× multiplier with only 28 CGC 10s in existence. Grade now before pop climbs.',gradingNote:'Only 28 CGC 10 copies vs 210 PSA 10. Send raw copies for CGC grading immediately — pop will grow but you get early advantage.'},
+      {id:'arb4',name:'Pikachu ex',number:'066/091',set:'Surging Sparks',variant:'SAR',rawPrice:245,psa10:580,cgc10:310,bgs10:null,psa9:380,cgc9:220,psaPop:145,cgcPop:18,bestPlay:'BUY CGC',gapPct:47,priceGap:270,popScarcity:95,momentum:82,pulseScore:87,why:'CGC 10 at $310 vs PSA 10 at $580. Only 18 CGC 10s exist. Electric meta dominance keeps demand high for both.',gradingNote:'18 CGC 10 copies is extraordinarily low for a modern chase card. This gap will compress fast.'},
+      {id:'arb5',name:'Charizard Base Set',number:'4/102',set:'Base Set',variant:'Holo',rawPrice:380,psa10:168000,cgc10:85000,bgs10:72000,psa9:8000,cgc9:5500,psaPop:5200,cgcPop:320,bestPlay:'BUY BGS',gapPct:57,priceGap:96000,popScarcity:88,momentum:90,pulseScore:90,why:'BGS 10 at $72K vs PSA 10 at $168K — BGS Pristine 10 is rarer and increasingly recognized. 30th anniversary driving all grades.',gradingNote:'BGS Pristine 10 population is very low. For vintage, BGS is gaining on PSA especially with high-end collectors.'},
+    ],
+    SEALED:[
+      {id:'sl1',name:'151 Booster Box',set:'Pokémon 151',type:'Booster Box',sealedPrice:138,packCount:36,perPackCost:3.83,evPerPack:4.20,evRatio:1.10,trend:'up',why:'Below MSRP with positive EV — rotation April 10 ends print runs, expect $200+ within months.',pulseScore:88,sig1:82,sig2:70,rotationFlag:true},
+      {id:'sl2',name:'Twilight Masquerade Box',set:'Twilight Masquerade',type:'Booster Box',sealedPrice:128,packCount:36,perPackCost:3.56,evPerPack:3.80,evRatio:1.07,trend:'flat',why:'Cheapest per-pack cost on this list at $3.56 with positive EV. Ogerpon cards undervalued.',pulseScore:74,sig1:70,sig2:55,rotationFlag:false},
+      {id:'sl3',name:'Crown Zenith ETB',set:'Crown Zenith',type:'ETB',sealedPrice:225,packCount:11,perPackCost:20.45,evPerPack:28.00,evRatio:1.37,trend:'up',why:'Best-in-class EV ratio at 1.37× — every pack worth $28 vs $20 cost. SWSH pinnacle, supply shrinking.',pulseScore:85,sig1:88,sig2:82,rotationFlag:false},
+    ],
+  };
+  return d[tab]||[];
+}
+
+// ── INIT ──────────────────────────────────────
+TABS.forEach(t=>{if(!pulseData[t]||!pulseData[t].length)pulseData[t]=getDemoData(t);shownCount[t]=t==='SETS'?3:PAGE;});
+document.getElementById('wlBtn').classList.toggle('active',watchlist.length>0);
+buildTabs();
+renderTab();
+</script>
+
+<!-- Detail Overlay -->
+
+<div class="detail-overlay" id="detailOverlay" style="transform:translateY(100%)">
+  <div class="detail-overlay-bg" onclick="closeDetail()"></div>
+  <div class="detail-sheet">
+    <div class="detail-handle"></div>
+    <div class="detail-nav">
+      <div class="detail-title" id="detailTitle">—</div>
+      <button class="detail-close" onclick="closeDetail()">×</button>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+  </div>
+</div>
+</body>
+</html>

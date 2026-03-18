@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sable — Health Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0d;--surface:#13131a;--surface2:#1a1a24;--surface3:#1f1f2e;
+  --border:#252535;--accent:#7c6aff;--green:#4ade80;--text:#f0f0f8;
+  --muted:#5a5a72;--danger:#ff4d6d;--gold:#f5c842;--orange:#fb923c;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+.phone{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* NAV */
+.top-nav{display:flex;align-items:center;background:var(–surface);border-bottom:1px solid var(–border);padding:13px 18px;flex-shrink:0;gap:10px;}
+.back-btn{background:none;border:none;cursor:pointer;color:var(–accent);display:flex;align-items:center;gap:5px;font-family:‘DM Sans’,sans-serif;font-size:13px;font-weight:500;padding:0;}
+.nav-title{font-family:‘Bebas Neue’,sans-serif;font-size:16px;letter-spacing:2px;color:var(–text);flex:1;text-align:center;}
+.check-all-btn{background:none;border:1px solid var(–border);border-radius:8px;color:var(–muted);font-family:‘DM Mono’,monospace;font-size:11px;padding:6px 12px;cursor:pointer;transition:border-color .2s,color .2s;flex-shrink:0;}
+.check-all-btn:hover{border-color:var(–accent);color:var(–accent);}
+.check-all-btn.running{border-color:var(–accent);color:var(–accent);pointer-events:none;}
+
+/* SCROLL */
+.scrollbody{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:32px;}
+.scrollbody::-webkit-scrollbar{width:3px;}
+.scrollbody::-webkit-scrollbar-thumb{background:var(–border);}
+
+/* OVERALL STATUS */
+.overall-card{border-radius:16px;padding:20px;text-align:center;border:1px solid var(–border);background:var(–surface);transition:border-color .4s,background .4s;}
+.overall-card.all-good {border-color:rgba(74,222,128,.4); background:rgba(74,222,128,.05);}
+.overall-card.has-warn  {border-color:rgba(245,200,66,.4);  background:rgba(245,200,66,.05);}
+.overall-card.has-error {border-color:rgba(255,77,109,.4);  background:rgba(255,77,109,.05);}
+.overall-card.checking  {border-color:var(–accent);}
+.overall-emoji{font-size:52px;line-height:1;margin-bottom:8px;display:block;}
+.overall-label{font-family:‘Bebas Neue’,sans-serif;font-size:22px;letter-spacing:3px;}
+.overall-card.all-good  .overall-label{color:var(–green);}
+.overall-card.has-warn  .overall-label{color:var(–gold);}
+.overall-card.has-error .overall-label{color:var(–danger);}
+.overall-card.checking  .overall-label{color:var(–accent);}
+.overall-sub{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–muted);margin-top:4px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* SERVICE CARDS */
+.services-grid{display:flex;flex-direction:column;gap:8px;}
+.service-card{background:var(–surface);border:1px solid var(–border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:border-color .2s;}
+.service-card:active{opacity:.8;}
+.service-emoji{font-size:28px;flex-shrink:0;width:36px;text-align:center;line-height:1;transition:transform .3s;}
+.service-emoji.spin{animation:wobble .5s ease;}
+@keyframes wobble{0%{transform:scale(1);}30%{transform:scale(1.3);}60%{transform:scale(.9);}100%{transform:scale(1);}}
+.service-info{flex:1;min-width:0;}
+.service-name{font-family:‘Bebas Neue’,sans-serif;font-size:16px;letter-spacing:1.5px;color:var(–text);}
+.service-status{font-size:12px;margin-top:2px;}
+.service-status.ok    {color:var(–green);}
+.service-status.warn  {color:var(–gold);}
+.service-status.error {color:var(–danger);}
+.service-status.checking{color:var(–accent);}
+.service-status.unknown {color:var(–muted);}
+.service-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+.service-ping{font-family:‘DM Mono’,monospace;font-size:10px;color:var(–muted);}
+.service-detail{font-family:‘DM Mono’,monospace;font-size:11px;color:var(–muted);}
+
+/* EXPAND DETAIL */
+.service-expand{max-height:0;overflow:hidden;transition:max-height .3s ease;background:var(–surface2);border-top:0px solid var(–border);}
+.service-expand.open{max-height:300px;border-top:1px solid var(–border);}
+.service-expand-inner{padding:12px 16px;display:flex;flex-direction:column;gap:4px;}
+.expand-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(–border);font-size:12px;}
+.expand-row:last-child{border-bottom:none;}
+.expand-key{color:var(–muted);}
+.expand-val{font-family:‘DM Mono’,monospace;color:var(–text);}
+.expand-val.green{color:var(–green);}
+.expand-val.gold {color:var(–gold);}
+.expand-val.danger{color:var(–danger);}
+
+/* CREDIT SETUP */
+.setup-card{background:var(–surface);border:1px solid var(–accent);border-radius:14px;padding:16px;}
+.setup-title{font-family:‘Bebas Neue’,sans-serif;font-size:15px;letter-spacing:2px;margin-bottom:4px;}
+.setup-sub{font-size:12px;color:var(–muted);margin-bottom:12px;line-height:1.5;}
+.setup-row{display:flex;gap:8px;align-items:center;}
+.setup-label{font-family:‘Bebas Neue’,sans-serif;font-size:10px;letter-spacing:2px;color:var(–muted);width:80px;flex-shrink:0;}
+.setup-input{flex:1;background:var(–surface2);border:1px solid var(–border);border-radius:8px;padding:9px 12px;color:var(–green);font-family:‘DM Mono’,monospace;font-size:15px;outline:none;transition:border-color .2s;}
+.setup-input:focus{border-color:var(–accent);}
+.setup-input::placeholder{color:var(–muted);font-size:13px;}
+.setup-save-btn{background:var(–accent);border:none;border-radius:8px;color:white;font-family:‘Bebas Neue’,sans-serif;font-size:13px;letter-spacing:1.5px;padding:9px 16px;cursor:pointer;flex-shrink:0;}
+
+/* SPEND SUMMARY */
+.spend-summary{background:var(–surface);border:1px solid var(–border);border-radius:14px;padding:14px 16px;}
+.spend-title{font-family:‘Bebas Neue’,sans-serif;font-size:11px;letter-spacing:2.5px;color:var(–muted);margin-bottom:10px;}
+.spend-row-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(–border);font-size:12px;}
+.spend-row-item:last-child{border-bottom:none;}
+.spend-val{font-family:‘DM Mono’,monospace;font-size:12px;}
+</style>
+
+</head>
+<body>
+<div class="phone">
+  <div class="top-nav">
+    <button class="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back
+    </button>
+    <div class="nav-title">HEALTH MONITOR</div>
+    <button class="check-all-btn" id="checkAllBtn" onclick="checkAll()">CHECK ALL</button>
+  </div>
+  <div class="scrollbody" id="mainBody"></div>
+</div>
+
+<script>
+// ── STORAGE ───────────────────────────────────
+const CREDIT_KEY = 'sable_credits';
+const LOG_KEY    = 'sable_spend_log';
+const loadState  = () => { try{return JSON.parse(localStorage.getItem(CREDIT_KEY)||'null');}catch(e){return null;} };
+const saveState  = s => localStorage.setItem(CREDIT_KEY, JSON.stringify(s));
+const loadLog    = () => { try{return JSON.parse(localStorage.getItem(LOG_KEY)||'[]');}catch(e){return [];} };
+const saveLog    = l => localStorage.setItem(LOG_KEY, JSON.stringify(l.slice(0,200)));
+const getKey     = k => { try{return JSON.parse(localStorage.getItem('sable_settings')||'{}')[k]||'';}catch(e){return '';} };
+
+let state    = loadState();
+let spendLog = loadLog();
+let openCard = null;
+
+// ── MODEL COSTS ───────────────────────────────
+const MODEL_COSTS = {
+  'claude-haiku-4-5-20251001': {input:1.00, output:5.00},
+  'claude-sonnet-4-20250514':  {input:3.00, output:15.00},
+  'default':                   {input:3.00, output:15.00},
+};
+const estimateCost = (model,i,o) => { const r=MODEL_COSTS[model]||MODEL_COSTS.default; return (i/1e6)*r.input+(o/1e6)*r.output; };
+
+// ── SERVICE DEFINITIONS ───────────────────────
+const SERVICES = [
+  {
+    id: 'claude',
+    name: 'CLAUDE CREDITS',
+    icon: '✦',
+    check: checkClaude,
+  },
+  {
+    id: 'poketrace',
+    name: 'POKETRACE',
+    icon: '🎴',
+    check: checkPokeTrace,
+  },
+  {
+    id: 'tcgplayer',
+    name: 'TCGPLAYER',
+    icon: '🃏',
+    check: checkTCGPlayer,
+  },
+  {
+    id: 'github',
+    name: 'GITHUB PAGES',
+    icon: '🐙',
+    check: checkGitHub,
+  },
+];
+
+// Status per service: {status, statusText, detail{}, ping, emoji}
+const svcState = {};
+SERVICES.forEach(s => svcState[s.id] = {status:'unknown', statusText:'Tap CHECK ALL', emoji:'😶', detail:{}, ping:null});
+
+// ── CHECK FUNCTIONS ───────────────────────────
+async function checkClaude() {
+  const id = 'claude';
+  setChecking(id);
+  const t0 = Date.now();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'ping'}]})
+    });
+    const data = await res.json();
+    const ping = Date.now()-t0;
+    if (data.error?.message?.includes('credit balance')) {
+      svcState[id] = {status:'error', statusText:'Credits exhausted', emoji:'😵', ping, detail:{'Balance':'$0.00','Action':'Top up at console.anthropic.com'}};
+    } else if (data.content) {
+      const bal = state?.currentBalance;
+      const status = !bal ? 'ok' : bal <= (state?.warnThreshold||5) ? 'warn' : 'ok';
+      const emoji  = !bal ? '😊' : bal <= (state?.warnThreshold||5) ? '😬' : bal <= 2 ? '😰' : '😊';
+      svcState[id] = {
+        status, emoji, ping,
+        statusText: bal!=null ? '$'+bal.toFixed(2)+' estimated remaining' : 'API responding — set balance to track',
+        detail: bal!=null ? {
+          'Balance':   '$'+bal.toFixed(2),
+          'Started':   '$'+(state?.startingBalance||0).toFixed(2),
+          'Spent':     '$'+(state?.totalSpent||0).toFixed(4),
+          'Warn at':   '$'+(state?.warnThreshold||5).toFixed(2),
+          'Response':  ping+'ms',
+        } : {'Response': ping+'ms', 'Note':'Enter balance below to track spending'},
+      };
+    } else {
+      svcState[id] = {status:'warn', statusText:'Unexpected response', emoji:'😕', ping, detail:{error:JSON.stringify(data).slice(0,80)}};
+    }
+  } catch(e) {
+    svcState[id] = {status:'error', statusText:'Connection failed', emoji:'😵', ping:null, detail:{error:e.message}};
+  }
+  updateCard(id);
+}
+
+async function checkPokeTrace() {
+  const id = 'poketrace';
+  setChecking(id);
+  const t0 = Date.now();
+  try {
+    const res = await fetch('https://api.poketrace.com/v1/cards?name=Charizard+ex&setSlug=151&market=US&limit=1', {
+      headers:{'X-API-Key': getKey('poketraceKey')}
+    });
+    const data = await res.json();
+    const ping = Date.now()-t0;
+    if (res.status===401||res.status===403) {
+      svcState[id]={status:'error',statusText:'Auth failed — check API key',emoji:'😵',ping,detail:{error:'HTTP '+res.status}};
+    } else if (res.status===429) {
+      svcState[id]={status:'warn',statusText:'Rate limited',emoji:'😬',ping,detail:{error:'Too many requests'}};
+    } else if (!res.ok) {
+      svcState[id]={status:'error',statusText:'HTTP '+res.status,emoji:'😵',ping,detail:{error:data.message||'Unknown'}};
+    } else if (data.data?.length>0) {
+      const card = data.data[0];
+      const nm = card.prices?.tcgplayer?.NEAR_MINT?.avg;
+      svcState[id]={status:'ok',statusText:'Live · '+card.name,emoji:'😊',ping,detail:{
+        'Card':    card.name||'—',
+        'Set':     card.set?.name||'—',
+        'NM Price': nm?'$'+nm.toFixed(2):'—',
+        'Sales':   card.prices?.tcgplayer?.NEAR_MINT?.saleCount||'—',
+        'Response':ping+'ms',
+      }};
+    } else {
+      svcState[id]={status:'warn',statusText:'Connected, no results',emoji:'😕',ping,detail:{note:'API up but test card not found'}};
+    }
+  } catch(e) {
+    svcState[id]={status:'error',statusText:'Connection failed',emoji:'😵',ping:null,detail:{error:e.message}};
+  }
+  updateCard(id);
+}
+
+async function checkTCGPlayer() {
+  const id = 'tcgplayer';
+  setChecking(id);
+  const t0 = Date.now();
+  try {
+    const res = await fetch('https://api.tcgplayer.com/v1.39.0/catalog/products?categoryId=3&productName=Charizard+ex&limit=1', {
+      headers:{'Authorization':'Bearer '+getKey('tcgplayerKey'),'Content-Type':'application/json'}
+    });
+    const data = await res.json();
+    const ping = Date.now()-t0;
+    if (res.status===401||res.status===403) {
+      svcState[id]={status:'error',statusText:'Auth failed — check bearer token',emoji:'😵',ping,detail:{error:'HTTP '+res.status}};
+    } else if (res.status===429) {
+      svcState[id]={status:'warn',statusText:'Rate limited',emoji:'😬',ping,detail:{error:'Too many requests'}};
+    } else if (!res.ok) {
+      svcState[id]={status:'error',statusText:'HTTP '+res.status,emoji:'😵',ping,detail:{error:data.errors?.[0]||'Unknown'}};
+    } else if (data.results?.length>0) {
+      const p = data.results[0];
+      svcState[id]={status:'ok',statusText:'Live · '+p.name,emoji:'😊',ping,detail:{
+        'Product':  p.name||'—',
+        'Set':      p.groupName||'—',
+        'ID':       p.productId||'—',
+        'Response': ping+'ms',
+      }};
+    } else {
+      svcState[id]={status:'warn',statusText:'Connected, no results',emoji:'😕',ping,detail:{note:'API up but no products returned'}};
+    }
+  } catch(e) {
+    svcState[id]={status:'error',statusText:'Connection failed — may need CORS proxy',emoji:'😵',ping:null,detail:{error:e.message,note:'TCGPlayer may block direct browser calls'}};
+  }
+  updateCard(id);
+}
+
+async function checkGitHub() {
+  const id = 'github';
+  setChecking(id);
+  const t0 = Date.now();
+  try {
+    const repoSlug = getKey('githubRepo') || 'sablegg/SableScan';
+    const res = await fetch('https://api.github.com/repos/'+repoSlug, {
+      headers:{'Accept':'application/vnd.github.v3+json'}
+    });
+    const data = await res.json();
+    const ping = Date.now()-t0;
+    if (res.status===404) {
+      svcState[id]={status:'warn',statusText:'Repo not found — check slug in settings',emoji:'😕',ping,detail:{slug:repoSlug}};
+    } else if (!res.ok) {
+      svcState[id]={status:'error',statusText:'HTTP '+res.status,emoji:'😵',ping,detail:{error:data.message||'Unknown'}};
+    } else {
+      const pagesRes = await fetch('https://api.github.com/repos/'+repoSlug+'/pages', {
+        headers:{'Accept':'application/vnd.github.v3+json'}
+      });
+      const pagesData = await pagesRes.json();
+      const pagesUp = pagesRes.ok && pagesData.status==='built';
+      svcState[id]={
+        status: pagesUp?'ok':'warn',
+        statusText: pagesUp ? 'Pages live · '+data.name : 'Repo OK · Pages '+( pagesData.status||'not enabled'),
+        emoji: pagesUp?'😊':'😬',
+        ping,
+        detail:{
+          'Repo':    data.full_name||'—',
+          'Branch':  data.default_branch||'—',
+          'Pages':   pagesUp?('✓ '+pagesData.html_url):(pagesData.status||'not found'),
+          'Updated': data.updated_at?new Date(data.updated_at).toLocaleDateString():'—',
+          'Response':ping+'ms',
+        }
+      };
+    }
+  } catch(e) {
+    svcState[id]={status:'error',statusText:'Connection failed',emoji:'😵',ping:null,detail:{error:e.message}};
+  }
+  updateCard(id);
+}
+
+// ── CHECK ALL ─────────────────────────────────
+async function checkAll() {
+  const btn = document.getElementById('checkAllBtn');
+  btn.classList.add('running'); btn.textContent='CHECKING…';
+  updateOverall();
+  await Promise.all(SERVICES.map(s => s.check()));
+  btn.classList.remove('running'); btn.textContent='CHECK ALL';
+  updateOverall();
+}
+
+function setChecking(id) {
+  svcState[id] = {...svcState[id], status:'checking', statusText:'Checking…', emoji:'🔄'};
+  updateCard(id);
+}
+
+function updateOverall() {
+  const card = document.getElementById('overallCard'); if(!card) return;
+  const statuses = SERVICES.map(s=>svcState[s.id].status);
+  const checking = statuses.some(s=>s==='checking');
+  const hasError = statuses.some(s=>s==='error');
+  const hasWarn  = statuses.some(s=>s==='warn');
+  const allOk    = statuses.every(s=>s==='ok');
+  const allUnknown = statuses.every(s=>s==='unknown');
+
+  if (allUnknown) {
+    card.className='overall-card'; card.querySelector('.overall-emoji').textContent='😶';
+    card.querySelector('.overall-label').textContent='TAP CHECK ALL';
+    card.querySelector('.overall-sub').textContent='Test all services at once';
+  } else if (checking) {
+    card.className='overall-card checking'; card.querySelector('.overall-emoji').textContent='🔄';
+    card.querySelector('.overall-label').textContent='CHECKING…';
+    card.querySelector('.overall-sub').textContent='Testing all services';
+  } else if (hasError) {
+    card.className='overall-card has-error'; card.querySelector('.overall-emoji').textContent='😵';
+    card.querySelector('.overall-label').textContent='ISSUES FOUND';
+    card.querySelector('.overall-sub').textContent='One or more services need attention';
+  } else if (hasWarn) {
+    card.className='overall-card has-warn'; card.querySelector('.overall-emoji').textContent='😬';
+    card.querySelector('.overall-label').textContent='MOSTLY OK';
+    card.querySelector('.overall-sub').textContent='Some services have warnings';
+  } else if (allOk) {
+    card.className='overall-card all-good'; card.querySelector('.overall-emoji').textContent='😁';
+    card.querySelector('.overall-label').textContent='ALL SYSTEMS GO';
+    card.querySelector('.overall-sub').textContent='Everything is looking great';
+  }
+}
+
+function updateCard(id) {
+  const s = svcState[id];
+  const emojiEl  = document.getElementById('emoji-'+id);
+  const statusEl = document.getElementById('status-'+id);
+  const pingEl   = document.getElementById('ping-'+id);
+  const expandEl = document.getElementById('expand-'+id);
+  if (emojiEl)  { emojiEl.textContent=s.emoji; emojiEl.classList.add('spin'); setTimeout(()=>emojiEl.classList.remove('spin'),500); }
+  if (statusEl) { statusEl.textContent=s.statusText; statusEl.className='service-status '+(s.status==='unknown'?'unknown':s.status); }
+  if (pingEl)   { pingEl.textContent=s.ping!=null?s.ping+'ms':''; }
+  if (expandEl && openCard===id) {
+    renderExpand(id);
+  }
+  updateOverall();
+}
+
+function renderExpand(id) {
+  const el = document.getElementById('expand-'+id); if(!el) return;
+  const s = svcState[id];
+  const inner = el.querySelector('.service-expand-inner'); if(!inner) return;
+  inner.innerHTML = '';
+  Object.entries(s.detail||{}).forEach(([k,v])=>{
+    const row=document.createElement('div'); row.className='expand-row';
+    const cls = k==='Balance'&&state?.currentBalance<=(state?.warnThreshold||5)?'danger':
+                k==='Balance'?'green':k==='NM Price'||k==='Pages'?'green':'';
+    const key=document.createElement('span'); key.className='expand-key'; key.textContent=k;
+    const val=document.createElement('span'); val.className='expand-val'+(cls?' '+cls:''); val.textContent=v;
+    row.append(key,val); inner.appendChild(row);
+  });
+    if (!Object.keys(s.detail||{}).length) inner.innerHTML='<div style="color:var(--muted);font-size:12px;">No detail available</div>';
+}
+
+function toggleExpand(id) {
+  const el = document.getElementById('expand-'+id); if(!el) return;
+  if (openCard===id) {
+    el.classList.remove('open'); openCard=null;
+  } else {
+    if (openCard) document.getElementById('expand-'+openCard)?.classList.remove('open');
+    openCard=id; el.classList.add('open');
+    renderExpand(id);
+  }
+}
+
+// ── CREDIT SETUP ──────────────────────────────
+function saveCredits() {
+  const bal  = parseFloat(document.getElementById('balInput')?.value);
+  const warn = parseFloat(document.getElementById('warnInput')?.value)||5;
+  if (isNaN(bal)||bal<0) return;
+  state = {startingBalance:bal, currentBalance:bal, warnThreshold:warn, setAt:new Date().toISOString(), totalSpent:0};
+  saveState(state);
+  render();
+}
+
+function recordSpend(feature, cost, model) {
+  if (!state) return;
+  state.currentBalance = Math.max(0, state.currentBalance-cost);
+  state.totalSpent = (state.totalSpent||0)+cost;
+  saveState(state);
+  spendLog.unshift({feature, cost, model, time:new Date().toISOString()});
+  saveLog(spendLog);
+}
+window.sableCredits = {
+  record: recordSpend,
+  balance: ()=>state?.currentBalance??null,
+  isLow: ()=>state?state.currentBalance<=(state.warnThreshold||5):false,
+  isEmpty: ()=>state?state.currentBalance<=0:false,
+};
+
+// ── RENDER ────────────────────────────────────
+function render() {
+  const body = document.getElementById('mainBody'); body.innerHTML='';
+
+  // Overall card
+  const overall = document.createElement('div'); overall.className='overall-card'; overall.id='overallCard';
+  overall.onclick=checkAll;
+  overall.style.cursor='pointer';
+  overall.innerHTML='<span class="overall-emoji">😶</span><div class="overall-label">TAP CHECK ALL</div><div class="overall-sub">Test all services at once</div>';
+  body.appendChild(overall);
+
+  // Service cards
+  const grid = document.createElement('div'); grid.className='services-grid';
+  SERVICES.forEach(svc => {
+    const s = svcState[svc.id];
+    const card = document.createElement('div'); card.className='service-card';
+    card.onclick=()=>toggleExpand(svc.id);
+
+    const emoji = document.createElement('div'); emoji.className='service-emoji'; emoji.id='emoji-'+svc.id; emoji.textContent=s.emoji;
+    const info  = document.createElement('div'); info.className='service-info';
+    const name  = document.createElement('div'); name.className='service-name'; name.textContent=svc.name;
+    const stat  = document.createElement('div'); stat.className='service-status unknown'; stat.id='status-'+svc.id; stat.textContent=s.statusText;
+    info.append(name,stat);
+    const right = document.createElement('div'); right.className='service-right';
+    const ping  = document.createElement('div'); ping.className='service-ping'; ping.id='ping-'+svc.id; ping.textContent=s.ping!=null?s.ping+'ms':'';
+    right.appendChild(ping);
+    card.append(emoji,info,right);
+    grid.appendChild(card);
+
+    // Expand section
+    const expand = document.createElement('div'); expand.className='service-expand'; expand.id='expand-'+svc.id;
+    const inner  = document.createElement('div'); inner.className='service-expand-inner';
+    expand.appendChild(inner);
+    grid.appendChild(expand);
+  });
+  body.appendChild(grid);
+
+  // Credit setup (if no balance set)
+  if (!state) {
+    const setup = document.createElement('div'); setup.className='setup-card';
+    setup.innerHTML =
+      '<div class="setup-title">SET CREDIT BALANCE</div>'+
+      '<div class="setup-sub">Enter your Anthropic API balance so Sable can estimate runway and warn you when credits are low.</div>';
+    const r1=document.createElement('div');r1.className='setup-row';r1.style.marginBottom='8px';
+    r1.innerHTML='<div class="setup-label">BALANCE</div><input class="setup-input" id="balInput" type="number" step="0.01" placeholder="$25.00">';
+    const r2=document.createElement('div');r2.className='setup-row';r2.style.marginBottom='12px';
+    r2.innerHTML='<div class="setup-label">WARN AT</div><input class="setup-input" id="warnInput" type="number" step="0.50" placeholder="$5.00">';
+    const btn=document.createElement('button');btn.className='setup-save-btn';btn.textContent='SAVE';btn.onclick=saveCredits;
+    setup.append(r1,r2,btn);
+    body.appendChild(setup);
+  } else {
+    // Spend summary
+    const spent = document.createElement('div'); spent.className='spend-summary';
+    const days = spendLog.length>0 ? Math.floor((Date.now()-new Date(spendLog[spendLog.length-1].time))/86400000)||1 : null;
+    const dailyRate = days&&state.totalSpent>0 ? state.totalSpent/days : null;
+    const runway = dailyRate ? Math.floor(state.currentBalance/dailyRate) : null;
+    spent.innerHTML = '<div class="spend-title">CREDIT SUMMARY</div>';
+    [
+      ['Balance',  '$'+state.currentBalance.toFixed(2), state.currentBalance<=(state.warnThreshold||5)?'danger':state.currentBalance/state.startingBalance<0.25?'gold':'green'],
+      ['Total spent', '$'+(state.totalSpent||0).toFixed(4), ''],
+      ['Runway', runway?'~'+runway+' days':'—', ''],
+      ['API calls', spendLog.length+' logged', ''],
+    ].forEach(([k,v,cls])=>{
+      const row=document.createElement('div');row.className='spend-row-item';
+      row.innerHTML='<span style="color:var(--muted)">'+k+'</span><span class="spend-val '+(cls||'')+'">'+v+'</span>';
+      spent.appendChild(row);
+    });
+    const updateRow=document.createElement('div');updateRow.className='setup-row';updateRow.style.marginTop='10px';
+    updateRow.innerHTML='<div class="setup-label">UPDATE</div><input class="setup-input" id="balInput" type="number" step="0.01" placeholder="New balance…">';
+    const btn=document.createElement('button');btn.className='setup-save-btn';btn.textContent='SET';btn.onclick=saveCredits;
+    updateRow.appendChild(btn);
+    spent.appendChild(updateRow);
+    body.appendChild(spent);
+  }
+
+  updateOverall();
+}
+
+render();
+// Auto-check on load
+setTimeout(checkAll, 400);
+</script>
+
+</body>
+</html>
