@@ -83,16 +83,16 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 #upload-preview{display:none;width:80px;height:112px;object-fit:cover;border-radius:6px;border:2px solid var(–accent);box-shadow:0 0 16px rgba(0,229,255,.3)}
 #file-input{display:none}
 .hint-row{display:flex;gap:8px;margin:0 12px 10px}
-.hint-input{flex:1;background:var(–surface);border:1px solid var(–border);border-radius:8px;padding:9px 12px;font-size:12px;color:var(–text);outline:none;transition:border-color .15s}
+.hint-input{flex:1;background:#111117;border:1px solid #252535;border-radius:8px;padding:9px 12px;font-size:12px;color:#e8e8f2;outline:none;transition:border-color .15s;-webkit-text-fill-color:#e8e8f2;color-scheme:dark}
 .hint-input:focus{border-color:var(–accent)}
 .hint-input::placeholder{color:var(–muted)}
 .cfg-strip{display:flex;gap:6px;padding:0 12px 10px;overflow-x:auto;scrollbar-width:none}
 .cfg-strip::-webkit-scrollbar{display:none}
-.cfg-sel{flex-shrink:0;background:var(–surface2);border:1px solid var(–border);border-radius:7px;padding:5px 8px;font-size:11px;color:var(–muted2);cursor:pointer;outline:none;-webkit-appearance:none}
+.cfg-sel{flex-shrink:0;background:#17171f;border:1px solid #353548;border-radius:7px;padding:5px 8px;font-size:11px;color:#88889a;cursor:pointer;outline:none;-webkit-appearance:none;-moz-appearance:none;appearance:none;color-scheme:dark}
 .mode-tog{flex-shrink:0;display:flex;background:var(–surface2);border:1px solid var(–border);border-radius:7px;overflow:hidden}
 .mt-btn{padding:5px 9px;font-size:10px;color:var(–muted);cursor:pointer;border-right:1px solid var(–border);transition:all .15s;white-space:nowrap}
 .mt-btn:last-child{border-right:none}
-.mt-btn.on{background:var(–accent-dim);color:var(–accent)}
+.mt-btn.on{background:#00e5ff;color:#000;font-weight:600}
 
 /* ─── LOADING ─── */
 #loading-panel{display:none;margin:12px;background:var(–surface);border:1px solid var(–border);border-radius:12px;padding:20px 16px}
@@ -238,7 +238,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 display:none;
 position:fixed;
 inset:0;
-z-index:200;
+z-index:400;
 background:var(–bg);
 flex-direction:column;
 }
@@ -299,6 +299,7 @@ position:relative;overflow:hidden;
 <nav id="nav">
   <button class="nb on" onclick="showPage('scan')" id="nav-scan"><span class="nb-icon">📷</span><span class="nb-label">Scan</span></button>
   <button class="nb" onclick="showPage('market')" id="nav-market"><span class="nb-icon">📊</span><span class="nb-label">Market</span></button>
+  <button class="nb" onclick="showPage('research')" id="nav-research"><span class="nb-icon">🔍</span><span class="nb-label">Research</span></button>
   <button class="nb" onclick="showPage('sell')" id="nav-sell"><span class="nb-icon">💰</span><span class="nb-label">Sell</span></button>
   <button class="nb" onclick="showPage('collection')" id="nav-collection"><span class="nb-icon">📁</span><span class="nb-label">Collect</span></button>
   <button class="nb" onclick="showPage('sets')" id="nav-sets"><span class="nb-icon">🗂️</span><span class="nb-label">Sets</span></button>
@@ -320,7 +321,7 @@ position:relative;overflow:hidden;
   </div>
   <div class="cfg-strip">
     <select class="cfg-sel" id="cfg-sales"><option value="5">5 sales</option><option value="10" selected>10 sales</option><option value="20">20 sales</option><option value="30">30 sales</option></select>
-    <select class="cfg-sel" id="cfg-margin"><option value="10">10% margin</option><option value="15" selected>15% margin</option><option value="20">20% margin</option><option value="25">25% margin</option></select>
+    <select class="cfg-sel" id="cfg-margin"><option value="10">10% margin</option><option value="15">15% margin</option><option value="20" selected>20% margin</option><option value="25">25% margin</option></select>
     <select class="cfg-sel" id="cfg-window"><option value="7">7d avg</option><option value="30" selected>30d avg</option><option value="90">90d avg</option></select>
     <div class="mode-tog">
       <button class="mt-btn on" onclick="setMode('both')" id="mode-both">Both</button>
@@ -518,6 +519,46 @@ position:relative;overflow:hidden;
         <div style="font-size:11px;color:var(--text);line-height:1.5" id="best-exit">—</div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ════ PAGE: RESEARCH ════ -->
+
+<div class="page" id="page-research">
+  <div class="ph"><div class="pt">Research</div><div class="ps">Sealed · History · Set context</div></div>
+  <div class="card">
+    <div class="ct">📦 Sealed Product Analyzer</div>
+    <div id="sealed-zone" style="border:2px dashed var(--border2);border-radius:8px;padding:20px;text-align:center;cursor:pointer;color:var(--muted);font-size:12px" onclick="document.getElementById('sealed-input').click()">📸 Scan sealed product (box / tin / ETB)</div>
+    <input type="file" id="sealed-input" accept="image/*" capture="environment" style="display:none">
+    <div id="sealed-results" style="display:none;margin-top:10px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;margin-bottom:8px" id="sealed-name">—</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">CRACK EV</div><div style="font-family:'Bebas Neue',sans-serif;font-size:26px" id="sealed-ev">—</div></div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">SELL SEALED</div><div style="font-family:'Bebas Neue',sans-serif;font-size:26px" id="sealed-price">—</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">📈 Historical Chart</div>
+    <div id="research-empty" style="text-align:center;padding:20px;color:var(--muted);font-size:11px">Scan a card first</div>
+    <div id="research-chart" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:11px;color:var(--muted2)" id="research-card-label">—</span>
+        <div style="display:flex;gap:3px">
+          <button class="mini-chart-tab on" onclick="setResearchPeriod('30d',this)">30D</button>
+          <button class="mini-chart-tab" onclick="setResearchPeriod('90d',this)">90D</button>
+          <button class="mini-chart-tab" onclick="setResearchPeriod('1y',this)">1Y</button>
+        </div>
+      </div>
+      <canvas id="research-chart-canvas" style="width:100%;height:140px;display:block"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">🗺️ Market Context</div>
+    <div class="sr"><span class="sl">Reprint risk</span><span class="sv" id="ctx-reprint">—</span></div>
+    <div class="sr"><span class="sl">Print status</span><span class="sv" id="ctx-print">—</span></div>
+    <div class="sr"><span class="sl">JP vs EN</span><span class="sv" id="ctx-jp">—</span></div>
+    <div class="sr"><span class="sl">Era comparison</span><span class="sv" id="ctx-era">—</span></div>
   </div>
 </div>
 
@@ -884,6 +925,7 @@ const DEMO = {
 // SETS DATA (abbreviated — full data in original)
 // ═══════════════════════════════════════════════════════════════
 const SETS_DATA = [
+  // Scarlet & Violet
   {gen:'Scarlet & Violet',name:'Prismatic Evolutions',year:2025,signal:'peak',score:88,msrp:180,sealed:310,jackpot:'Eevee Heroes reprint',chase:[{n:'Umbreon ex SAR',p:380,t:'+28%'},{n:'Sylveon ex SAR',p:210,t:'+18%'}]},
   {gen:'Scarlet & Violet',name:'Stellar Crown',year:2024,signal:'rising',score:72,msrp:180,sealed:195,jackpot:'Stellar Crown ETB',chase:[{n:'Terapagos ex SAR',p:95,t:'+12%'},{n:'Pecharunt ex IR',p:42,t:'+8%'}]},
   {gen:'Scarlet & Violet',name:'Shrouded Fable',year:2024,signal:'floor',score:65,msrp:180,sealed:160,jackpot:'Below MSRP sealed',chase:[{n:'Pecharunt ex IR',p:38,t:'+5%'},{n:'Darkrai ex SAR',p:28,t:'+2%'}]},
@@ -893,13 +935,50 @@ const SETS_DATA = [
   {gen:'Scarlet & Violet',name:'Obsidian Flames',year:2023,signal:'stable',score:68,msrp:180,sealed:185,jackpot:'Tera Charizard ex IRT',chase:[{n:'Tera Charizard ex IRT',p:120,t:'+8%'},{n:'Pidgeot ex IR',p:32,t:'+3%'}]},
   {gen:'Scarlet & Violet',name:'Paldea Evolved',year:2023,signal:'stable',score:60,msrp:180,sealed:175,jackpot:'Iono SAR',chase:[{n:'Iono SAR',p:160,t:'+5%'},{n:'Pokemon League HQ',p:22,t:'+2%'}]},
   {gen:'Scarlet & Violet',name:'Scarlet & Violet Base',year:2023,signal:'floor',score:52,msrp:180,sealed:160,jackpot:'Charizard ex SAR',chase:[{n:'Charizard ex SAR',p:85,t:'+4%'},{n:'Miriam SAR',p:48,t:'+2%'}]},
+  // Sword & Shield
   {gen:'Sword & Shield',name:'Crown Zenith',year:2023,signal:'rising',score:78,msrp:180,sealed:280,jackpot:'VSTAR Universe reprints',chase:[{n:'Giratina VSTAR Alt Art',p:200,t:'+18%'},{n:'Arceus VSTAR Rainbow',p:85,t:'+10%'}]},
+  {gen:'Sword & Shield',name:'Silver Tempest',year:2022,signal:'stable',score:65,msrp:180,sealed:190,jackpot:'Lugia VSTAR Alt Art',chase:[{n:'Lugia VSTAR Alt Art',p:95,t:'+8%'},{n:'Regidrago VSTAR Alt Art',p:55,t:'+6%'}]},
+  {gen:'Sword & Shield',name:'Lost Origin',year:2022,signal:'rising',score:72,msrp:180,sealed:210,jackpot:'Giratina VSTAR Alt Art',chase:[{n:'Giratina VSTAR Alt Art',p:180,t:'+22%'},{n:'Aerodactyl VSTAR Alt Art',p:62,t:'+10%'}]},
+  {gen:'Sword & Shield',name:'Astral Radiance',year:2022,signal:'stable',score:64,msrp:180,sealed:188,jackpot:'Origin Palkia VSTAR Alt',chase:[{n:'Origin Palkia VSTAR Alt',p:70,t:'+6%'},{n:'Hisuian Electrode V Alt',p:42,t:'+4%'}]},
+  {gen:'Sword & Shield',name:'Brilliant Stars',year:2022,signal:'stable',score:67,msrp:180,sealed:195,jackpot:'Arceus VSTAR Alt Art',chase:[{n:'Arceus VSTAR Alt Art',p:52,t:'+5%'},{n:'Charizard VSTAR Rainbow',p:48,t:'+4%'}]},
+  {gen:'Sword & Shield',name:'Fusion Strike',year:2021,signal:'stable',score:60,msrp:180,sealed:180,jackpot:'Gengar VMAX Alt Art',chase:[{n:'Gengar VMAX Alt Art',p:68,t:'+4%'},{n:'Mew VMAX Alt Art',p:55,t:'+4%'}]},
   {gen:'Sword & Shield',name:'Evolving Skies',year:2021,signal:'peak',score:82,msrp:180,sealed:420,jackpot:'Umbreon VMAX Alt Art',chase:[{n:'Umbreon VMAX Alt Art',p:280,t:'+8%'},{n:'Rayquaza VMAX Alt Art',p:180,t:'+5%'}]},
+  {gen:'Sword & Shield',name:'Chilling Reign',year:2021,signal:'stable',score:64,msrp:180,sealed:195,jackpot:'Shadow Rider Calyrex VMAX',chase:[{n:'Shadow Rider Calyrex VMAX Alt',p:52,t:'+3%'},{n:'Ice Rider Calyrex VMAX Alt',p:48,t:'+2%'}]},
+  {gen:'Sword & Shield',name:'Battle Styles',year:2021,signal:'slept',score:68,msrp:180,sealed:185,jackpot:'Rapid Strike Urshifu VMAX',chase:[{n:'Rapid Strike Urshifu VMAX Alt',p:55,t:'+9%'},{n:'Single Strike Urshifu VMAX Alt',p:48,t:'+7%'}]},
   {gen:'Sword & Shield',name:'Shining Fates',year:2021,signal:'peak',score:86,msrp:80,sealed:200,jackpot:'Shiny Charizard VMAX',chase:[{n:'Shiny Charizard VMAX',p:85,t:'+5%'},{n:'Shiny Eternatus VMAX',p:38,t:'+3%'}]},
+  {gen:'Sword & Shield',name:'Champions Path',year:2020,signal:'stable',score:74,msrp:20,sealed:95,jackpot:'Charizard VMAX Rainbow',chase:[{n:'Charizard VMAX Rainbow',p:145,t:'+6%'},{n:'Charizard V Alt Art',p:90,t:'+4%'}]},
+  {gen:'Sword & Shield',name:'Vivid Voltage',year:2020,signal:'slept',score:62,msrp:180,sealed:170,jackpot:'Amazing Rares undervalued',chase:[{n:'Pikachu V Full Art',p:28,t:'+8%'},{n:'Jolteon V Alt Art',p:22,t:'+6%'}]},
+  {gen:'Sword & Shield',name:'Darkness Ablaze',year:2020,signal:'slept',score:60,msrp:180,sealed:165,jackpot:'Charizard VMAX nearby floor',chase:[{n:'Charizard VMAX',p:55,t:'+9%'},{n:'Eternatus VMAX',p:30,t:'+7%'}]},
+  {gen:'Sword & Shield',name:'Rebel Clash',year:2020,signal:'stable',score:55,msrp:180,sealed:160,jackpot:'—',chase:[{n:'Toxtricity VMAX Alt',p:30,t:'+3%'},{n:"Boss's Orders",p:25,t:'+2%'}]},
+  // Sun & Moon
   {gen:'Sun & Moon',name:'Hidden Fates',year:2019,signal:'peak',score:92,msrp:50,sealed:250,jackpot:'Charizard GX Shiny',chase:[{n:'Charizard GX Shiny',p:290,t:'+8%'},{n:'Gyarados GX Shiny',p:85,t:'+4%'}]},
   {gen:'Sun & Moon',name:'Cosmic Eclipse',year:2019,signal:'rising',score:80,msrp:180,sealed:280,jackpot:'Final Sun & Moon set',chase:[{n:'Solgaleo & Lunala GX Alt',p:85,t:'+12%'},{n:'Arceus & Dialga & Palkia Alt',p:72,t:'+10%'}]},
+  {gen:'Sun & Moon',name:'Unified Minds',year:2019,signal:'rising',score:72,msrp:180,sealed:240,jackpot:'TAG TEAM Gold cards',chase:[{n:'Mewtwo & Mew GX',p:62,t:'+9%'},{n:'Garchomp & Giratina GX',p:55,t:'+8%'}]},
+  {gen:'Sun & Moon',name:'Unbroken Bonds',year:2019,signal:'rising',score:70,msrp:180,sealed:230,jackpot:'Reshiram & Charizard GX',chase:[{n:'Reshiram & Charizard GX Alt',p:78,t:'+10%'},{n:'Gardevoir & Sylveon GX Alt',p:52,t:'+7%'}]},
+  {gen:'Sun & Moon',name:'Team Up',year:2019,signal:'slept',score:68,msrp:180,sealed:220,jackpot:'Red & Blue — undervalued',chase:[{n:'Red & Blue',p:88,t:'+12%'},{n:'Eevee & Snorlax GX',p:45,t:'+8%'}]},
+  {gen:'Sun & Moon',name:'Lost Thunder',year:2018,signal:'rising',score:74,msrp:180,sealed:240,jackpot:'Largest set ever printed',chase:[{n:'Zeraora GX Full Art',p:48,t:'+10%'},{n:'Lugia GX',p:42,t:'+8%'}]},
+  {gen:'Sun & Moon',name:'Dragon Majesty',year:2018,signal:'rising',score:76,msrp:55,sealed:180,jackpot:'Dragon-type specialist set',chase:[{n:'Dragonite GX Full Art',p:55,t:'+12%'},{n:'Drampa GX',p:28,t:'+9%'}]},
+  {gen:'Sun & Moon',name:'Celestial Storm',year:2018,signal:'slept',score:64,msrp:180,sealed:200,jackpot:'Jirachi prism star',chase:[{n:'Articuno GX Full Art',p:38,t:'+8%'},{n:'Rayquaza GX Hyper Rare',p:32,t:'+6%'}]},
+  {gen:'Sun & Moon',name:'Forbidden Light',year:2018,signal:'stable',score:58,msrp:180,sealed:185,jackpot:'Ultra Necrozma GX',chase:[{n:'Ultra Necrozma GX Full Art',p:45,t:'+4%'},{n:'Lucario GX Full Art',p:30,t:'+3%'}]},
+  {gen:'Sun & Moon',name:'Ultra Prism',year:2018,signal:'rising',score:72,msrp:180,sealed:225,jackpot:'Prism stars + Altered Creation',chase:[{n:'Dawn Wings Necrozma GX',p:48,t:'+9%'},{n:'Dusk Mane Necrozma GX',p:42,t:'+8%'}]},
+  {gen:'Sun & Moon',name:'Crimson Invasion',year:2017,signal:'slept',score:62,msrp:180,sealed:195,jackpot:'Buzzwole GX alt art',chase:[{n:'Buzzwole GX Full Art',p:38,t:'+9%'},{n:'Nihilego GX Full Art',p:28,t:'+7%'}]},
+  {gen:'Sun & Moon',name:'Shining Legends',year:2017,signal:'rising',score:78,msrp:25,sealed:220,jackpot:'Mewtwo shining rare',chase:[{n:'Shining Mewtwo',p:95,t:'+14%'},{n:'Shining Mew',p:55,t:'+10%'}]},
+  {gen:'Sun & Moon',name:'Burning Shadows',year:2017,signal:'stable',score:60,msrp:180,sealed:185,jackpot:'Charizard GX rainbow',chase:[{n:'Charizard GX Rainbow',p:88,t:'+5%'},{n:'Ho-Oh GX Full Art',p:38,t:'+3%'}]},
+  {gen:'Sun & Moon',name:'Guardians Rising',year:2017,signal:'stable',score:62,msrp:180,sealed:190,jackpot:'Tapu Lele GX',chase:[{n:'Tapu Lele GX Full Art',p:32,t:'+4%'},{n:'Wishiwashi GX Full Art',p:20,t:'+2%'}]},
+  {gen:'Sun & Moon',name:'Sun & Moon Base',year:2017,signal:'stable',score:58,msrp:180,sealed:175,jackpot:'Decidueye GX rainbow',chase:[{n:'Solgaleo GX Full Art',p:38,t:'+4%'},{n:'Lunala GX Full Art',p:32,t:'+3%'}]},
+  // XY
   {gen:'XY',name:'Evolutions',year:2016,signal:'peak',score:90,msrp:180,sealed:380,jackpot:'Base Set reprints',chase:[{n:'Charizard EX Full Art',p:95,t:'+10%'},{n:'M Charizard EX Full Art',p:88,t:'+8%'}]},
+  {gen:'XY',name:'Steam Siege',year:2016,signal:'stable',score:56,msrp:180,sealed:170,jackpot:'Gardevoir/Gallade EX',chase:[{n:'Gardevoir EX Full Art',p:28,t:'+3%'},{n:'Volcanion EX Full Art',p:22,t:'+2%'}]},
+  {gen:'XY',name:'Fates Collide',year:2016,signal:'stable',score:58,msrp:180,sealed:175,jackpot:'M Alakazam EX',chase:[{n:'M Alakazam EX Full Art',p:32,t:'+4%'},{n:'Zygarde EX Full Art',p:22,t:'+2%'}]},
+  {gen:'XY',name:'BREAKpoint',year:2016,signal:'slept',score:65,msrp:180,sealed:190,jackpot:'Trevenant BREAK undervalued',chase:[{n:'M Gyarados EX Full Art',p:38,t:'+8%'},{n:'Espeon EX Full Art',p:32,t:'+7%'}]},
   {gen:'XY',name:'BREAKthrough',year:2015,signal:'rising',score:70,msrp:180,sealed:220,jackpot:'Brigette FA + M Mewtwo',chase:[{n:'Brigette FA',p:28,t:'+6%'},{n:'M Mewtwo EX Full Art',p:45,t:'+8%'}]},
+  {gen:'XY',name:'Ancient Origins',year:2015,signal:'rising',score:68,msrp:180,sealed:215,jackpot:'Hoopa EX Full Art',chase:[{n:'Hoopa EX Full Art',p:42,t:'+9%'},{n:'M Rayquaza EX Full Art',p:38,t:'+7%'}]},
+  {gen:'XY',name:'Roaring Skies',year:2015,signal:'rising',score:75,msrp:180,sealed:230,jackpot:'Shaymin EX Full Art',chase:[{n:'Shaymin EX Full Art',p:65,t:'+12%'},{n:'M Rayquaza EX Full Art',p:48,t:'+9%'}]},
+  {gen:'XY',name:'Primal Clash',year:2015,signal:'slept',score:64,msrp:180,sealed:195,jackpot:'Primal Groudon/Kyogre EX',chase:[{n:'Primal Groudon EX Full Art',p:38,t:'+8%'},{n:'Primal Kyogre EX Full Art',p:35,t:'+7%'}]},
+  {gen:'XY',name:'Phantom Forces',year:2014,signal:'rising',score:72,msrp:180,sealed:225,jackpot:'M Gengar EX + Gengar FA',chase:[{n:'Gengar EX Full Art',p:45,t:'+11%'},{n:'M Gengar EX Full Art',p:38,t:'+9%'}]},
+  {gen:'XY',name:'Furious Fists',year:2014,signal:'slept',score:60,msrp:180,sealed:185,jackpot:'Lucario EX undervalued',chase:[{n:'Lucario EX Full Art',p:30,t:'+7%'},{n:'Hawlucha EX Full Art',p:18,t:'+5%'}]},
+  {gen:'XY',name:'Flashfire',year:2014,signal:'rising',score:70,msrp:180,sealed:220,jackpot:'Charizard EX Full Art trio',chase:[{n:'Charizard EX Full Art',p:55,t:'+12%'},{n:'M Charizard EX Y Full Art',p:48,t:'+10%'}]},
+  {gen:'XY',name:'XY Base',year:2014,signal:'slept',score:62,msrp:180,sealed:190,jackpot:'Xerneas/Yveltal EX',chase:[{n:'Xerneas EX Full Art',p:28,t:'+7%'},{n:'Yveltal EX Full Art',p:25,t:'+6%'}]},
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -1266,6 +1345,13 @@ function populateMarket(data) {
   document.getElementById('best-exit').textContent='PSA 9 typically offers best ROI for most non-10 pop cards.';
   document.getElementById('scarcity-ratio').textContent=psaG[10]&&psaG[9]?(psaG[10]/psaG[9]).toFixed(2)+'x':'—';
   document.getElementById('scarcity-text').textContent='PSA 10s command a premium. Consider grading NM copies.';
+  document.getElementById('research-empty').style.display='none';
+  document.getElementById('research-chart').style.display='block';
+  document.getElementById('research-card-label').textContent=card.name||'—';
+  document.getElementById('ctx-reprint').textContent='Low';
+  document.getElementById('ctx-print').textContent='Out of print';
+  document.getElementById('ctx-jp').textContent='JP ~20% cheaper';
+  document.getElementById('ctx-era').textContent='XY era — strong collector demand';
   document.getElementById('sell-card-name').textContent=card.name||'—';
   document.getElementById('sell-empty').style.display='none';
   document.getElementById('sell-content').style.display='block';
