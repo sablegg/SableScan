@@ -273,25 +273,41 @@ async function getAiAdvice(id) {
   }
 
   try {
-    const prompt = `You are a Pokemon TCG reseller pricing expert. Give sharp practical advice.
+    const today = new Date().toISOString().split('T')[0];
+    const safeName = (c.name||'').replace(/[\u2018\u2019\u0027]/g,'').trim();
+    const prompt = `You are Sable's Mark engine — a Pokemon TCG buy/sell/hold advisor.
 
-Card: ${c.name} (${c.number})
-Condition: ${c.cond}
-Paid: $${c.paid.toFixed(2)}
-Market NM price: $${c.market.toFixed(2)}
-Market trend: ${c.trend}
-Current ask: $${c.mark.toFixed(2)}
+Today's date is: ` + today + `
+
+Card: ` + safeName + ` (` + (c.number||'') + `)
+Set: ` + (c.set||'Unknown') + `
+Variant: ` + (c.variant||'Normal') + `
+Condition: ` + c.cond + `
+Paid: $` + c.paid.toFixed(2) + `
+Market NM price: $` + c.market.toFixed(2) + `
+Market trend: ` + c.trend + `
+Current ask: $` + c.mark.toFixed(2) + `
+PSA 10 price: ` + (c.psa10 ? '$'+c.psa10.toFixed(2) : 'Unknown') + `
+
+SIGNAL DEFINITIONS:
+- BUY MORE: Strong upside, accumulate at current price
+- HOLD: Fair value, no action needed, let it ride
+- SELL: Above fair value or momentum fading, list soon
+- SELL NOW: Significantly overvalued or negative catalyst, exit immediately
+
+GRADING FLAG: Set to true if PSA 10 is 3x or more above raw NM price AND condition is NM.
 
 Provide:
-1. Recommended ask price (to nearest $0.50)
-2. Signal: BUY MORE (undervalued, stack more), SELL (list normally), SELL NOW (move fast)
-3. Reasoning (2 sentences max)
+1. Signal: BUY MORE | HOLD | SELL | SELL NOW
+2. Recommended ask price to nearest $0.50
+3. Reasoning 2 sentences max specific to this card set and market now
 4. Round UP or DOWN with brief reason
-5. Sales velocity and confidence
-6. Grading flag: if this NM card could be worth significantly more graded (PSA 9/10), flag it
+5. Sales velocity and price confidence
+6. Grading flag and note
+7. 3-month price target low mid high
 
-Respond ONLY in valid JSON:
-{"recommendedPrice":0,"signal":"SELL","reasoning":"","roundDirection":"up","roundReason":"","salesVelocity":"medium","priceConfidence":"medium","gradingFlag":false,"gradingNote":""}`;
+Respond ONLY in valid JSON no markdown no backticks:
+{"signal":"SELL","recommendedPrice":0,"reasoning":"","roundDirection":"up","roundReason":"","salesVelocity":"medium","priceConfidence":"medium","gradingFlag":false,"gradingNote":"","priceTarget":{"low":0,"mid":0,"high":0},"dataConfidence":"high"}`;
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -317,7 +333,9 @@ Respond ONLY in valid JSON:
       aiBox.classList.add('flash-' + sk2);
       setTimeout(() => aiBox.classList.remove('flash-' + sk2), 900);
     }
-    if (aiVal) aiVal.textContent = '$' + result.recommendedPrice.toFixed(2);
+    if (aiVal) aiVal.textContent = '$' + (result.recommendedPrice||result.recommendedPrice||0).toFixed(2);
+    // Store enriched signal data
+    if (result.priceTarget) aiData[id].priceTarget = result.priceTarget;
 
     // Update signal badge — show only matching
     ['buy-more','sell','sell-now'].forEach(s => {

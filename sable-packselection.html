@@ -352,8 +352,13 @@ async function analyzeByPhoto(imageData) {
 
 // ── ANALYZE BY TEXT ───────────────────────────
 async function analyzeByText() {
-  const query = document.getElementById('searchInput').value.trim();
-  if (!query) return;
+  const rawQuery = document.getElementById('searchInput').value.trim();
+  if (!rawQuery) return;
+  // Sanitize apostrophes and special chars
+  const query = rawQuery
+    .replace(/[‘’']/g, '')
+    .replace(/[^\w\s\-&.\/]/g, '')
+    .trim();
   document.getElementById('searchBtn').disabled = true;
   showAnalyzing();
   try {
@@ -375,29 +380,34 @@ async function analyzeByText() {
 }
 
 function buildPackPrompt() {
-  return `You are a Pokemon TCG sealed product expert. Identify this sealed product and provide a complete pack breakdown.
+  const today = new Date().toISOString().split('T')[0];
+  return `You are Sable's Pack Selection analyzer for the Pokemon TCG. Analyze this sealed product.
 
-Return ONLY valid JSON:
-{
-  "productName": "Full product name",
-  "set": "Set name",
-  "type": "Booster Box|ETB|Blister|Tin|UPC|Bundle|Other",
-  "marketPrice": 0.00,
-  "packs": [
-    {"name": "Pack name/set name", "qty": 0, "unitValue": 0.00}
-  ],
-  "extras": [
-    {"name": "Promo card / accessory name", "qty": 0, "unitValue": 0.00}
-  ],
-  "totalPackValue": 0.00,
-  "evRatio": 0.00,
-  "perPackCost": 0.00,
-  "verdict": "BUY|FAIR|PASS",
-  "verdictScore": 0,
-  "insight": "2 sentences: why this is or isn't good value right now"
-}
+Today's date is: ` + today + `
 
-Use current TCGPlayer market prices for pack values. unitValue = current single pack market price.`;
+YOUR JOB:
+1. Identify the exact product (set, type, year)
+2. Calculate crack EV vs sealed resale
+3. Give a clear BUY | FAIR | PASS | FLIP recommendation
+
+EV CALCULATION:
+- Identify pull rates for chase cards, ultra rares, holos, reverse holos
+- Estimate probability-weighted value per pack
+- Multiply by pack count for total crack EV
+- Compare against sealed market price
+
+RECOMMENDATION:
+- BUY: Crack EV exceeds sealed by 15%+ AND strong singles demand
+- FAIR: Crack EV within 15% of sealed price
+- PASS: Crack EV significantly below sealed AND sealed not appreciating
+- FLIP: Buy sealed now sell later — sealed below trajectory
+
+KNOWN MSRP: Booster Box 36 packs $143.64 | ETB 9 packs $49.99 | Bundle 6 packs $19.99 | Blister 3 packs $14.99
+
+Return ONLY valid JSON, no markdown, no backticks:
+{"productName":"Full official product name","set":"Set name","type":"Booster Box|ETB|Blister|Tin|UPC|Bundle|Other","setYear":2023,"era":"Scarlet & Violet|Sword & Shield|Sun & Moon|XY|etc","marketPrice":0.00,"msrp":0.00,"packCount":0,"packs":[{"name":"Pack name","qty":0,"unitValue":0.00}],"extras":[{"name":"Promo card name","qty":0,"unitValue":0.00}],"totalPackValue":0.00,"evRatio":0.00,"perPackCost":0.00,"evPerPack":0.00,"sealedTrend":"rising|stable|falling","isRotated":false,"isRotatingSoon":false,"reprintRisk":"LOW|MEDIUM|HIGH","verdict":"BUY|FAIR|PASS|FLIP","verdictScore":0,"hotLabel":"HOT|WATCH|SLEEPER|AVOID|null","chaseCards":[{"name":"Card name","pullRate":"1 in 72 packs","currentPrice":0.00,"evContribution":0.00}],"insight":"2-3 sentences: crack EV vs sealed, rotation angle, demand trajectory. Sharp and actionable.","dataConfidence":"high|medium|low"}
+
+Use current TCGPlayer market prices. unitValue = current single pack market price.`;
 }
 
 // ── SHOW ANALYZING ────────────────────────────

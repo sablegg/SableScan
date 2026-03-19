@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Sable — Rel ease Radar</title>
+<title>Sable — Release Radar</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -132,6 +132,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
       Back
     </button>
     <div class="nav-title">RELEASE RADAR</div>
+    <div id="radarRefreshLabel" style="font-size:9px;color:var(--muted);margin-right:4px"></div>
     <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
       REFRESH
@@ -142,8 +143,40 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
 
 <script>
 const CACHE_KEY = 'sable_release_radar_v2';
-// Clear old cache key if present
-localStorage.removeItem('sable_release_radar');
+const RADAR_TS_KEY = 'sable_radar_last_refresh';
+const SETTINGS_KEY = 'sable_settings';
+
+function getRadarRefreshRate() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    return parseInt(s.radarRefresh || '86400000');
+  } catch(e) { return 86400000; }
+}
+
+function shouldRadarAutoRefresh() {
+  const rate = getRadarRefreshRate();
+  if (rate === 0) return false;
+  try {
+    const last = parseInt(localStorage.getItem(RADAR_TS_KEY) || '0');
+    return Date.now() - last > rate;
+  } catch(e) { return true; }
+}
+
+function markRadarRefreshed() {
+  localStorage.setItem(RADAR_TS_KEY, Date.now().toString());
+}
+
+function getRadarRefreshLabel() {
+  try {
+    const last = parseInt(localStorage.getItem(RADAR_TS_KEY) || '0');
+    if (!last) return '';
+    const mins = Math.round((Date.now() - last) / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return mins + 'm ago';
+    return Math.round(mins / 60) + 'h ago';
+  } catch(e) { return ''; }
+}
+
 let radarData = null;
 let openRelease = null;
 let countdownTimers = [];
@@ -179,6 +212,8 @@ async function loadAll() {
       try {
         radarData = JSON.parse(jsonMatch[0]);
         localStorage.setItem(CACHE_KEY, JSON.stringify(radarData));
+        markRadarRefreshed();
+        updateRadarRefreshLabel();
       } catch(parseErr) {
         console.warn('JSON parse failed, using demo data');
         radarData = getDemoData();
@@ -199,13 +234,38 @@ async function loadAll() {
 
 function buildPrompt() {
   const today = new Date().toISOString().split('T')[0];
-  return `Today is ${today}. Search for all upcoming Pokemon TCG product releases — booster boxes, ETBs, UPCs, special collections, tins, and sealed products. Include everything known from now through the next 12 months.
+  return `You are Sable's Release Radar engine for the Pokemon TCG. Search for accurate upcoming release information, hype signals, and TCG news.
 
-For each product include: exact release date, MSRP, pack count, which set packs are included, product type, and community hype/sentiment assessment.
+Today's date is: ${today}
 
-Also search for the latest Pokemon TCG news items (announcements, card reveals, tournament results, market news) — include as many as you find.
+SEARCH FOR:
+1. All upcoming Pokemon TCG product releases from now through the next 12 months
+2. Latest Pokemon TCG news (announcements, card reveals, tournament results, market news, rotation updates)
 
-Respond ONLY in valid JSON:
+KNOWN UPCOMING RELEASES (verify and add more):
+- Perfect Order — March 27 2026 (Booster Box, ETB)
+- Chaos Rising — May 22 2026
+- Search for any others announced or rumored
+
+RELEASE CALENDAR CONTEXT:
+- Main sets release roughly every 3 months
+- ETBs release alongside or shortly after main sets
+- Japanese sets release 3-6 months before English
+- April 10 2026 rotation removes all remaining Sword and Shield sets
+- Charizard, Pikachu, Eevee, Mewtwo = significantly higher hype scores
+
+HYPE SCORING (0-100):
+- hype: Community hype — social media, YouTube, pack opening anticipation
+- communityBuzz: Overall collector and player excitement
+- investorScore: Investment/resale potential
+
+HOT LABEL criteria:
+- HOT: hype > 80 OR features top chase Pokemon
+- WARM: investorScore > 70 but moderate hype
+- WATCH: Interesting but not confirmed hot
+- null: Standard release
+
+Respond ONLY in valid JSON, no markdown, no backticks:
 {
   "releases": [
     {
@@ -221,20 +281,36 @@ Respond ONLY in valid JSON:
       "hype": 0,
       "communityBuzz": 0,
       "investorScore": 0,
-      "hypeLabel": "HOT|WARM|WATCH",
-      "description": "One sentence about this product and why collectors care"
+      "hypeLabel": "HOT|WARM|WATCH|null",
+      "featuredPokemon": ["Pokemon name"],
+      "description": "One sentence about this product and why collectors care",
+      "isRestock": false
     }
   ],
   "news": [
     {
-      "headline": "News headline",
-      "summary": "2-3 sentence summary",
+      "headline": "Short punchy headline",
+      "summary": "1-2 sentence summary",
       "source": "Source name",
       "date": "YYYY-MM-DD",
+      "category": "ROTATION|REPRINT|TOURNAMENT|NEW SET|PRODUCT|MARKET",
+      "urgency": "HIGH|MEDIUM|LOW",
       "url": "https://..."
     }
-  ]
+  ],
+  "rotationAlert": {
+    "date": "April 10 2026",
+    "daysUntil": 23,
+    "setsRotating": ["Sword and Shield Base", "Battle Styles", "Chilling Reign", "Evolving Skies", "Fusion Strike", "Brilliant Stars", "Astral Radiance", "Lost Origin", "Silver Tempest"],
+    "impact": "Brief market impact note"
+  }
 }`;
+}
+
+// ── REFRESH LABEL ────────────────────────────
+function updateRadarRefreshLabel() {
+  const el = document.getElementById('radarRefreshLabel');
+  if (el) el.textContent = getRadarRefreshLabel();
 }
 
 // ── COUNTDOWN ─────────────────────────────────
@@ -668,17 +744,29 @@ function getDemoData() {
 }
 
 // ── INIT ──────────────────────────────────────
-// Always show demo data first so sections are never empty
-radarData = getDemoData();
-render();
-// Then try to refresh from API in background
-const cached = localStorage.getItem(CACHE_KEY);
-if (cached) {
-  try {
-    const c = JSON.parse(cached);
-    if (c.releases?.length && c.news?.length) { radarData = c; render(); }
-  } catch(e) {}
-}
+// Init — load cache first, auto-refresh if stale
+(async function initRadar() {
+  const cached = localStorage.getItem(CACHE_KEY);
+  if (cached) {
+    try {
+      const c = JSON.parse(cached);
+      if (c.releases?.length && c.news?.length) {
+        radarData = c;
+        render();
+        updateRadarRefreshLabel();
+      }
+    } catch(e) {}
+  }
+  // Show demo if nothing loaded yet
+  if (!radarData) {
+    radarData = getDemoData();
+    render();
+  }
+  // Auto-refresh if stale
+  if (shouldRadarAutoRefresh()) {
+    loadAll();
+  }
+})();
 </script>
 
 </body>

@@ -240,6 +240,7 @@ SINGLES / GRADED / SEALED CARDS
   <div class="refresh-bar">
     <div class="refresh-left">
       <div class="refresh-title" id="refreshTitle">SET INTELLIGENCE</div>
+        <div id="refreshLabel" style="font-size:9px;color:var(--muted);margin-top:1px"></div>
       <div class="refresh-note" id="refreshNote">AI researches market — ~$0.01 per refresh</div>
     </div>
     <button class="refresh-btn" id="refreshBtn" onclick="refreshPulse()">
@@ -278,6 +279,49 @@ const ARBS_SIGS = [
 const saveWL=d=>localStorage.setItem(WL_KEY,JSON.stringify(d));
 const loadData=()=>{try{return JSON.parse(localStorage.getItem(DATA_KEY)||'{}');}catch(e){return {};}};
 const saveData=d=>localStorage.setItem(DATA_KEY,JSON.stringify(d));
+
+// ── AUTO-REFRESH LOGIC ────────────────────────
+const REFRESH_TS_KEY = 'sable_pulse_last_refresh';
+const SETTINGS_KEY = 'sable_settings';
+
+function getRefreshRate() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    return parseInt(s.pulseRefresh || '86400000');
+  } catch(e) { return 86400000; }
+}
+
+function shouldAutoRefresh(tab) {
+  if (tab !== 'SETS') return false; // auto-refresh SETS only
+  const rate = getRefreshRate();
+  if (rate === 0) return false; // manual only
+  try {
+    const ts = JSON.parse(localStorage.getItem(REFRESH_TS_KEY) || '{}');
+    const last = parseInt(ts[tab] || '0');
+    return Date.now() - last > rate;
+  } catch(e) { return true; }
+}
+
+function markRefreshed(tab) {
+  try {
+    const ts = JSON.parse(localStorage.getItem(REFRESH_TS_KEY) || '{}');
+    ts[tab] = Date.now();
+    localStorage.setItem(REFRESH_TS_KEY, JSON.stringify(ts));
+  } catch(e) {}
+}
+
+function getRefreshLabel() {
+  try {
+    const ts = JSON.parse(localStorage.getItem(REFRESH_TS_KEY) || '{}');
+    const last = parseInt(ts['SETS'] || '0');
+    if (!last) return 'Never refreshed';
+    const mins = Math.round((Date.now() - last) / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return mins + 'm ago';
+    const hrs = Math.round(mins / 60);
+    return hrs + 'h ago';
+  } catch(e) { return ''; }
+}
 
 const TABS=['SETS','SINGLES','GRADED','SEALED','ARBS'];
 let activeTab='SETS';
@@ -576,6 +620,8 @@ async function refreshPulse(){
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     pulseData[activeTab] = jsonMatch ? JSON.parse(jsonMatch[0]) : getDemoData(activeTab);
     saveData(pulseData);
+    markRefreshed(activeTab);
+    updateRefreshLabel();
   }catch(e){
     console.warn('Pulse error:',e);
     pulseData[activeTab]=getDemoData(activeTab);
@@ -585,6 +631,11 @@ async function refreshPulse(){
   btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> REFRESH';
   renderTab();
 }
+function updateRefreshLabel() {
+  const el = document.getElementById('refreshLabel');
+  if (el) el.textContent = getRefreshLabel();
+}
+
 function showSkeletons(){
   const body=document.getElementById('pulseBody');body.innerHTML='';
   for(let i=0;i<3;i++){
@@ -609,7 +660,34 @@ Return 8-10 opportunities. Respond ONLY in valid JSON array:
 }
 
 function buildPrompt(tab){
-  if(tab==='SETS') return `You are a Pokemon TCG investment analyst. March 2026: 30th anniversary, April 10 rotation removes G-regulation sets, Mega Evolution era active. Identify the 3 best sets to invest in RIGHT NOW — value-first. Score each 0-100: dipDepth, supplyPressure, collectibility, reprintRisk (high=bad), communityHype, chaseValue, rotationBenefit, overallScore. Respond ONLY in valid JSON array: [{"name":"","releaseDate":"","era":"","trendPhase":"bottom|cooling|climbing|peak","sentiment":"bullish|neutral|bearish","overallScore":0,"dipDepth":0,"supplyPressure":0,"collectibility":0,"reprintRisk":0,"communityHype":0,"chaseValue":0,"rotationBenefit":0,"chaseCards":[{"name":"card name","lastSold":"$X · Mon DD"},{"name":"card name","lastSold":"$X · Mon DD"}],"why":"3 sentences"}]`;
+  if(tab==='SETS') {
+    const today = new Date().toISOString().split('T')[0];
+    return `You are Sable's Market Intelligence engine for the Pokemon TCG. Identify the top 3 sets to invest in RIGHT NOW.
+
+Today's date is: ${today}
+
+CONTEXT:
+- Standard rotation happens every April. April 10 2026 rotation removes all remaining Sword and Shield sets.
+- Sealed product scarcity increases after rotation — sealed prices often rise post-rotation.
+- 30th anniversary of Pokemon in 2026 is driving collector nostalgia demand.
+- Mega Evolution era is the current newest set release as of early 2026.
+- Market is heavily influenced by YouTube creators, tournament results, reprint announcements, and nostalgia cycles.
+- Charizard, Pikachu, Eevee, Mewtwo always drive premium demand.
+
+SCORING (0-100):
+- buyTheDip: How far below peak? Higher = better entry point
+- supplyPressure: How tight is supply? Higher = more scarce
+- sentiment: Community and collector positivity. Higher = more bullish
+- overallScore: Weighted average (buyTheDip 40%, supply 30%, sentiment 30%)
+
+SIGNALS: TRENDING UP | CLIMBING | STABLE | FLOOR | SOFTENING | PEAK
+SENTIMENT: BULLISH | NEUTRAL | BEARISH
+PHASE: TREND | CLIMBING | FLOOR | PEAK | STABLE | COOLING
+REPRINT RISK: LOW | MEDIUM | HIGH
+
+Return ONLY valid JSON array, no other text, no markdown, no backticks:
+[{"name":"","era":"Scarlet & Violet|Sword & Shield|Sun & Moon|XY|Black & White|Original","year":2023,"signal":"TRENDING UP|CLIMBING|STABLE|FLOOR|SOFTENING|PEAK","signalDirection":"up|down|stable","sentiment":"BULLISH|NEUTRAL|BEARISH","overallScore":0,"phase":"TREND|CLIMBING|FLOOR|PEAK|STABLE|COOLING","reprintRisk":"LOW|MEDIUM|HIGH","isRotated":false,"isRotatingSoon":false,"rotationNote":null,"chaseCards":[{"name":"card name","price":84,"trend":"+12%","lastSaleDate":"Mar 14"},{"name":"card name","price":72,"trend":"+8%","lastSaleDate":"Mar 12"}],"metrics":{"buyTheDip":82,"supplyPressure":68,"sentiment":85},"why":"2-3 sharp sentences — why this set is a buy right now. Rotation angle, demand drivers, specific catalysts.","hotLabel":"HOT|WATCH|SLEPT ON|null","sealedMsrp":180,"sealedCurrent":285,"sealedTrend":"rising|stable|falling"}]`;
+  }
   if(tab==='SINGLES') return `Pokemon TCG value analyst. Find 15 undervalued singles — buy low sell high. Score: sig1=momentum(0-100), sig2=liquidity(0-100). Respond ONLY in valid JSON array: [{"id":"unique","name":"","number":"","set":"","variant":"","marketPrice":0,"buyTarget":0,"avg30d":0,"dipPct":0,"trend":"up|down|flat","why":"one sentence","pulseScore":0,"sig1":0,"sig2":0,"gradingPotential":false,"gradingNote":null,"rotationFlag":false}]`;
   if(tab==='GRADED') return `Pokemon TCG grading ROI analyst. Find 15 best raw-to-graded opportunities. sig1=scarcity(0-100), sig2=premium(0-100). Respond ONLY in valid JSON array: [{"id":"unique","name":"","number":"","set":"","variant":"","rawPrice":0,"psa10Price":0,"gradingMultiplier":0,"gradingCost":15,"netROI":0,"trend":"up|down|flat","why":"one sentence","pulseScore":0,"sig1":0,"sig2":0}]`;
   return `Pokemon TCG sealed analyst. Find 15 best value sealed products. Include per-pack math. sig1=EV score(0-100), sig2=supply(0-100). Respond ONLY in valid JSON array: [{"id":"unique","name":"","set":"","type":"Booster Box|ETB|Blister|Tin|UPC","sealedPrice":0,"packCount":0,"perPackCost":0,"evPerPack":0,"evRatio":0,"trend":"up|down|flat","why":"one sentence","pulseScore":0,"sig1":0,"sig2":0,"rotationFlag":false}]`;
