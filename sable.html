@@ -494,33 +494,39 @@ input, select {
   appearance: none;
   color-scheme: dark;
   max-width: 90px;
+  text-align: center;
 }
 
 .mode-tog {
-  flex-shrink: 0;
   display: flex;
   background: var(--surface2);
   border: 1px solid var(--border2);
   border-radius: var(--r-sm);
   overflow: hidden;
+  width: 100%;
 }
 .mt-btn {
-  padding: 6px 8px;
+  flex: 1;
+  padding: 10px 0;
   font-family: var(--font-display);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: .04em;
+  letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--muted);
   cursor: pointer;
+  border: none;
   border-right: 1px solid var(--border2);
+  background: transparent;
   transition: all .15s;
+  text-align: center;
   white-space: nowrap;
 }
 .mt-btn:last-child { border-right: none; }
 .mt-btn.on {
   background: var(--accent);
   color: #000;
+  font-weight: 800;
 }
 .mt-btn:not(.on):active { background: var(--surface3); color: var(--text); }
 
