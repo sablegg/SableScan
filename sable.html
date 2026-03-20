@@ -356,9 +356,9 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     <!-- Buy tiers -->
     <div style="padding:8px 12px">
       <div class="buy-tiers">
-        <div class="buy-tier dim" id="tier-strong">✅ STRONG<span class="tier-price" id="tier-strong-price">—</span></div>
-        <div class="buy-tier dim" id="tier-acceptable">🟡 OK<span class="tier-price" id="tier-ok-price">—</span></div>
-        <div class="buy-tier dim" id="tier-pass">🔴 PASS<span class="tier-price" id="tier-pass-price">—</span></div>
+        <div class="buy-tier dim" id="tier-strong" onclick="selectTier('strong')">✅ STRONG<span class="tier-price" id="tier-strong-price">—</span></div>
+        <div class="buy-tier dim" id="tier-acceptable" onclick="selectTier('acceptable')">🟡 OK<span class="tier-price" id="tier-ok-price">—</span></div>
+        <div class="buy-tier dim" id="tier-pass" onclick="selectTier('pass')">🔴 PASS<span class="tier-price" id="tier-pass-price">—</span></div>
       </div>
       <div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.5" id="buy-reasoning"></div>
     </div>
@@ -1200,11 +1200,52 @@ function renderConditions(prices, selectedCond) {
   });
 }
 
+
+function selectTier(tier) {
+  if (!STATE.lastResult) return;
+  const prices = STATE.lastResult.prices || {};
+  const condPrices = prices.ebay || DEMO.scan.prices.ebay;
+  const condPrice = condPrices[STATE.currentCondition] || condPrices.NM || prices.avg || 0;
+  const marginPct = parseInt(document.getElementById('cfg-margin')?.value || '20') / 100;
+  const strong     = condPrice * 0.75;
+  const acceptable = condPrice * (1 - marginPct);
+  const pass       = condPrice * 0.97;
+  const map = { strong: { price: strong, color: 'strong', cls: 'active-g' },
+                acceptable: { price: acceptable, color: 'ok', cls: 'active-y' },
+                pass: { price: pass, color: 'pass', cls: 'active-r' } };
+  const t = map[tier];
+  const bpEl = document.getElementById('buy-price-big');
+  bpEl.textContent = '$' + t.price.toFixed(0);
+  bpEl.className = 'buy-price ' + t.color;
+  ['strong','acceptable','pass'].forEach(id => {
+    document.getElementById('tier-'+id).className = 'buy-tier dim' + (id === tier ? ' ' + map[id].cls : '');
+  });
+}
 function switchCondition(cond) {
   STATE.currentCondition = cond;
   if (!STATE.lastResult) return;
-  const prices = STATE.lastResult.prices?.ebay || DEMO.scan.prices.ebay;
-  renderConditions(prices, cond);
+  const prices = STATE.lastResult.prices || {};
+  const condPrices = prices.ebay || DEMO.scan.prices.ebay;
+  renderConditions(condPrices, cond);
+  // Recalculate and update buy price + tiers for selected condition
+  const condPrice = condPrices[cond] || condPrices.NM || prices.avg || 0;
+  const marginPct = parseInt(document.getElementById('cfg-margin')?.value || '20') / 100;
+  const strong     = condPrice * 0.75;
+  const acceptable = condPrice * (1 - marginPct);
+  const pass       = condPrice * 0.97;
+  const verdict    = STATE.lastResult.verdict || 'acceptable';
+  let priceColor = 'ok', tierClass = 'active-y';
+  if (verdict === 'strong-buy' || verdict === 'strongBuy') { priceColor = 'strong'; tierClass = 'active-g'; }
+  else if (verdict === 'pass') { priceColor = 'pass'; tierClass = 'active-r'; }
+  const displayPrice = tierClass === 'active-g' ? strong : tierClass === 'active-r' ? pass : acceptable;
+  const bpEl = document.getElementById('buy-price-big');
+  bpEl.textContent = '$' + displayPrice.toFixed(0);
+  bpEl.className = 'buy-price ' + priceColor;
+  document.getElementById('tier-strong-price').textContent = '$' + strong.toFixed(0);
+  document.getElementById('tier-ok-price').textContent    = '$' + acceptable.toFixed(0);
+  document.getElementById('tier-pass-price').textContent  = '$' + pass.toFixed(0);
+  // Re-render PSA grid for new condition
+  renderGradeGrid(prices.psaGrades || {}, cond, STATE.psaFee);
 }
 
 function renderVariants(variants) {
