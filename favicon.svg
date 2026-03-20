@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#070709"/>
+  <!-- Diamond gem shape -->
+  <ellipse cx="32" cy="54" rx="14" ry="3" fill="#00d4ff" opacity="0.15"/>
+  <polygon points="32,56 10,28 54,28" fill="#003d44"/>
+  <polygon points="32,56 10,28 21,12" fill="#005a66"/>
+  <polygon points="32,56 54,28 43,12" fill="#004d55"/>
+  <polygon points="21,12 10,28 32,20" fill="#00b8cc"/>
+  <polygon points="43,12 54,28 32,20" fill="#00d4ff"/>
+  <polygon points="21,12 32,7 43,12 32,20" fill="#80f2ff"/>
+  <polygon points="32,20 43,12 54,28 32,28" fill="#00c8dd" opacity="0.75"/>
+  <polygon points="32,20 21,12 10,28 32,28" fill="#009aaa" opacity="0.75"/>
+  <!-- Top sparkle -->
+  <line x1="32" y1="2" x2="32" y2="6" stroke="#80f2ff" stroke-width="2" stroke-linecap="round"/>
+</svg>
