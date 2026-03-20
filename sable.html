@@ -932,6 +932,12 @@ function showPage(id) {
 // SCAN FLOW
 // ═══════════════════════════════════════════════════════════════
 function processFile(file) {
+  // Clear previous result so stale data never bleeds into new scan
+  STATE.lastResult = null;
+  STATE.currentCondition = 'NM';
+  document.getElementById('results-panel').style.display = 'none';
+  document.getElementById('results-panel').classList.remove('fu');
+
   const url = URL.createObjectURL(file);
   const preview = document.getElementById('upload-preview');
   preview.src = url;
