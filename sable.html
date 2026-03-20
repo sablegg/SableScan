@@ -271,9 +271,10 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     <select class="cfg-sel" id="cfg-window"><option value="7">7d avg</option><option value="30" selected>30d avg</option><option value="90">90d avg</option></select>
   </div>
   <div style="padding:0 12px 10px;display:flex;gap:6px">
-    <button id="mode-both" onclick="setMode('both')" style="flex:1;padding:8px 0;background:var(--accent);color:#000;border:none;border-radius:7px;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center">Both</button>
-    <button id="mode-formula" onclick="setMode('formula')" style="flex:1;padding:8px 0;background:var(--surface2);color:var(--muted2);border:1px solid var(--border);border-radius:7px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;text-align:center">Formula</button>
-    <button id="mode-ai" onclick="setMode('ai')" style="flex:1;padding:8px 0;background:var(--surface2);color:var(--muted2);border:1px solid var(--border);border-radius:7px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all .15s;text-align:center">AI</button>
+    <button id="mode-both" onclick="setMode('both')" style="flex:1;padding:8px 0;background:var(--accent);color:#000;border:none;border-radius:7px;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;text-align:center">Both</button>
+    <button id="mode-formula" onclick="setMode('formula')" style="flex:1;padding:8px 0;background:var(--surface2);color:var(--muted2);border:1px solid var(--border);border-radius:7px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;text-align:center">Formula</button>
+    <button id="mode-ai" onclick="setMode('ai')" style="flex:1;padding:8px 0;background:var(--surface2);color:var(--muted2);border:1px solid var(--border);border-radius:7px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;text-align:center">AI</button>
+  </div>
   <div id="loading-panel">
     <div class="load-title"><div class="spinner"></div>Analyzing…</div>
     <div class="load-step" id="step-1"><span class="step-icon">🔍</span>Identifying card…</div>
@@ -1742,7 +1743,6 @@ function syncMode(mode) { setMode(mode); }
 // MISC
 // ═══════════════════════════════════════════════════════════════
 function setMode(mode){STATE.currentMode=mode;['both','formula','ai'].forEach(m=>{const btn=document.getElementById('mode-'+m);if(m===mode){btn.style.background='var(--accent)';btn.style.color='#000';btn.style.border='none';btn.style.fontWeight='600';}else{btn.style.background='var(--surface2)';btn.style.color='var(--muted2)';btn.style.border='1px solid var(--border)';btn.style.fontWeight='400';}});}
-}
 
 function togglePanel(id) {
   const el = document.getElementById(id);
