@@ -946,6 +946,79 @@ function checkScanAllowed() {
   return {allowed:true};
 }
 
+
+function normalizeApiResponse(d) {
+  // Normalize priceHistory keys: sevenDay→7d, thirtyDay→30d, ninetyDay→90d
+  if (d.priceHistory) {
+    d.priceHistory['7d']  = d.priceHistory['7d']  || d.priceHistory.sevenDay  || [];
+    d.priceHistory['30d'] = d.priceHistory['30d'] || d.priceHistory.thirtyDay || [];
+    d.priceHistory['90d'] = d.priceHistory['90d'] || d.priceHistory.ninetyDay || [];
+  } else {
+    d.priceHistory = {'7d':[],'30d':[],'90d':[]};
+  }
+
+  // Normalize psaGrades: psa10→10, psa9→9 etc
+  if (d.psaGrades) {
+    const pg = {};
+    [10,9,8,7,6].forEach(g => {
+      pg[g] = d.psaGrades[g] || d.psaGrades['psa'+g] || null;
+    });
+    if (!d.prices) d.prices = {};
+    d.prices.psaGrades = pg;
+  }
+
+  // Normalize prices structure
+  if (!d.prices) d.prices = {};
+  if (!d.prices.ebay && d.marketPrice) {
+    d.prices.ebay = { NM: d.marketPrice, LP: d.marketPrice*0.72, MP: d.marketPrice*0.57, HP: d.marketPrice*0.42, DMG: d.marketPrice*0.36 };
+  }
+  d.prices.avg   = d.prices.avg   || d.avg   || d.marketPrice || 0;
+  d.prices.low   = d.prices.low   || d.low   || 0;
+  d.prices.high  = d.prices.high  || d.high  || 0;
+  d.prices.avg1d = d.prices.avg1d || d.prices.avg || 0;
+  d.prices.avg7d = d.prices.avg7d || d.prices.avg || 0;
+  d.prices.avg30d= d.prices.avg30d|| d.prices.avg || 0;
+  d.prices.saleCount = d.prices.saleCount || 0;
+
+  // Normalize trendScore from trend string
+  if (!d.trendScore) {
+    const tmap = { rising:0.75, up:0.75, stable:0.5, flat:0.5, falling:0.25, down:0.25, softening:0.25 };
+    d.trendScore = tmap[(d.trend||'').toLowerCase()] ?? 0.5;
+  }
+  if (!d.liquidityScore) d.liquidityScore = 0.5;
+
+  // Normalize verdict from gradingFlag / trend
+  if (!d.verdict) {
+    if (d.trendScore > 0.65)       d.verdict = 'strong-buy';
+    else if (d.trendScore < 0.35)  d.verdict = 'pass';
+    else                           d.verdict = 'acceptable';
+  }
+
+  // Normalize buyTargets from maxPay
+  if (!d.buyTargets) {
+    const nm = d.prices.ebay?.NM || d.prices.avg || 0;
+    d.buyTargets = {
+      strongBuy:  d.maxPay ? d.maxPay * 0.88 : nm * 0.75,
+      acceptable: d.maxPay || nm * 0.80,
+      pass:       nm * 0.97
+    };
+  }
+
+  // Normalize card image
+  if (!d.card) d.card = {};
+  if (!d.card.imageUrl && d.claudeData) {
+    d.card = Object.assign({}, d.claudeData, d.card);
+  }
+
+  // Normalize variants
+  if (!d.variants || !d.variants.length) {
+    const nm = d.prices.ebay?.NM || d.prices.avg || 0;
+    d.variants = [{ label: d.card?.variant || 'Standard', condition:'NM', price: nm, active: true }];
+  }
+
+  return d;
+}
+
 async function startScan(file, textOnly) {
   const check = checkScanAllowed();
   if (!check.allowed) { showToast(check.reason); return; }
