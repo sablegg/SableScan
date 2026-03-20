@@ -1741,7 +1741,7 @@ function syncMode(mode) { setMode(mode); }
 // ═══════════════════════════════════════════════════════════════
 // MISC
 // ═══════════════════════════════════════════════════════════════
-function setMode(mode){STATE.currentMode=mode;['both','formula','ai'].forEach(m=>{const btn=document.getElementById('mode-'+m);if(m===mode){btn.style.background='var(--accent)';btn.style.color='#000';btn.style.border='none';btn.style.fontWeight='600';}else{btn.style.background='var(--surface2)';btn.style.color='var(--muted2)';btn.style.border='1px solid var(--border)';btn.style.fontWeight='400';}});});
+function setMode(mode){STATE.currentMode=mode;['both','formula','ai'].forEach(m=>{const btn=document.getElementById('mode-'+m);if(m===mode){btn.style.background='var(--accent)';btn.style.color='#000';btn.style.border='none';btn.style.fontWeight='600';}else{btn.style.background='var(--surface2)';btn.style.color='var(--muted2)';btn.style.border='1px solid var(--border)';btn.style.fontWeight='400';}});}
 }
 
 function togglePanel(id) {
