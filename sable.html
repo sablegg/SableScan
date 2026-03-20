@@ -1168,7 +1168,7 @@ function populateResults(data) {
   }
 
   // Condition & prices
-  const condPrices = prices.ebay || prices.nm ? {NM:prices.ebay?.NM||prices.nm, LP:prices.ebay?.LP||prices.lp, MP:prices.ebay?.MP||prices.mp, HP:prices.ebay?.HP||prices.hp, DMG:prices.ebay?.DMG||prices.dmg} : prices.ebay || DEMO.scan.prices.ebay;
+  const condPrices = (prices.ebay && prices.ebay.NM) ? prices.ebay : DEMO.scan.prices.ebay;
   renderConditions(condPrices, STATE.currentCondition);
 
   // Variants
@@ -1179,9 +1179,9 @@ function populateResults(data) {
   const nmPrice = condPrices.NM || prices.avg || 0;
   const condPrice = condPrices[condition] || nmPrice;
 
-  const strong = targets.strongBuy || condPrice * 0.80;
-  const acceptable = targets.acceptable || condPrice * 0.90;
-  const pass = targets.pass || condPrice * 0.97;
+  const strong     = targets.strongBuy  || data.maxPay * 0.88 || condPrice * 0.75;
+  const acceptable = targets.acceptable || data.maxPay          || condPrice * 0.80;
+  const pass       = targets.pass       || condPrice * 0.97;
 
   const verdict = data.verdict || 'acceptable';
   let priceColor = 'ok', tierClass = 'active-y', tierText = '🟡 ACCEPTABLE';
