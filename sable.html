@@ -300,9 +300,9 @@ position:relative;overflow:hidden;
 <nav id="nav">
   <button class="nb on" onclick="showPage('scan')" id="nav-scan"><span class="nb-icon">📷</span><span class="nb-label">Scan</span></button>
   <button class="nb" onclick="showPage('market')" id="nav-market"><span class="nb-icon">📊</span><span class="nb-label">Market</span></button>
-  <button class="nb" onclick="showPage('research')" id="nav-research"><span class="nb-icon">ðŸ”</span><span class="nb-label">Research</span></button>
+  <button class="nb" onclick="showPage('research')" id="nav-research"><span class="nb-icon">🔍</span><span class="nb-label">Research</span></button>
   <button class="nb" onclick="showPage('sell')" id="nav-sell"><span class="nb-icon">💰</span><span class="nb-label">Sell</span></button>
-  <button class="nb" onclick="showPage('collection')" id="nav-collection"><span class="nb-icon">ðŸ“</span><span class="nb-label">Collect</span></button>
+  <button class="nb" onclick="showPage('collection')" id="nav-collection"><span class="nb-icon">📁</span><span class="nb-label">Collect</span></button>
   <button class="nb" onclick="showPage('sets')" id="nav-sets"><span class="nb-icon">🗂️</span><span class="nb-label">Sets</span></button>
   <button class="nb" onclick="showPage('tools')" id="nav-tools"><span class="nb-icon">✦</span><span class="nb-label">Sable</span></button>
 </nav>
@@ -332,10 +332,10 @@ position:relative;overflow:hidden;
   </div>
   <div id="loading-panel">
     <div class="load-title"><div class="spinner"></div>Analyzing…</div>
-    <div class="load-step" id="step-1"><span class="step-icon">ðŸ”</span>Identifying card…</div>
+    <div class="load-step" id="step-1"><span class="step-icon">🔍</span>Identifying card…</div>
     <div class="load-step" id="step-2"><span class="step-icon">📡</span>Fetching PokeTrace prices…</div>
     <div class="load-step" id="step-3"><span class="step-icon">💎</span>Loading card data…</div>
-    <div class="load-step" id="step-4"><span class="step-icon">ðŸ“</span>Calculating buy targets…</div>
+    <div class="load-step" id="step-4"><span class="step-icon">📐</span>Calculating buy targets…</div>
     <div class="load-step" id="step-5"><span class="step-icon">🤖</span>Claude AI evaluation…</div>
   </div>
   <div id="results-panel">
@@ -489,7 +489,7 @@ position:relative;overflow:hidden;
       </div>
     </div>
     <div class="card">
-      <div class="ct">ðŸŒ US vs EU Arbitrage (NM)</div>
+      <div class="ct">🌐 US vs EU Arbitrage (NM)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div class="arb-cell"><div class="arb-label">US MARKET</div><div class="arb-price" id="arb-us">—</div><div style="font-size:10px;color:var(--muted)">eBay/TCGPlayer</div></div>
         <div class="arb-cell"><div class="arb-label">EU MARKET</div><div class="arb-price" id="arb-eu">—</div><div style="font-size:10px;color:var(--muted)">CardMarket</div></div>
@@ -509,7 +509,7 @@ position:relative;overflow:hidden;
       <div style="font-size:11px;color:var(--muted2);line-height:1.5" id="anomaly-text">—</div>
     </div>
     <div class="card">
-      <div class="ct">ðŸ† Grading Intelligence</div>
+      <div class="ct">🏆 Grading Intelligence</div>
       <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
         <div><div style="font-size:9px;color:var(--muted)">PSA10/PSA9 ratio</div><div style="font-family:'Bebas Neue',sans-serif;font-size:22px" id="scarcity-ratio">—</div></div>
         <div style="flex:1;font-size:11px;color:var(--muted2);line-height:1.4" id="scarcity-text">—</div>
@@ -635,7 +635,7 @@ position:relative;overflow:hidden;
   </div>
   <div id="collection-list">
     <div id="col-empty" style="text-align:center;padding:40px 20px;color:var(--muted)">
-      <div style="font-size:32px;margin-bottom:8px">ðŸ“</div>
+      <div style="font-size:32px;margin-bottom:8px">📁</div>
       <div style="font-size:13px">Your collection is empty</div>
       <div style="font-size:11px;margin-top:4px">Scan a card then tap "+ Collect"</div>
     </div>
