@@ -267,7 +267,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
   </div>
   <div class="cfg-strip">
     <select class="cfg-sel" id="cfg-sales"><option value="5">5 sales</option><option value="10" selected>10 sales</option><option value="20">20 sales</option><option value="30">30 sales</option></select>
-    <select class="cfg-sel" id="cfg-margin"><option value="10">10% margin</option><option value="15" selected>15% margin</option><option value="20">20% margin</option><option value="25">25% margin</option></select>
+    <select class="cfg-sel" id="cfg-margin" onchange="recalcBuyPrice()"><option value="10">10% margin</option><option value="15" selected>15% margin</option><option value="20">20% margin</option><option value="25">25% margin</option><option value="30">30% margin</option><option value="35">35% margin</option></select>
     <select class="cfg-sel" id="cfg-window"><option value="7">7d avg</option><option value="30" selected>30d avg</option><option value="90">90d avg</option></select>
   </div>
   <div style="padding:0 12px 10px;display:flex;gap:6px">
@@ -1148,6 +1148,9 @@ function populateResults(data) {
   document.getElementById('result-name').textContent = card.name || '—';
   document.getElementById('result-set').textContent = (card.set || '') + (card.number ? ' · #' + card.number : '');
   document.getElementById('result-rarity').textContent = card.rarity || '';
+  const marginVal = document.getElementById('cfg-margin').value;
+  const md = document.getElementById('margin-display');
+  if (md) md.textContent = marginVal + '%';
   const variantEl = document.getElementById('result-variant');
   const variantDisplay = {
     'Holofoil': 'Holo', 'Reverse_Holofoil': 'Reverse Holo',
@@ -1297,6 +1300,50 @@ function renderConditions(prices, selectedCond) {
 }
 
 
+
+function recalcBuyPrice() {
+  if (!STATE.lastResult) return;
+  const prices = STATE.lastResult.prices || {};
+  const condPrices = (prices.ebay && Object.values(prices.ebay).some(v => v !== null)) ? prices.ebay : {};
+  const condPrice = condPrices[STATE.currentCondition] || condPrices.NM || prices.avg || 0;
+  const marginPct = parseInt(document.getElementById('cfg-margin').value) / 100;
+  const strong     = condPrice * 0.75;
+  const acceptable = condPrice * (1 - marginPct);
+  const pass       = condPrice * 0.97;
+  const verdict    = STATE.lastResult.verdict || 'acceptable';
+  let priceColor = 'ok', tierClass = 'active-y';
+  if (verdict === 'strong-buy' || verdict === 'strongBuy') { priceColor = 'strong'; tierClass = 'active-g'; }
+  else if (verdict === 'pass') { priceColor = 'pass'; tierClass = 'active-r'; }
+  const displayPrice = tierClass === 'active-g' ? strong : tierClass === 'active-r' ? pass : acceptable;
+  const bpEl = document.getElementById('buy-price-big');
+  if (bpEl) { bpEl.textContent = '$' + displayPrice.toFixed(0); bpEl.className = 'buy-price ' + priceColor; }
+  const tsp = document.getElementById('tier-strong-price');
+  const top = document.getElementById('tier-ok-price');
+  const tpp = document.getElementById('tier-pass-price');
+  if (tsp) tsp.textContent = '$' + strong.toFixed(0);
+  if (top) top.textContent = '$' + acceptable.toFixed(0);
+  if (tpp) tpp.textContent = '$' + pass.toFixed(0);
+  const md = document.getElementById('margin-display');
+  if (md) md.textContent = Math.round(marginPct * 100) + '%';
+}
+
+function nudgeMargin(delta) {
+  const sel = document.getElementById('cfg-margin');
+  const current = parseInt(sel.value);
+  const newVal = Math.min(50, Math.max(5, current + delta));
+  // Update or add option if not present
+  let found = false;
+  for (let i = 0; i < sel.options.length; i++) {
+    if (parseInt(sel.options[i].value) === newVal) { sel.selectedIndex = i; found = true; break; }
+  }
+  if (!found) {
+    const opt = document.createElement('option');
+    opt.value = newVal; opt.text = newVal + '% margin'; opt.selected = true;
+    sel.add(opt);
+  }
+  recalcBuyPrice();
+}
+
 function selectTier(tier) {
   if (!STATE.lastResult) return;
   const prices = STATE.lastResult.prices || {};
@@ -1342,6 +1389,7 @@ function switchCondition(cond) {
   document.getElementById('tier-pass-price').textContent  = '$' + pass.toFixed(0);
   // Re-render PSA grid for new condition
   renderGradeGrid(prices.psaGrades || {}, cond, STATE.psaFee);
+  recalcBuyPrice();
 }
 
 function renderVariants(variants) {
