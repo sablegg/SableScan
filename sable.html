@@ -1191,7 +1191,7 @@ function populateResults(data) {
   }
 
   // Condition & prices
-  const condPrices = (prices.ebay && prices.ebay.NM) ? prices.ebay : DEMO.scan.prices.ebay;
+  const condPrices = (prices.ebay && Object.values(prices.ebay).some(v => v !== null)) ? prices.ebay : {};
   renderConditions(condPrices, STATE.currentCondition);
 
   // Variants
