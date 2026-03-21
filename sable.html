@@ -1149,8 +1149,18 @@ function populateResults(data) {
   document.getElementById('result-set').textContent = (card.set || '') + (card.number ? ' · #' + card.number : '');
   document.getElementById('result-rarity').textContent = card.rarity || '';
   const variantEl = document.getElementById('result-variant');
-  if (card.variant && card.variant !== 'Normal') {
-    variantEl.textContent = card.variant;
+  const variantDisplay = {
+    'Holofoil': 'Holo', 'Reverse_Holofoil': 'Reverse Holo',
+    'Holo': 'Holo', 'Reverse Holo': 'Reverse Holo',
+    'IR': 'IR', 'SAR': 'SAR', 'Alt Art': 'Alt Art',
+    'Rainbow Rare': 'Rainbow', 'Hyper Rare': 'Hyper Rare',
+    'Full Art': 'Full Art', 'Full Art Trainer': 'Full Art',
+    'Shiny Vault': 'Shiny', 'Trainer Gallery': 'TG',
+    '1st_Edition': '1st Ed', '1st_Edition_Holofoil': '1st Ed Holo',
+  };
+  const variantLabel = variantDisplay[card.variant] || (card.variant !== 'Normal' ? card.variant : null);
+  if (variantLabel) {
+    variantEl.textContent = variantLabel;
     variantEl.style.display = 'inline-block';
   } else {
     variantEl.style.display = 'none';
