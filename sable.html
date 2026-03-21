@@ -1332,6 +1332,16 @@ function recalcBuyPrice() {
   if (tpp) tpp.textContent = '$' + pass.toFixed(0);
   const md = document.getElementById('margin-display');
   if (md) md.textContent = Math.round(marginPct * 100) + '%';
+  // Re-render condition bars with updated margin reflected in buy highlight
+  renderConditions(condPrices, STATE.currentCondition);
+  // Update tier badge active state
+  ['strong','acceptable','pass'].forEach(t => {
+    const el = document.getElementById('tier-'+t);
+    if (el) el.className = 'buy-tier dim';
+  });
+  const activeId = verdict === 'strong-buy' || verdict === 'strongBuy' ? 'tier-strong' : verdict === 'pass' ? 'tier-pass' : 'tier-acceptable';
+  const activeEl = document.getElementById(activeId);
+  if (activeEl) activeEl.className = 'buy-tier ' + tierClass;
 }
 
 function nudgeMargin(delta) {
