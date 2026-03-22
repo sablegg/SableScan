@@ -1,628 +1,446 @@
-<!DOCTYPE html>
-
-<html lang="en">
+<!doctype html>
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Sable — Mark</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#0a0a0d;--surface:#13131a;--surface2:#1a1a24;--surface3:#1f1f2e;
-  --border:#252535;--accent:#7c6aff;--green:#4ade80;--text:#f0f0f8;
-  --muted:#5a5a72;--danger:#ff4d6d;--gold:#f5c842;--orange:#fb923c;
-  --cNM:#4ade80;--cLP:#facc15;--cMP:#fb923c;--cHP:#f87171;--cDMG:#9b9baf;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;}
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
-.phone{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
-
-/* ANALYZE ALL */
-.analyze-all-btn{background:linear-gradient(135deg,var(--accent),#4ade80);border:none;border-radius:10px;color:white;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;padding:7px 12px;cursor:pointer;transition:opacity .2s,transform .1s;display:flex;align-items:center;gap:5px;flex-shrink:0;}
-.analyze-all-btn:active{transform:scale(.95);}
-.analyze-all-btn.loading{opacity:.6;pointer-events:none;}
-.analyze-all-cost{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-align:center;padding:2px 0 6px;letter-spacing:.5px;}
-
-/* PRICE TARGET GRAPH */
-.price-graph{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
-.graph-track-wrap{position:relative;height:36px;display:flex;align-items:center;}
-.graph-track{width:100%;height:6px;background:var(--surface);border-radius:3px;position:relative;}
-.graph-zone-hold{position:absolute;height:100%;background:rgba(245,200,66,.18);border-radius:3px;}
-.graph-zone-sell{position:absolute;height:100%;background:rgba(74,222,128,.18);border-radius:3px;}
-.graph-zone-quick{position:absolute;height:100%;background:rgba(124,106,255,.18);border-radius:3px;}
-.graph-marker{position:absolute;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;border:2px solid var(--bg);}
-.graph-marker.paid{background:var(--muted);}
-.graph-marker.market{background:var(--gold);}
-.graph-marker.target{background:var(--green);width:14px;height:14px;box-shadow:0 0 8px rgba(74,222,128,.5);}
-.graph-marker.current{background:var(--accent);}
-.graph-labels{display:flex;justify-content:space-between;}
-.graph-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
-.graph-legend{display:flex;gap:10px;flex-wrap:wrap;}
-.legend-item{display:flex;align-items:center;gap:4px;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
-.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-
-/* NAV */
-.top-nav{display:flex;align-items:center;background:var(--surface);border-bottom:1px solid var(--border);padding:13px 18px;flex-shrink:0;gap:10px;}
-.back-btn{background:none;border:none;cursor:pointer;color:var(--accent);display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:0;transition:opacity .2s;}
-.back-btn:hover{opacity:.7;}
-.nav-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--text);flex:1;text-align:right;}
-
-/* SCROLL */
-.scrollbody{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;padding-bottom:24px;}
-.scrollbody::-webkit-scrollbar{width:3px;}
-.scrollbody::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-
-/* SESSION LABEL */
-.session-label{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2.5px;color:var(--muted);padding:4px 2px 2px;}
-
-/* MARK CARD */
-.mark-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:visible;transition:border-color .2s;margin-bottom:2px;}
-.mark-card.has-signal-buy-more{border-color:rgba(74,222,128,.3);}
-.mark-card.has-signal-sell    {border-color:rgba(245,200,66,.3);}
-.mark-card.has-signal-sell-now{border-color:rgba(255,77,109,.3);}
-
-/* MAIN ROW */
-.mark-main{padding:16px 16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;}
-
-.mark-top{display:flex;align-items:center;gap:8px;}
-.mark-name{font-size:17px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-
-/* STICKER BOXES */
-.sticker-row{display:flex;gap:8px;align-items:stretch;}
-.sticker-box{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column;gap:2px;transition:border-color .2s,background .3s;}
-.sticker-lbl{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--muted);}
-.sticker-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;color:var(--text);line-height:1;}
-.sticker-box.ai-box{cursor:pointer;border-color:var(--accent);border-style:dashed;background:rgba(124,106,255,.08);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-.sticker-box.ai-box .sticker-lbl{color:var(--accent);}
-.sticker-box.ai-box .sticker-val{color:var(--accent);font-weight:700;text-align:center;}
-.sticker-box.ai-box.loaded .sticker-val{color:var(--green);font-weight:700;text-align:center;}
-.sticker-box.ai-box.loaded{border-style:solid;border-color:var(--green);background:rgba(74,222,128,.08);}
-.sticker-box.ai-box .sticker-lbl{text-align:center;}
-/* Signal flash animations */
-.sticker-box.flash-buy-more  {animation:flashBuy  .8s ease forwards;}
-.sticker-box.flash-sell      {animation:flashSell .8s ease forwards;}
-.sticker-box.flash-sell-now  {animation:flashNow  .8s ease forwards;}
-@keyframes flashBuy {
-0%  {background:rgba(74,222,128,.7);border-color:var(--green);}
-60% {background:rgba(74,222,128,.25);border-color:var(--green);}
-100%{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.5);}
-}
-@keyframes flashSell {
-0%  {background:rgba(245,200,66,.7);border-color:var(--gold);}
-60% {background:rgba(245,200,66,.25);border-color:var(--gold);}
-100%{background:rgba(245,200,66,.1);border-color:rgba(245,200,66,.5);}
-}
-@keyframes flashNow {
-0%  {background:rgba(255,77,109,.7);border-color:var(--danger);}
-60% {background:rgba(255,77,109,.25);border-color:var(--danger);}
-100%{background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.5);}
-}
-.ai-spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--surface2);}
-@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-
-/* PRICE ROW (keep for compat) */
-.mark-price-row{display:flex;align-items:center;gap:0;}
-.cond-pill{border:none;border-radius:6px;padding:5px 10px;font-family:'DM Mono',monospace;font-size:13px;font-weight:600;flex-shrink:0;pointer-events:none;}
-.cond-NM{background:rgba(74,222,128,.15);color:var(--cNM);}
-.cond-LP{background:rgba(250,204,21,.15);color:var(--cLP);}
-.cond-MP{background:rgba(251,146,60,.15);color:var(--cMP);}
-.cond-HP{background:rgba(248,113,113,.15);color:var(--cHP);}
-.cond-DMG{background:rgba(155,155,175,.12);color:var(--cDMG);}
-
-.price-sep{color:var(--border);padding:0 8px;font-size:12px;}
-
-.paid-block{display:flex;flex-direction:column;gap:1px;}
-.paid-lbl{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--muted);}
-.paid-val{font-family:'DM Mono',monospace;font-size:17px;color:var(--text);}
-
-.trend-arrow{font-size:24px;padding:0 8px;flex-shrink:0;}
-.trend-up{color:var(--green);}
-.trend-down{color:var(--danger);}
-.trend-flat{color:var(--muted);}
-
-.mark-block{display:flex;flex-direction:column;gap:1px;flex-shrink:0;}
-.mark-lbl{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--muted);}
-.mark-input-wrap{display:flex;align-items:baseline;gap:3px;}
-.mark-input{background:none;border:none;border-bottom:1px solid var(--border);color:var(--green);font-family:'DM Mono',monospace;font-size:19px;font-weight:500;width:80px;outline:none;padding:2px 0;transition:border-color .2s;text-align:right;}
-.mark-input:focus{border-color:var(--green);}
-.mark-input::placeholder{color:var(--muted);font-size:14px;}
-.mark-pct{font-family:'DM Mono',monospace;font-size:15px;margin-left:4px;}
-.mark-pct.pos{color:var(--green);}
-.mark-pct.neg{color:var(--danger);}
-.mark-pct.zero{color:var(--muted);}
-
-/* SIGNAL ROW */
-.signal-row{display:flex;align-items:center;justify-content:space-between;min-height:32px;}
-.signal-badges{display:flex;gap:6px;align-items:center;}
-.signal-badge{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;padding:6px 16px;border-radius:20px;border:1.5px solid transparent;display:none;transition:opacity .2s;}
-.signal-badge.buy-more  {color:var(--green); border-color:var(--green); background:rgba(74,222,128,.1);}
-.signal-badge.sell      {color:var(--gold);  border-color:var(--gold);  background:rgba(245,200,66,.1);}
-.signal-badge.sell-now  {color:var(--danger);border-color:var(--danger);background:rgba(255,77,109,.1);}
-.signal-badge.active     {display:inline-flex;}
-
-.ai-btn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;padding:5px 10px;cursor:pointer;transition:border-color .2s,color .2s,background .2s;display:flex;align-items:center;gap:5px;flex-shrink:0;}
-.ai-btn:hover{border-color:var(--accent);color:var(--accent);}
-.ai-btn.loading{border-color:var(--accent);color:var(--accent);animation:pulseBorder 1s ease infinite;}
-.ai-btn.done{border-color:var(--accent);background:rgba(124,106,255,.1);color:var(--accent);}
-@keyframes pulseBorder{0%,100%{opacity:1;}50%{opacity:.4;}}
-
-/* AI REASONING PANEL */
-.ai-panel{max-height:0;overflow:hidden;transition:max-height .35s ease;background:var(--surface2);border-radius:0 0 14px 14px;}
-.ai-panel.open{max-height:280px;border-top:1px solid var(--border);}
-.ai-inner{padding:14px;}
-.ai-reasoning{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);line-height:1.6;margin-bottom:10px;}
-.ai-data-row{display:flex;gap:8px;flex-wrap:wrap;}
-.ai-chip{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;flex-direction:column;gap:1px;flex:1;min-width:80px;}
-.ai-chip-lbl{font-family:'Bebas Neue',sans-serif;font-size:9px;letter-spacing:2px;color:var(--muted);}
-.ai-chip-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--text);}
-.ai-apply-btn{width:100%;margin-top:10px;padding:9px;background:var(--accent);border:none;border-radius:10px;color:white;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;cursor:pointer;transition:opacity .2s;}
-.ai-apply-btn:hover{opacity:.85;}
-
-/* LOADING SKELETON */
-.skeleton{background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:4px;height:12px;}
-@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
-</style>
-
+<title>Untitled Document</title>
 </head>
+
 <body>
-<div class="phone">
-  <div class="top-nav">
-    <button class="back-btn">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      Receipt
-    </button>
-    <div class="nav-title">MARK</div>
-    <button class="analyze-all-btn" id="analyzeAllBtn" onclick="analyzeAll()">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-      ALL
-    </button>
-  </div>
-  <div class="analyze-all-cost" id="analyzeAllCost">~$0.01 for all cards</div>
-  <div class="scrollbody" id="markBody"></div>
+<div>&lt;!DOCTYPE html&gt;</div>
+<div><br>
 </div>
-
-<script>
-const session = {
-  title: 'Amazing Buyer',
-  date: new Date().toISOString(),
-  cards: [
-    {id:1, name:'Charizard ex',   number:'199/165', cond:'NM', paid:38.40, market:48.00, mark:null, trend:'up'},
-    {id:2, name:'Pikachu VMAX',   number:'044/185', cond:'NM', paid:17.60, market:22.00, mark:null, trend:'flat'},
-    {id:3, name:'Umbreon VMAX',   number:'215/264', cond:'LP', paid:24.32, market:30.00, mark:null, trend:'up'},
-    {id:4, name:'Rayquaza VSTAR', number:'111/189', cond:'NM', paid:12.00, market:15.00, mark:null, trend:'down'},
-    {id:5, name:'Lugia V',        number:'186/195', cond:'NM', paid:22.00, market:28.00, mark:null, trend:'up'},
-  ]
-};
-
-// Init mark to market price
-session.cards.forEach(c => { if (c.mark == null) c.mark = c.market; });
-
-const aiData = {};
-let openAiId = null;
-
-// ── HELPERS ───────────────────────────────────
-function profitPct(paid, mark) {
-  if (!mark || !paid) return null;
-  return ((mark - paid) / paid * 100);
-}
-function signalKey(s) { return s.toLowerCase().replace(/ /g, '-'); }
-function signalLabel(s) { return s; }
-
-// ── NUDGE MARK ────────────────────────────────
-function nudgeMark(id, delta) {
-  const c = session.cards.find(x => x.id === id); if (!c) return;
-  c.mark = Math.max(0, c.mark + delta);
-  const el = document.getElementById('markinput-' + id);
-  if (el) el.textContent = '$' + c.mark.toFixed(2);
-  const pct = profitPct(c.paid, c.mark);
-  const pctEl = document.getElementById('pct-' + id);
-  if (pctEl) {
-    pctEl.textContent = pct != null ? (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%' : '';
-    pctEl.className = 'mark-pct ' + (pct == null ? 'zero' : pct > 0 ? 'pos' : 'neg');
-  }
-}
-
-// ── TOGGLE AI PANEL ───────────────────────────
-function toggleAiPanel(id) {
-  openAiId = openAiId === id ? null : id;
-  const panel = document.getElementById('aipanel-' + id);
-  if (panel) panel.classList.toggle('open', openAiId === id);
-}
-
-// ── ANALYZE ALL ───────────────────────────────
-async function analyzeAll() {
-  const btn = document.getElementById('analyzeAllBtn');
-  btn.classList.add('loading');
-  btn.innerHTML = '⟳ Analyzing…';
-  for (const c of session.cards) {
-    if (!aiData[c.id]) {
-      await getAiAdvice(c.id);
-      await new Promise(r => setTimeout(r, 300));
-    }
-  }
-  btn.classList.remove('loading');
-  btn.innerHTML = '✦ All Done';
-  try { navigator.vibrate([10,30,20]); } catch(e) {}
-}
-
-// ── GET AI ADVICE ─────────────────────────────
-async function getAiAdvice(id) {
-  const c = session.cards.find(x => x.id === id); if (!c) return;
-  if (aiData[id]) { toggleAiPanel(id); return; }
-
-  // Show spinner in AI box
-  const aiBox = document.getElementById('aibox-' + id);
-  const aiVal = document.getElementById('aival-' + id);
-  if (aiVal) aiVal.textContent = '…';
-  if (aiBox) {
-    const spin = document.createElement('div');
-    spin.className = 'ai-spinner';
-    spin.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>';
-    aiBox.appendChild(spin);
-  }
-  // Skeleton panel
-  const panel = document.getElementById('aipanel-' + id);
-  if (panel) {
-    panel.classList.add('open');
-    const sk = document.createElement('div');
-    sk.className = 'ai-inner';
-    sk.innerHTML = '<div class="skeleton" style="width:90%;margin-bottom:8px"></div><div class="skeleton" style="width:70%;margin-bottom:8px"></div><div class="skeleton" style="width:80%"></div>';
-    panel.innerHTML = '';
-    panel.appendChild(sk);
-  }
-
-  try {
-    const prompt = `You are a Pokemon TCG reseller pricing expert. Give sharp practical advice.
-
-Card: ${c.name} (${c.number})
-Condition: ${c.cond}
-Paid: $${c.paid.toFixed(2)}
-Market NM price: $${c.market.toFixed(2)}
-Market trend: ${c.trend}
-Current ask: $${c.mark.toFixed(2)}
-
-Provide:
-1. Recommended ask price (to nearest $0.50)
-2. Signal: BUY MORE (undervalued, stack more), SELL (list normally), SELL NOW (move fast)
-3. Reasoning (2 sentences max)
-4. Round UP or DOWN with brief reason
-5. Sales velocity and confidence
-6. Grading flag: if this NM card could be worth significantly more graded (PSA 9/10), flag it
-
-Respond ONLY in valid JSON:
-{"recommendedPrice":0,"signal":"SELL","reasoning":"","roundDirection":"up","roundReason":"","salesVelocity":"medium","priceConfidence":"medium","gradingFlag":false,"gradingNote":""}`;
-
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 400,
-        messages: [{role:'user', content: prompt}]
-      })
-    });
-    const data = await res.json();
-    const text = (data.content?.[0]?.text || '').replace(/```json|```/g,'').trim();
-    const result = JSON.parse(text);
-    aiData[id] = result;
-
-    // Update AI box
-    if (aiBox) {
-      aiBox.querySelector('.ai-spinner')?.remove();
-      aiBox.classList.add('loaded');
-      const sk2 = signalKey(result.signal);
-      aiBox.classList.remove('flash-buy-more','flash-sell','flash-sell-now');
-      void aiBox.offsetWidth;
-      aiBox.classList.add('flash-' + sk2);
-      setTimeout(() => aiBox.classList.remove('flash-' + sk2), 900);
-    }
-    if (aiVal) aiVal.textContent = '$' + result.recommendedPrice.toFixed(2);
-
-    // Update signal badge — show only matching
-    ['buy-more','sell','sell-now'].forEach(s => {
-      const badge = document.getElementById('sig-' + s + '-' + id);
-      if (badge) badge.classList.toggle('active', s === signalKey(result.signal));
-    });
-
-    // Update card border
-    const card = document.getElementById('markcard-' + id);
-    if (card) card.className = 'mark-card has-signal-' + signalKey(result.signal);
-
-    // Grade badge
-    if (result.gradingFlag) {
-      const gb = document.getElementById('gradebadge-' + id);
-      if (gb) gb.style.display = 'flex';
-    }
-
-    // Show reasoning button
-    const aiBtn = document.getElementById('aibtn-' + id);
-    if (aiBtn) { aiBtn.style.display = 'flex'; aiBtn.textContent = '✦ ' + result.signal + ' · reasoning'; }
-
-    // Render full reasoning panel
-    renderAiPanel(id, result, c);
-
-  } catch(e) {
-    console.warn('AI error:', e);
-    if (aiBox) aiBox.querySelector('.ai-spinner')?.remove();
-    if (aiVal) aiVal.textContent = 'err';
-    if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; }
-  }
-}
-
-// ── RENDER AI PANEL ───────────────────────────
-function renderAiPanel(id, result, c) {
-  const panel = document.getElementById('aipanel-' + id);
-  if (!panel) return;
-  panel.innerHTML = '';
-  const inner = document.createElement('div');
-  inner.className = 'ai-inner';
-
-  // Reasoning
-  const reason = document.createElement('div');
-  reason.className = 'ai-reasoning';
-  reason.textContent = result.reasoning;
-  inner.appendChild(reason);
-
-  // Data chips
-  const chips = document.createElement('div');
-  chips.className = 'ai-data-row';
-  [
-    ['SUGGESTED', '$' + result.recommendedPrice.toFixed(2)],
-    ['ROUND', result.roundDirection.toUpperCase()],
-    ['VELOCITY', result.salesVelocity.toUpperCase()],
-    ['CONFIDENCE', result.priceConfidence.toUpperCase()],
-  ].forEach(([lbl, val]) => {
-    const chip = document.createElement('div');
-    chip.className = 'ai-chip';
-    chip.innerHTML = '<div class="ai-chip-lbl">' + lbl + '</div><div class="ai-chip-val">' + val + '</div>';
-    chips.appendChild(chip);
-  });
-  inner.appendChild(chips);
-
-  // Round reason
-  if (result.roundReason) {
-    const rr = document.createElement('div');
-    rr.style.cssText = 'font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5;';
-    rr.textContent = result.roundReason;
-    inner.appendChild(rr);
-  }
-
-  // Grading flag
-  if (result.gradingFlag && result.gradingNote) {
-    const gf = document.createElement('div');
-    gf.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:8px 10px;background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.3);border-radius:8px;';
-    const gIcon = document.createElement('span'); gIcon.textContent = '🏆'; gIcon.style.fontSize = '16px';
-    const gBody = document.createElement('div');
-    const gTitle = document.createElement('div');
-    gTitle.style.cssText = 'font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:2px;';
-    gTitle.textContent = 'GRADE THIS CARD';
-    const gNote = document.createElement('div');
-    gNote.style.cssText = 'font-size:11px;color:var(--text);line-height:1.5;';
-    gNote.textContent = result.gradingNote;
-    gBody.append(gTitle, gNote);
-    gf.append(gIcon, gBody);
-    inner.appendChild(gf);
-  }
-
-  // Price graph
-  if (result.recommendedPrice) {
-    const low  = Math.min(c.paid, c.market, result.recommendedPrice) * 0.85;
-    const high = Math.max(c.paid, c.market, result.recommendedPrice) * 1.2;
-    const range = high - low || 1;
-    const toPos = v => Math.max(2, Math.min(96, ((v - low) / range) * 100));
-    const paidPos = toPos(c.paid), marketPos = toPos(c.market), targetPos = toPos(result.recommendedPrice);
-    const currentPos = c.mark ? toPos(c.mark) : null;
-    const sellStart = toPos(c.market * 0.9), holdStart = toPos(c.paid);
-
-    const graph = document.createElement('div');
-    graph.className = 'price-graph';
-    const trackWrap = document.createElement('div');
-    trackWrap.className = 'graph-track-wrap';
-    const track = document.createElement('div');
-    track.className = 'graph-track';
-    track.innerHTML =
-      '<div class="graph-zone-quick" style="left:0%;width:' + Math.min(sellStart,100) + '%"></div>' +
-      '<div class="graph-zone-sell"  style="left:' + sellStart + '%;width:' + Math.max(0,holdStart-sellStart) + '%"></div>' +
-      '<div class="graph-zone-hold"  style="left:' + holdStart + '%;right:0"></div>' +
-      '<div class="graph-marker paid"   style="left:' + paidPos   + '%"></div>' +
-      '<div class="graph-marker market" style="left:' + marketPos + '%"></div>' +
-      '<div class="graph-marker target" style="left:' + targetPos + '%"></div>' +
-      (currentPos ? '<div class="graph-marker current" style="left:' + currentPos + '%"></div>' : '');
-    trackWrap.appendChild(track);
-
-    const labels = document.createElement('div');
-    labels.className = 'graph-labels';
-    labels.innerHTML =
-      '<span class="graph-lbl">$' + low.toFixed(0) + '</span>' +
-      '<span class="graph-lbl" style="color:var(--green)">target $' + result.recommendedPrice.toFixed(2) + '</span>' +
-      '<span class="graph-lbl">$' + high.toFixed(0) + '</span>';
-
-    const legend = document.createElement('div');
-    legend.className = 'graph-legend';
-    legend.innerHTML =
-      '<div class="legend-item"><div class="legend-dot" style="background:var(--muted)"></div>paid</div>' +
-      '<div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>market</div>' +
-      '<div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>target</div>' +
-      (currentPos ? '<div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>your ask</div>' : '');
-
-    graph.append(trackWrap, labels, legend);
-    inner.appendChild(graph);
-  }
-
-  // Apply button
-  const applyBtn = document.createElement('button');
-  applyBtn.className = 'ai-apply-btn';
-  applyBtn.textContent = 'APPLY $' + result.recommendedPrice.toFixed(2);
-  applyBtn.onclick = () => {
-    const card = session.cards.find(x => x.id === id);
-    if (card) card.mark = result.recommendedPrice;
-    const el = document.getElementById('markinput-' + id);
-    if (el) el.textContent = '$' + result.recommendedPrice.toFixed(2);
-    const pct = profitPct(card?.paid, result.recommendedPrice);
-    const pctEl = document.getElementById('pct-' + id);
-    if (pctEl) {
-      pctEl.textContent = pct != null ? (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%' : '';
-      pctEl.className = 'mark-pct ' + (pct == null ? 'zero' : pct > 0 ? 'pos' : 'neg');
-    }
-    panel.classList.remove('open');
-    openAiId = null;
-  };
-  inner.appendChild(applyBtn);
-  panel.appendChild(inner);
-}
-
-// ── RENDER ────────────────────────────────────
-function render() {
-  const body = document.getElementById('markBody');
-  body.innerHTML = '';
-
-  // Session label
-  const d = new Date(session.date);
-  const dateStr = d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
-  const lbl = document.createElement('div');
-  lbl.className = 'session-label';
-  lbl.textContent = session.title + ' — ' + dateStr;
-  body.appendChild(lbl);
-
-  session.cards.forEach(c => {
-    const ai = aiData[c.id];
-    const adjOpen = openAiId === c.id;
-    const pct = profitPct(c.paid, c.mark);
-
-    const card = document.createElement('div');
-    card.className = 'mark-card' + (ai ? ' has-signal-' + signalKey(ai.signal) : '');
-    card.id = 'markcard-' + c.id;
-
-    const main = document.createElement('div');
-    main.className = 'mark-main';
-    main.onclick = () => toggleAiPanel(c.id);
-
-    // Top row: name + number + grade badge
-    const top = document.createElement('div');
-    top.className = 'mark-top';
-    const nameEl = document.createElement('div');
-    nameEl.className = 'mark-name';
-    nameEl.textContent = c.name;
-    const numSpan = document.createElement('span');
-    numSpan.style.cssText = 'font-family:DM Mono,monospace;font-size:14px;font-weight:400;opacity:.6;margin-left:6px;';
-    numSpan.textContent = c.number;
-    nameEl.appendChild(numSpan);
-    const gradeBadge = document.createElement('div');
-    gradeBadge.id = 'gradebadge-' + c.id;
-    gradeBadge.style.cssText = 'display:' + (ai && ai.gradingFlag ? 'flex' : 'none') + ';align-items:center;gap:3px;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);border-radius:6px;padding:2px 7px;flex-shrink:0;';
-    const gIcon = document.createElement('span'); gIcon.textContent = '🏆'; gIcon.style.fontSize = '11px';
-    const gLbl  = document.createElement('span'); gLbl.textContent = 'GRADE';
-    gLbl.style.cssText = 'font-family:Bebas Neue,sans-serif;font-size:10px;letter-spacing:1.5px;color:var(--gold);';
-    gradeBadge.append(gIcon, gLbl);
-    top.append(nameEl, gradeBadge);
-    main.appendChild(top);
-
-    // Meta row: cond + trend + pct
-    const metaRow = document.createElement('div');
-    metaRow.style.cssText = 'display:flex;align-items:center;gap:8px;';
-    const condEl = document.createElement('span');
-    condEl.className = 'cond-pill cond-' + c.cond; condEl.textContent = c.cond;
-    const trendEl = document.createElement('div');
-    trendEl.className = 'trend-arrow trend-' + c.trend;
-    trendEl.textContent = c.trend === 'up' ? '↑' : c.trend === 'down' ? '↓' : '→';
-    const pctEl = document.createElement('span');
-    pctEl.className = 'mark-pct ' + (pct == null ? 'zero' : pct > 0 ? 'pos' : 'neg');
-    pctEl.id = 'pct-' + c.id;
-    pctEl.textContent = pct != null ? (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%' : '';
-    metaRow.append(condEl, trendEl, pctEl);
-    main.appendChild(metaRow);
-
-    // Sticker boxes
-    const stickerRow = document.createElement('div');
-    stickerRow.className = 'sticker-row';
-
-    // PAID
-    const paidBox = document.createElement('div');
-    paidBox.className = 'sticker-box';
-    const paidLbl = document.createElement('div'); paidLbl.className = 'sticker-lbl'; paidLbl.textContent = 'PAID';
-    const paidVal = document.createElement('div'); paidVal.className = 'sticker-val'; paidVal.textContent = '$' + c.paid.toFixed(2);
-    paidBox.append(paidLbl, paidVal);
-
-    // MARK with nudge
-    const markBox = document.createElement('div');
-    markBox.className = 'sticker-box';
-    markBox.onclick = e => e.stopPropagation();
-    const markLbl = document.createElement('div'); markLbl.className = 'sticker-lbl'; markLbl.textContent = 'MARK';
-    const markNudge = document.createElement('div');
-    markNudge.style.cssText = 'display:flex;align-items:center;gap:2px;margin-top:2px;';
-    const mMinus = document.createElement('button');
-    mMinus.textContent = '−';
-    mMinus.style.cssText = 'background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 2px;line-height:1;';
-    mMinus.onclick = e => { e.stopPropagation(); nudgeMark(c.id, -0.50); };
-    const markValEl = document.createElement('div');
-    markValEl.style.cssText = 'font-family:DM Mono,monospace;font-size:17px;font-weight:500;color:var(--green);flex:1;text-align:center;';
-    markValEl.id = 'markinput-' + c.id;
-    markValEl.textContent = '$' + (c.mark || c.market).toFixed(2);
-    const mPlus = document.createElement('button');
-    mPlus.textContent = '+';
-    mPlus.style.cssText = 'background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 2px;line-height:1;';
-    mPlus.onclick = e => { e.stopPropagation(); nudgeMark(c.id, +0.50); };
-    markNudge.append(mMinus, markValEl, mPlus);
-    markBox.append(markLbl, markNudge);
-
-    // AI box
-    const aiBox = document.createElement('div');
-    aiBox.className = 'sticker-box ai-box' + (ai ? ' loaded' : '');
-    aiBox.id = 'aibox-' + c.id;
-    aiBox.onclick = e => { e.stopPropagation(); getAiAdvice(c.id); };
-    const aiLbl = document.createElement('div'); aiLbl.className = 'sticker-lbl'; aiLbl.style.textAlign = 'center'; aiLbl.textContent = '✦ AI';
-    const aiVal = document.createElement('div');
-    aiVal.className = 'sticker-val'; aiVal.id = 'aival-' + c.id;
-    aiVal.style.cssText = 'text-align:center;font-weight:700;';
-    aiVal.textContent = ai ? '$' + ai.recommendedPrice.toFixed(2) : '';
-    aiBox.append(aiLbl, aiVal);
-
-    stickerRow.append(paidBox, markBox, aiBox);
-    main.appendChild(stickerRow);
-
-    // Signal + reasoning btn row
-    const sigRow = document.createElement('div');
-    sigRow.className = 'signal-row';
-    const badges = document.createElement('div');
-    badges.className = 'signal-badges';
-    ['BUY MORE','SELL','SELL NOW'].forEach(s => {
-      const key = signalKey(s);
-      const b = document.createElement('div');
-      b.className = 'signal-badge ' + key + (ai && signalKey(ai.signal) === key ? ' active' : '');
-      b.id = 'sig-' + key + '-' + c.id;
-      b.textContent = s;
-      badges.appendChild(b);
-    });
-    const aiBtn = document.createElement('button');
-    aiBtn.className = 'ai-btn' + (ai ? ' done' : '');
-    aiBtn.id = 'aibtn-' + c.id;
-    aiBtn.style.display = ai ? 'flex' : 'none';
-    aiBtn.textContent = ai ? '✦ ' + ai.signal + ' · reasoning' : '';
-    aiBtn.onclick = e => { e.stopPropagation(); toggleAiPanel(c.id); };
-    sigRow.append(badges, aiBtn);
-    main.appendChild(sigRow);
-    card.appendChild(main);
-
-    // AI panel
-    const aiPanel = document.createElement('div');
-    aiPanel.className = 'ai-panel' + (adjOpen ? ' open' : '');
-    aiPanel.id = 'aipanel-' + c.id;
-    if (ai && adjOpen) renderAiPanel(c.id, ai, c);
-    card.appendChild(aiPanel);
-    body.appendChild(card);
-  });
-}
-
-// Cost label
-(function(){
-  const cost = (session.cards.length * 0.003).toFixed(3);
-  const el = document.getElementById('analyzeAllCost');
-  if (el) el.textContent = '~$' + cost + ' to analyze all ' + session.cards.length + ' cards';
-})();
-
-render();
-</script>
-
+<div>&lt;html lang="en"&gt;</div>
+<div>&lt;head&gt;</div>
+<div>&lt;meta charset="UTF-8"&gt;</div>
+<div>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"&gt;</div>
+<div>&lt;title&gt;Sable — Inventory&lt;/title&gt;</div>
+<div>&lt;link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=DM+Mono:wght@400;500&amp;family=DM+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"&gt;</div>
+<div>&lt;style&gt;</div>
+<div>:root{</div>
+<div>  --bg:#0a0a0d;--surface:#13131a;--surface2:#1a1a24;--surface3:#1f1f2e;</div>
+<div>  --border:#252535;--accent:#7c6aff;--green:#4ade80;--text:#f0f0f8;</div>
+<div>  --muted:#5a5a72;--danger:#ff4d6d;--gold:#f5c842;</div>
+<div>  --cNM:#4ade80;--cLP:#facc15;--cMP:#fb923c;--cHP:#f87171;--cDMG:#9b9baf;</div>
+<div>}</div>
+<div>*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}</div>
+<div>html,body{height:100%;overflow:hidden;}</div>
+<div>body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}</div>
+<div>.phone{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden;}</div>
+<div><br>
+</div>
+<div>/* NAV */</div>
+<div>.top-nav{display:flex;align-items:center;background:var(–surface);border-bottom:1px solid var(–border);padding:13px 18px;flex-shrink:0;gap:10px;}</div>
+<div>.back-btn{background:none;border:none;cursor:pointer;color:var(–accent);display:flex;align-items:center;gap:6px;font-family:&lsquo;DM Sans&rsquo;,sans-serif;font-size:13px;font-weight:500;padding:0;transition:opacity .2s;}</div>
+<div>.back-btn:hover{opacity:.7;}</div>
+<div>.nav-title{font-family:&lsquo;Bebas Neue&rsquo;,sans-serif;font-size:16px;letter-spacing:2px;color:var(–text);flex:1;text-align:center;}</div>
+<div>.nav-right{display:flex;align-items:center;gap:8px;}</div>
+<div>.filter-btn{background:none;border:1px solid var(–border);border-radius:8px;color:var(–muted);font-family:&lsquo;DM Mono&rsquo;,monospace;font-size:11px;padding:5px 10px;cursor:pointer;transition:border-color .15s,color .15s;}</div>
+<div>.filter-btn.active{border-color:var(–accent);color:var(–accent);}</div>
+<div><br>
+</div>
+<div>/* SCROLL */</div>
+<div>.scrollbody{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;padding-bottom:24px;}</div>
+<div>.scrollbody::-webkit-scrollbar{width:3px;}</div>
+<div>.scrollbody::-webkit-scrollbar-thumb{background:var(–border);border-radius:2px;}</div>
+<div><br>
+</div>
+<div>/* DASHBOARD */</div>
+<div>.dashboard{display:grid;grid-template-columns:1fr 1fr;gap:8px;}</div>
+<div>.dash-card{background:var(–surface);border:1px solid var(–border);border-radius:14px;padding:14px;}</div>
+<div>.dash-card.wide{grid-column:1/-1;}</div>
+<div>.dash-lbl{font-family:&lsquo;Bebas Neue&rsquo;,sans-serif;font-size:10px;letter-spacing:2.5px;color:var(–muted);margin-bottom:4px;}</div>
+<div>.dash-val{font-family:&lsquo;Bebas Neue&rsquo;,sans-serif;font-size:30px;line-height:1;letter-spacing:1px;}</div>
+<div>.dash-val.green{color:var(–green);}</div>
+<div>.dash-val.gold{color:var(–gold);}</div>
+<div>.dash-val.accent{color:var(–accent);}</div>
+<div>.dash-val.muted{color:var(–muted);}</div>
+<div>.dash-sub{font-family:&lsquo;DM Mono&rsquo;,monospace;font-size:10px;color:var(–muted);margin-top:3px;}</div>
+<div><br>
+</div>
+<div>/* PROFIT BAR */</div>
+<div>.profit-bar-wrap{margin-top:8px;}</div>
+<div>.profit-bar-track{height:6px;background:var(–surface2);border-radius:3px;overflow:hidden;}</div>
+<div>.profit-bar-fill{height:100%;border-radius:3px;transition:width .4s ease;background:var(–green);}</div>
+<div>.profit-bar-fill.loss{background:var(–danger);}</div>
+<div>.profit-bar-labels{display:flex;justify-content:space-between;margin-top:4px;}</div>
+<div>.profit-bar-lbl{font-family:&lsquo;DM Mono&rsquo;,monospace;font-size:10px;color:var(–muted);}</div>
+<div><br>
+</div>
+<div>/* SESSION DIVIDER */</div>
+<div>.session-header{display:flex;align-items:center;gap:10px;padding:4px 0 2px;}</div>
+<div>.session-title{font-family:&lsquo;Bebas Neue&rsquo;,sans-serif;font-size:11px;letter-spacing:2px;color:var(–muted);}</div>
+<div>.session-line{flex:1;height:1px;background:var(–border);}</div>
+<div>.session-total{font-family:&lsquo;DM Mono&rsquo;,monospace;font-size:11px;color:var(–muted);}</div>
+<div><br>
+</div>
+<div>/* INVENTORY CARD */</div>
+<div>.inv-card{background:var(–surface);border:1px solid var(–border);border-radius:12px;overflow:hidden;transition:border-color .2s;}</div>
+<div>.inv-card.profitable{border-color:rgba(74,222,128,.25);}</div>
+<div>.inv-card.at-loss{border-color:rgba(255,77,109,.2);}</div>
+<div>.inv-main{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;}</div>
+<div>.inv-left{flex:1;min-width:0;}</div>
+<div>.inv-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}</div>
+<div>.inv-meta{display:flex;align-items:center;gap:6px;margin-top:4px;}</div>
+<div>.inv-number{font-family:&lsquo;DM Mono&rsquo;,monospace;font-size:10px;color:var(–muted);}</div>
+<div>.cond-pill{border:none;border-radius:5px;padding:2px 6px;font-family:&lsquo;DM Mono&rsquo;,monospace;font-size:10px;font-weight:600;pointer-events:none;}</div>
+<div>.cond-NM{background:rgba(74,222,128,.15);color:var(–cNM);}</div>
+<div>.cond-LP{background:rgba(250,204,21,.15);color:var(–cLP);}</div>
+<div>.cond-MP{background:rgba(251,146,60,.15);color:var(–cMP);}</div>
+<div>.cond-HP{background:rgba(248,113,113,.15);color:var(–cHP);}</div>
+<div>.cond-DMG{background:rgba(155,155,175,.12);color:var(–cDMG);}</div>
+<div>.inv-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}</div>
+<div>.inv-cost{font-family:&lsquo;DM Mono&rsquo;,monospace;font-size:11px;color:var(–muted);}</div>
+<div>.inv-profit{font-family:&lsquo;DM Mono&rsquo;,monospace;font-size:13px;font-weight:500;}</div>
+<div>.inv-profit.pos{color:var(–green);}</div>
+<div>.inv-profit.neg{color:var(–danger);}</div>
+<div>.inv-profit.zero{color:var(–muted);}</div>
+<div><br>
+</div>
+<div>/* EXPAND PANEL */</div>
+<div>.inv-panel{max-height:0;overflow:hidden;transition:max-height .3s ease;background:var(–surface2);}</div>
+<div>.inv-panel.open{max-height:140px;border-top:1px solid var(–border);}</div>
+<div>.inv-panel-inner{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}</div>
+<div><br>
+</div>
+<div>/* ASK PRICE ROW */</div>
+<div>.ask-row{display:flex;align-items:center;gap:10px;}</div>
+<div>.ask-label{font-family:&lsquo;Bebas Neue&rsquo;,sans-serif;font-size:10px;letter-spacing:2px;color:var(–muted);flex-shrink:0;}</div>
+<div>.ask-input{flex:1;background:var(–surface);border:1px solid var(–border);border-radius:8px;padding:7px 10px;color:var(–green);font-family:&lsquo;DM Mono&rsquo;,monospace;font-size:14px;font-weight:500;outline:none;transition:border-color .2s;text-align:right;}</div>
+<div>.ask-input:focus{border-color:var(–green);}</div>
+<div>.ask-input::placeholder{color:var(–muted);font-size:12px;}</div>
+<div><br>
+</div>
+<div>/* PROFIT DETAIL */</div>
+<div>.profit-detail{display:flex;justify-content:space-between;align-items:center;}</div>
+<div>.profit-detail-item{display:flex;flex-direction:column;gap:2px;align-items:center;}</div>
+<div>.pd-lbl{font-family:&lsquo;Bebas Neue&rsquo;,sans-serif;font-size:9px;letter-spacing:2px;color:var(–muted);}</div>
+<div>.pd-val{font-family:&lsquo;DM Mono&rsquo;,monospace;font-size:13px;color:var(–text);}</div>
+<div>.pd-val.green{color:var(–green);}</div>
+<div>.pd-val.danger{color:var(–danger);}</div>
+<div>.pd-arrow{font-size:16px;color:var(–border);}</div>
+<div><br>
+</div>
+<div>/* EMPTY */</div>
+<div>.empty-state{text-align:center;color:var(–muted);font-size:13px;padding:40px 24px;line-height:1.8;}</div>
+<div>.empty-state .empty-icon{font-size:32px;margin-bottom:8px;opacity:.4;}</div>
+<div>&lt;/style&gt;</div>
+<div><br>
+</div>
+<div>&lt;/head&gt;</div>
+<div>&lt;body&gt;</div>
+<div>&lt;div class="phone"&gt;</div>
+<div>  &lt;div class="top-nav"&gt;</div>
+<div>    &lt;button class="back-btn"&gt;</div>
+<div>      &lt;svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"&gt;&lt;polyline points="15 18 9 12 15 6"/&gt;&lt;/svg&gt;</div>
+<div>      Back</div>
+<div>    &lt;/button&gt;</div>
+<div>    &lt;div class="nav-title"&gt;INVENTORY&lt;/div&gt;</div>
+<div>    &lt;div class="nav-right"&gt;</div>
+<div>      &lt;button class="filter-btn active" id="filterAll" onclick="setFilter('all',this)"&gt;ALL&lt;/button&gt;</div>
+<div>      &lt;button class="filter-btn" id="filterUnpriced" onclick="setFilter('unpriced',this)"&gt;UNPRICED&lt;/button&gt;</div>
+<div>    &lt;/div&gt;</div>
+<div>  &lt;/div&gt;</div>
+<div>  &lt;div class="scrollbody" id="invBody"&gt;&lt;/div&gt;</div>
+<div>&lt;/div&gt;</div>
+<div><br>
+</div>
+<div>&lt;script&gt;</div>
+<div>// ── STORAGE ───────────────────────────────────</div>
+<div>const INV_KEY = 'sable_inventory';</div>
+<div>const loadInv  = () =&gt; { try { return JSON.parse(localStorage.getItem(INV_KEY)||'[]'); } catch(e){ return []; }};</div>
+<div>const saveInv  = d =&gt; localStorage.setItem(INV_KEY, JSON.stringify(d));</div>
+<div><br>
+</div>
+<div>// ── SEED DEMO ─────────────────────────────────</div>
+<div>(function(){</div>
+<div>  if (localStorage.getItem(INV_KEY)) return;</div>
+<div>  const now = new Date();</div>
+<div>  const d1 = new Date(now - 86400000*2).toISOString();</div>
+<div>  const d2 = new Date(now - 86400000*7).toISOString();</div>
+<div>  const seed = [</div>
+<div>    // Session 1 — 2 days ago</div>
+<div>    {id:1, name:'Charizard ex',   number:'199/165', cond:'NM', cost:38.40, ask:65.00, date:d1, session:'Market Run — Mar 14'},</div>
+<div>    {id:2, name:'Pikachu VMAX',   number:'044/185', cond:'NM', cost:17.60, ask:28.00, date:d1, session:'Market Run — Mar 14'},</div>
+<div>    {id:3, name:'Umbreon VMAX',   number:'215/264', cond:'LP', cost:24.32, ask:null,  date:d1, session:'Market Run — Mar 14'},</div>
+<div>    // Session 2 — 7 days ago</div>
+<div>    {id:4, name:'Rayquaza VSTAR', number:'111/189', cond:'NM', cost:12.00, ask:18.00, date:d2, session:'Card Kingdom'},</div>
+<div>    {id:5, name:'Mewtwo V',       number:'030/198', cond:'MP', cost:4.50,  ask:null,  date:d2, session:'Card Kingdom'},</div>
+<div>    {id:6, name:'Lugia V',        number:'186/195', cond:'NM', cost:22.00, ask:19.00, date:d2, session:'Card Kingdom'},</div>
+<div>  ];</div>
+<div>  saveInv(seed);</div>
+<div>})();</div>
+<div><br>
+</div>
+<div>// ── STATE ─────────────────────────────────────</div>
+<div>let inventory = loadInv();</div>
+<div>let openId = null;</div>
+<div>let filter = 'all';</div>
+<div>let nextId = Math.max(...inventory.map(c=&gt;c.id), 0) + 1;</div>
+<div><br>
+</div>
+<div>// ── CALCS ─────────────────────────────────────</div>
+<div>function profit(c) { return c.ask != null ? c.ask - c.cost : null; }</div>
+<div>function totalCost()   { return inventory.reduce((s,c)=&gt;s+c.cost, 0); }</div>
+<div>function totalAsk()    { return inventory.reduce((s,c)=&gt;s+(c.ask||0), 0); }</div>
+<div>function totalProfit() { return inventory.filter(c=&gt;c.ask!=null).reduce((s,c)=&gt;s+(c.ask-c.cost),0); }</div>
+<div>function pricedCount() { return inventory.filter(c=&gt;c.ask!=null).length; }</div>
+<div>function marginPct()   {</div>
+<div>  const cost=inventory.filter(c=&gt;c.ask!=null).reduce((s,c)=&gt;s+c.cost,0);</div>
+<div>  const ask=inventory.filter(c=&gt;c.ask!=null).reduce((s,c)=&gt;s+c.ask,0);</div>
+<div>  return cost&gt;0 ? ((ask-cost)/cost*100) : 0;</div>
+<div>}</div>
+<div><br>
+</div>
+<div>// ── FILTER ────────────────────────────────────</div>
+<div>function setFilter(f, el) {</div>
+<div>  filter = f;</div>
+<div>  document.querySelectorAll('.filter-btn').forEach(b=&gt;b.classList.remove('active'));</div>
+<div>  el.classList.add('active');</div>
+<div>  render();</div>
+<div>}</div>
+<div><br>
+</div>
+<div>function filteredItems() {</div>
+<div>  if (filter==='unpriced') return inventory.filter(c=&gt;c.ask==null);</div>
+<div>  return inventory;</div>
+<div>}</div>
+<div><br>
+</div>
+<div>// ── GROUP BY SESSION ──────────────────────────</div>
+<div>function groupBySessions(items) {</div>
+<div>  const groups = {};</div>
+<div>  const order = [];</div>
+<div>  items.forEach(c =&gt; {</div>
+<div>    if (!groups[c.session]) { groups[c.session]=[]; order.push(c.session); }</div>
+<div>    groups[c.session].push(c);</div>
+<div>  });</div>
+<div>  return order.map(s=&gt;({ session:s, cards:groups[s] }));</div>
+<div>}</div>
+<div><br>
+</div>
+<div>// ── UPDATE ASK ────────────────────────────────</div>
+<div>function updateAsk(id, val) {</div>
+<div>  const c = inventory.find(x=&gt;x.id===id); if(!c) return;</div>
+<div>  const parsed = parseFloat(val);</div>
+<div>  c.ask = (!val || isNaN(parsed)) ? null : parsed;</div>
+<div>  saveInv(inventory);</div>
+<div>  // Update card border and profit display without full re-render</div>
+<div>  const card = document.getElementById('invcard-'+id);</div>
+<div>  const profEl = document.getElementById('profit-'+id);</div>
+<div>  const pdProfit = document.getElementById('pdprofit-'+id);</div>
+<div>  const pdMargin = document.getElementById('pdmargin-'+id);</div>
+<div>  const p = profit(c);</div>
+<div>  if (card) {</div>
+<div>    card.classList.toggle('profitable', p!=null &amp;&amp; p&gt;0);</div>
+<div>    card.classList.toggle('at-loss', p!=null &amp;&amp; p&lt;0);</div>
+<div>  }</div>
+<div>  if (profEl) {</div>
+<div>    profEl.textContent = p!=null ? (p&gt;=0?'+':'')+' $'+Math.abs(p).toFixed(2) : '—';</div>
+<div>    profEl.className = 'inv-profit '+(p==null?'zero':p&gt;0?'pos':p&lt;0?'neg':'zero');</div>
+<div>  }</div>
+<div>  if (pdProfit) {</div>
+<div>    pdProfit.textContent = p!=null ? (p&gt;=0?'+':'')+' $'+Math.abs(p).toFixed(2) : '—';</div>
+<div>    pdProfit.className = 'pd-val '+(p==null?'':p&gt;0?'green':'danger');</div>
+<div>  }</div>
+<div>  if (pdMargin &amp;&amp; c.ask!=null) {</div>
+<div>    const m = ((c.ask-c.cost)/c.cost*100);</div>
+<div>    pdMargin.textContent = (m&gt;=0?'+':'')+m.toFixed(1)+'%';</div>
+<div>    pdMargin.className = 'pd-val '+(m&gt;=0?'green':'danger');</div>
+<div>  } else if (pdMargin) { pdMargin.textContent='—'; pdMargin.className='pd-val'; }</div>
+<div>  updateDashboard();</div>
+<div>}</div>
+<div><br>
+</div>
+<div>function updateDashboard() {</div>
+<div>  const tc=document.getElementById('dashCost');   if(tc) tc.textContent='$'+totalCost().toFixed(2);</div>
+<div>  const ta=document.getElementById('dashAsk');    if(ta) ta.textContent='$'+totalAsk().toFixed(2);</div>
+<div>  const tp=document.getElementById('dashProfit'); if(tp) {</div>
+<div>    const p=totalProfit();</div>
+<div>    tp.textContent=(p&gt;=0?'+':'')+' $'+Math.abs(p).toFixed(2);</div>
+<div>    tp.className='dash-val '+(p&gt;0?'green':p&lt;0?'danger':'muted').replace('danger','').replace('muted','muted');</div>
+<div>    if(p&gt;0) tp.className='dash-val green'; else if(p&lt;0) tp.className='dash-val danger'; else tp.className='dash-val muted';</div>
+<div>  }</div>
+<div>  const tm=document.getElementById('dashMargin'); if(tm) {</div>
+<div>    const m=marginPct(); tm.textContent=(m&gt;=0?'+':'')+m.toFixed(1)+'%';</div>
+<div>  }</div>
+<div>  const barFill=document.getElementById('profitBarFill');</div>
+<div>  if(barFill) {</div>
+<div>    const cost=inventory.filter(c=&gt;c.ask!=null).reduce((s,c)=&gt;s+c.cost,0);</div>
+<div>    const ask=inventory.filter(c=&gt;c.ask!=null).reduce((s,c)=&gt;s+(c.ask||0),0);</div>
+<div>    const pct = cost&gt;0 ? Math.min(200, (ask/cost)*100) : 0;</div>
+<div>    const fillPct = Math.min(100, Math.max(0, pct-100+50));</div>
+<div>    barFill.style.width = fillPct+'%';</div>
+<div>    barFill.classList.toggle('loss', totalProfit()&lt;0);</div>
+<div>  }</div>
+<div>}</div>
+<div><br>
+</div>
+<div>function toggleCard(id) {</div>
+<div>  openId = openId===id ? null : id;</div>
+<div>  const panel = document.getElementById('panel-'+id); if(!panel) return;</div>
+<div>  panel.classList.toggle('open', openId===id);</div>
+<div>  const card = document.getElementById('invcard-'+id); if(card) card.style.borderRadius = openId===id?'12px 12px 0 0':'12px';</div>
+<div>  if (openId===id) setTimeout(()=&gt;document.getElementById('ask-'+id)?.focus(), 80);</div>
+<div>}</div>
+<div><br>
+</div>
+<div>// ── RENDER ────────────────────────────────────</div>
+<div>function render() {</div>
+<div>  const body = document.getElementById('invBody');</div>
+<div>  body.innerHTML = '';</div>
+<div>  const items = filteredItems();</div>
+<div><br>
+</div>
+<div>  // Dashboard</div>
+<div>  const p = totalProfit();</div>
+<div>  const m = marginPct();</div>
+<div>  const cost = inventory.filter(c=&gt;c.ask!=null).reduce((s,c)=&gt;s+c.cost,0);</div>
+<div>  const ask  = inventory.filter(c=&gt;c.ask!=null).reduce((s,c)=&gt;s+(c.ask||0),0);</div>
+<div>  const barPct = cost&gt;0 ? Math.min(100,Math.max(0,((ask/cost)*100)-100+50)) : 50;</div>
+<div><br>
+</div>
+<div>  const dash = document.createElement('div');</div>
+<div>  dash.className = 'dashboard';</div>
+<div>  dash.innerHTML =</div>
+<div>    '&lt;div class="dash-card"&gt;'+</div>
+<div>      '&lt;div class="dash-lbl"&gt;INVESTED&lt;/div&gt;'+</div>
+<div>      '&lt;div class="dash-val muted" id="dashCost"&gt;$'+totalCost().toFixed(2)+'&lt;/div&gt;'+</div>
+<div>      '&lt;div class="dash-sub"&gt;'+inventory.length+' cards&lt;/div&gt;'+</div>
+<div>    '&lt;/div&gt;'+</div>
+<div>    '&lt;div class="dash-card"&gt;'+</div>
+<div>      '&lt;div class="dash-lbl"&gt;HYPOTHETICAL RETURN&lt;/div&gt;'+</div>
+<div>      '&lt;div class="dash-val accent" id="dashAsk"&gt;$'+totalAsk().toFixed(2)+'&lt;/div&gt;'+</div>
+<div>      '&lt;div class="dash-sub"&gt;'+pricedCount()+' of '+inventory.length+' priced&lt;/div&gt;'+</div>
+<div>    '&lt;/div&gt;'+</div>
+<div>    '&lt;div class="dash-card wide"&gt;'+</div>
+<div>      '&lt;div class="dash-lbl"&gt;HYPOTHETICAL PROFIT&lt;/div&gt;'+</div>
+<div>      '&lt;div class="dash-val '+(p&gt;0?'green':p&lt;0?'danger':'muted')+'" id="dashProfit"&gt;'+(p&gt;=0?'+':'')+' $'+Math.abs(p).toFixed(2)+'&lt;/div&gt;'+</div>
+<div>      '&lt;div class="profit-bar-wrap"&gt;'+</div>
+<div>        '&lt;div class="profit-bar-track"&gt;&lt;div class="profit-bar-fill'+(p&lt;0?' loss':'')+'" id="profitBarFill" style="width:'+barPct+'%"&gt;&lt;/div&gt;&lt;/div&gt;'+</div>
+<div>        '&lt;div class="profit-bar-labels"&gt;&lt;span class="profit-bar-lbl"&gt;cost&lt;/span&gt;&lt;span class="profit-bar-lbl" id="dashMargin"&gt;'+(m&gt;=0?'+':'')+m.toFixed(1)+'%&lt;/span&gt;&lt;span class="profit-bar-lbl"&gt;ask&lt;/span&gt;&lt;/div&gt;'+</div>
+<div>      '&lt;/div&gt;'+</div>
+<div>    '&lt;/div&gt;';</div>
+<div>  body.appendChild(dash);</div>
+<div><br>
+</div>
+<div>  if (!items.length) {</div>
+<div>    const empty = document.createElement('div');</div>
+<div>    empty.className = 'empty-state';</div>
+<div>    empty.innerHTML = '&lt;div class="empty-icon"&gt;📦&lt;/div&gt;'+(filter==='unpriced'?'All cards priced — nice.':'No inventory yet.\nComplete a sale to populate.');</div>
+<div>    body.appendChild(empty);</div>
+<div>    return;</div>
+<div>  }</div>
+<div><br>
+</div>
+<div>  // Group by session</div>
+<div>  const groups = groupBySessions(items);</div>
+<div>  groups.forEach(g =&gt; {</div>
+<div>    const sessionCost = g.cards.reduce((s,c)=&gt;s+c.cost,0);</div>
+<div>    const sessionProfit = g.cards.filter(c=&gt;c.ask!=null).reduce((s,c)=&gt;s+(c.ask-c.cost),0);</div>
+<div><br>
+</div>
+<div>    // Session header</div>
+<div>    const sh = document.createElement('div');</div>
+<div>    sh.className = 'session-header';</div>
+<div>    sh.innerHTML =</div>
+<div>      '&lt;div class="session-title"&gt;'+g.session+'&lt;/div&gt;'+</div>
+<div>      '&lt;div class="session-line"&gt;&lt;/div&gt;'+</div>
+<div>      '&lt;div class="session-total"&gt;$'+sessionCost.toFixed(2)+(sessionProfit!==0?' · '+(sessionProfit&gt;=0?'+':'')+' $'+Math.abs(sessionProfit).toFixed(2)+' est.':'')+'&lt;/div&gt;';</div>
+<div>    body.appendChild(sh);</div>
+<div><br>
+</div>
+<div>    g.cards.forEach(c =&gt; {</div>
+<div>      const p = profit(c);</div>
+<div>      const card = document.createElement('div');</div>
+<div>      card.className = 'inv-card'+(p!=null&amp;&amp;p&gt;0?' profitable':p!=null&amp;&amp;p&lt;0?' at-loss':'');</div>
+<div>      card.id = 'invcard-'+c.id;</div>
+<div><br>
+</div>
+<div>      const main = document.createElement('div');</div>
+<div>      main.className = 'inv-main';</div>
+<div>      main.onclick = ()=&gt;toggleCard(c.id);</div>
+<div><br>
+</div>
+<div>      const condPill = document.createElement('span');</div>
+<div>      condPill.className = 'cond-pill cond-'+c.cond; condPill.textContent=c.cond;</div>
+<div><br>
+</div>
+<div>      const left = document.createElement('div');</div>
+<div>      left.className = 'inv-left';</div>
+<div>      left.innerHTML =</div>
+<div>        '&lt;div class="inv-name"&gt;'+c.name+'&lt;/div&gt;'+</div>
+<div>        '&lt;div class="inv-meta"&gt;'+</div>
+<div>          '&lt;span class="inv-number"&gt;'+c.number+'&lt;/span&gt;'+</div>
+<div>        '&lt;/div&gt;';</div>
+<div>      left.querySelector('.inv-meta').appendChild(condPill);</div>
+<div><br>
+</div>
+<div>      const right = document.createElement('div');</div>
+<div>      right.className = 'inv-right';</div>
+<div>      right.innerHTML =</div>
+<div>        '&lt;div class="inv-cost"&gt;paid $'+c.cost.toFixed(2)+'&lt;/div&gt;'+</div>
+<div>        '&lt;div class="inv-profit '+(p==null?'zero':p&gt;0?'pos':'neg')+'" id="profit-'+c.id+'"&gt;'+(p!=null?(p&gt;=0?'+':'')+' $'+Math.abs(p).toFixed(2):'set ask →')+'&lt;/div&gt;';</div>
+<div><br>
+</div>
+<div>      main.append(left, right);</div>
+<div><br>
+</div>
+<div>      // Expand panel</div>
+<div>      const panel = document.createElement('div');</div>
+<div>      panel.className = 'inv-panel'+(openId===c.id?' open':'');</div>
+<div>      panel.id = 'panel-'+c.id;</div>
+<div><br>
+</div>
+<div>      const inner = document.createElement('div');</div>
+<div>      inner.className = 'inv-panel-inner';</div>
+<div><br>
+</div>
+<div>      // Ask price row</div>
+<div>      const askRow = document.createElement('div');</div>
+<div>      askRow.className = 'ask-row';</div>
+<div>      askRow.innerHTML = '&lt;div class="ask-label"&gt;ASKING PRICE&lt;/div&gt;';</div>
+<div>      const askInput = document.createElement('input');</div>
+<div>      askInput.className = 'ask-input'; askInput.id = 'ask-'+c.id;</div>
+<div>      askInput.type='number'; askInput.step='0.01'; askInput.min='0';</div>
+<div>      askInput.placeholder='$0.00';</div>
+<div>      if (c.ask!=null) askInput.value = c.ask.toFixed(2);</div>
+<div>      askInput.oninput = ()=&gt;updateAsk(c.id, askInput.value);</div>
+<div>      askRow.appendChild(askInput);</div>
+<div><br>
+</div>
+<div>      // Profit breakdown</div>
+<div>      const pd = document.createElement('div');</div>
+<div>      pd.className = 'profit-detail';</div>
+<div>      const pVal = profit(c);</div>
+<div>      const mVal = c.ask!=null ? ((c.ask-c.cost)/c.cost*100) : null;</div>
+<div>      pd.innerHTML =</div>
+<div>        '&lt;div class="profit-detail-item"&gt;&lt;div class="pd-lbl"&gt;PAID&lt;/div&gt;&lt;div class="pd-val"&gt;$'+c.cost.toFixed(2)+'&lt;/div&gt;&lt;/div&gt;'+</div>
+<div>        '&lt;div class="pd-arrow"&gt;→&lt;/div&gt;'+</div>
+<div>        '&lt;div class="profit-detail-item"&gt;&lt;div class="pd-lbl"&gt;ASK&lt;/div&gt;&lt;div class="pd-val"&gt;'+( c.ask!=null?'$'+c.ask.toFixed(2):'—' )+'&lt;/div&gt;&lt;/div&gt;'+</div>
+<div>        '&lt;div class="pd-arrow"&gt;=&lt;/div&gt;'+</div>
+<div>        '&lt;div class="profit-detail-item"&gt;&lt;div class="pd-lbl"&gt;PROFIT&lt;/div&gt;&lt;div class="pd-val '+(pVal==null?'':pVal&gt;=0?'green':'danger')+'" id="pdprofit-'+c.id+'"&gt;'+(pVal!=null?(pVal&gt;=0?'+':'')+' $'+Math.abs(pVal).toFixed(2):'—')+'&lt;/div&gt;&lt;/div&gt;'+</div>
+<div>        '&lt;div class="profit-detail-item"&gt;&lt;div class="pd-lbl"&gt;MARGIN&lt;/div&gt;&lt;div class="pd-val '+(mVal==null?'':mVal&gt;=0?'green':'danger')+'" id="pdmargin-'+c.id+'"&gt;'+(mVal!=null?(mVal&gt;=0?'+':'')+mVal.toFixed(1)+'%':'—')+'&lt;/div&gt;&lt;/div&gt;';</div>
+<div><br>
+</div>
+<div>      inner.append(askRow, pd);</div>
+<div>      panel.appendChild(inner);</div>
+<div>      card.append(main, panel);</div>
+<div>      body.appendChild(card);</div>
+<div>    });</div>
+<div>  });</div>
+<div>}</div>
+<div><br>
+</div>
+<div>function el(tag,cls,text){</div>
+<div>  const e=document.createElement(tag); if(cls) e.className=cls; if(text) e.textContent=text; return e;</div>
+<div>}</div>
+<div><br>
+</div>
+<div>render();</div>
+<div>&lt;/script&gt;</div>
+<div><br>
+</div>
+<div>&lt;/body&gt;</div>
+<div>&lt;/html&gt;</div>
 </body>
 </html>
