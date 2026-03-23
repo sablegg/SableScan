@@ -379,7 +379,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
           <button class="mini-chart-tab" onclick="setMiniChartPeriod('90d',this)">90D</button>
         </div>
       </div>
-      <canvas id="mini-chart" style="width:100%;height:70px;display:block"></canvas>
+      <canvas id="mini-chart" style="width:100%;height:90px;display:block"></canvas>
       <div style="display:flex;justify-content:space-between;margin-top:4px">
         <span style="font-size:10px;color:var(--muted)" id="mini-low">Low: —</span>
         <span style="font-size:10px;color:var(--muted)" id="mini-high">High: —</span>
@@ -1257,10 +1257,10 @@ function populateResults(data) {
   // PSA grades
   renderGradeGrid(prices.psaGrades || {}, STATE.currentCondition, STATE.psaFee);
 
-  // Mini chart
-  if (data.priceHistory) {
-    drawMiniChart(data.priceHistory['7d'] || [], '7d');
-  }
+  // Mini chart — show eBay + TCGPlayer
+  const ph = data.priceHistory || {};
+  const periodMap7 = {'7d':'sevenDay'};
+  drawMiniChart(ph['7d'] || ph.sevenDay || [], '7d', ph['tcg_7d'] || ph.tcg_sevenDay || []);
 
   // Set pulse
   if (data.set) {
@@ -1477,52 +1477,134 @@ function setPsaFee(fee, el) {
 // ═══════════════════════════════════════════════════════════════
 // CHARTS
 // ═══════════════════════════════════════════════════════════════
-function drawMiniChart(data, period) {
+function drawMiniChart(ebayData, period, tcgData) {
   const canvas = document.getElementById('mini-chart');
   const W = canvas.offsetWidth || 300;
-  const H = 70;
+  const H = 90;
   canvas.width = W * window.devicePixelRatio;
   canvas.height = H * window.devicePixelRatio;
   const ctx = canvas.getContext('2d');
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
   ctx.clearRect(0, 0, W, H);
-  if (!data || data.length < 2) return;
-  const min = Math.min(...data) * 0.97;
-  const max = Math.max(...data) * 1.03;
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, 'rgba(0,229,255,0.3)');
-  grad.addColorStop(1, 'rgba(0,229,255,0)');
-  ctx.beginPath();
-  data.forEach((v, i) => {
-    const x = (i / (data.length - 1)) * W;
-    const y = H - ((v - min) / (max - min)) * (H - 10) - 5;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  const lastX = W, lastY = H - ((data[data.length-1] - min) / (max - min)) * (H - 10) - 5;
-  ctx.lineTo(lastX, H);
-  ctx.lineTo(0, H);
-  ctx.closePath();
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.beginPath();
-  data.forEach((v, i) => {
-    const x = (i / (data.length - 1)) * W;
-    const y = H - ((v - min) / (max - min)) * (H - 10) - 5;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.strokeStyle = '#00e5ff';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  document.getElementById('mini-low').textContent = 'Low: $' + Math.min(...data).toFixed(2);
-  document.getElementById('mini-high').textContent = 'High: $' + Math.max(...data).toFixed(2);
+
+  const hasEbay = ebayData && ebayData.length >= 2;
+  const hasTcg  = tcgData  && tcgData.length  >= 2;
+
+  // Use avg1d as last sale fallback if no history
+  const lastSale = STATE.lastResult?.prices?.avg1d || STATE.lastResult?.prices?.avg || null;
+
+  if (!hasEbay && !hasTcg) {
+    // Draw empty state with last sale dot if available
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.fillRect(0, 0, W, H);
+    if (lastSale) {
+      // Draw a single dot at far right center with label
+      const dotX = W - 8;
+      const dotY = H / 2;
+      ctx.strokeStyle = 'rgba(0,229,255,0.3)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.moveTo(0, dotY); ctx.lineTo(dotX, dotY); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#00e5ff';
+      ctx.beginPath(); ctx.arc(dotX, dotY, 4, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#00e5ff';
+      ctx.font = 'bold 10px DM Mono, monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText('$' + lastSale.toFixed(2), dotX - 8, dotY + 4);
+      document.getElementById('mini-low').textContent = 'Last: $' + lastSale.toFixed(2);
+      document.getElementById('mini-high').textContent = '';
+    } else {
+      ctx.fillStyle = '#55556a';
+      ctx.font = '11px DM Sans, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('No price history available', W/2, H/2 + 4);
+      document.getElementById('mini-low').textContent = '';
+      document.getElementById('mini-high').textContent = '';
+    }
+    return;
+  }
+
+  const allVals = [...(hasEbay ? ebayData : []), ...(hasTcg ? tcgData : [])];
+  if (lastSale) allVals.push(lastSale);
+  const min = Math.min(...allVals) * 0.93;
+  const max = Math.max(...allVals) * 1.07;
+  const scaleY = v => H - ((v - min) / (max - min)) * (H - 16) - 8;
+
+  const drawSeries = (data, color, fillColor, dotColor) => {
+    if (!data || data.length < 2) return;
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, fillColor);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath();
+    data.forEach((v, i) => {
+      const x = (i / (data.length - 1)) * (W - 16);
+      const y = scaleY(v);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.lineTo((W-16), H); ctx.lineTo(0, H); ctx.closePath();
+    ctx.fillStyle = grad; ctx.fill();
+    // Line
+    ctx.beginPath();
+    data.forEach((v, i) => {
+      const x = (i / (data.length - 1)) * (W - 16);
+      const y = scaleY(v);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+    // Last point dot
+    const lastX = W - 16;
+    const lastY = scaleY(data[data.length - 1]);
+    ctx.fillStyle = dotColor || color;
+    ctx.beginPath(); ctx.arc(lastX, lastY, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#0a0a0f';
+    ctx.beginPath(); ctx.arc(lastX, lastY, 2, 0, Math.PI*2); ctx.fill();
+  };
+
+  if (hasTcg)  drawSeries(tcgData,  '#a78bfa', 'rgba(167,139,250,0.12)', '#a78bfa');
+  if (hasEbay) drawSeries(ebayData, '#00e5ff', 'rgba(0,229,255,0.18)',   '#00e5ff');
+
+  // Last sale dot at far right edge (from avg1d)
+  if (lastSale) {
+    const dotX = W - 4;
+    const dotY = scaleY(lastSale);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(dotX, dotY, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#00e5ff';
+    ctx.beginPath(); ctx.arc(dotX, dotY, 2.5, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Legend
+  const legendY = 10;
+  if (hasEbay) {
+    ctx.fillStyle = '#00e5ff';
+    ctx.beginPath(); ctx.arc(8, legendY, 3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#88889a'; ctx.font = '9px DM Mono, monospace'; ctx.textAlign = 'left';
+    ctx.fillText('eBay', 14, legendY + 3.5);
+  }
+  if (hasTcg) {
+    const ox = hasEbay ? 50 : 8;
+    ctx.fillStyle = '#a78bfa';
+    ctx.beginPath(); ctx.arc(ox, legendY, 3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#88889a'; ctx.font = '9px DM Mono, monospace'; ctx.textAlign = 'left';
+    ctx.fillText('TCG', ox + 6, legendY + 3.5);
+  }
+
+  const primary = hasEbay ? ebayData : tcgData;
+  document.getElementById('mini-low').textContent  = 'Low: $' + Math.min(...primary).toFixed(2);
+  document.getElementById('mini-high').textContent = 'High: $' + Math.max(...primary).toFixed(2);
 }
 
 function setMiniChartPeriod(period, el) {
   document.querySelectorAll('.mini-chart-tab').forEach(t => t.classList.remove('on'));
   el.classList.add('on');
-  if (STATE.lastResult?.priceHistory) {
-    drawMiniChart(STATE.lastResult.priceHistory[period] || [], period);
-  }
+  const ph = STATE.lastResult?.priceHistory || {};
+  const periodMap = {'7d':'sevenDay','30d':'thirtyDay','90d':'ninetyDay'};
+  const altKey = periodMap[period] || period;
+  const ebay = ph[period] || ph[altKey] || ph['ebay_'+period] || [];
+  const tcg  = ph['tcg_'+period] || ph['tcg_'+altKey] || [];
+  drawMiniChart(ebay, period, tcg);
 }
 
 function setResearchPeriod(period, el) {
