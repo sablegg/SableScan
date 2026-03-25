@@ -1681,9 +1681,13 @@ function populateSealedContext(setEntry, cardName) {
 function populateMarket(data) {
   const card = data.card || {};
   const prices = data.prices || {};
+  const setEl   = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setHTML = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
   setEl('market-card-name', card.name || '—');
-  document.getElementById('market-empty').style.display = 'none';
-  document.getElementById('market-content').style.display = 'block';
+  const mktEmpty = document.getElementById('market-empty');
+  const mktContent = document.getElementById('market-content');
+  if (mktEmpty) mktEmpty.style.display = 'none';
+  if (mktContent) mktContent.style.display = 'block';
 
   const a1d = prices.avg1d || prices.avg || 0;
   const a7d = prices.avg7d || prices.avg || 0;
@@ -1702,8 +1706,7 @@ function populateMarket(data) {
   const trendScore = data.trendScore || 0.5;
   const liq = data.liquidityScore || 0.5;
   const tp = document.getElementById('trend-pill');
-  tp.textContent = trendScore > 0.6 ? '↑ RISING' : trendScore < 0.4 ? '↓ FALLING' : '→ STABLE';
-  tp.className = 'pill ' + (trendScore > 0.6 ? 'up' : trendScore < 0.4 ? 'dn' : 'fl');
+  if (tp) { tp.textContent = trendScore > 0.6 ? '↑ RISING' : trendScore < 0.4 ? '↓ FALLING' : '→ STABLE'; tp.className = 'pill ' + (trendScore > 0.6 ? 'up' : trendScore < 0.4 ? 'dn' : 'fl'); }
   const lp = document.getElementById('liq-pill');
   if (lp) { lp.textContent = liq > 0.6 ? 'HIGH' : liq > 0.3 ? 'MEDIUM' : 'LOW'; lp.className = 'pill ' + (liq > 0.6 ? 'up' : liq < 0.3 ? 'dn' : 'fl'); }
 
@@ -1720,6 +1723,7 @@ function populateMarket(data) {
 
   // Grade table
   const tbody = document.getElementById('grade-table-body');
+  if (!tbody) return;
   tbody.innerHTML = '';
   const psaG = prices.psaGrades || {};
   const nmRaw = prices.ebay?.NM || prices.avg || 0;
@@ -1762,8 +1766,10 @@ function populateMarket(data) {
   }
 
   // Sealed tab — populate from SETS_DATA
-  document.getElementById('research-empty').style.display = 'none';
-  document.getElementById('research-chart').style.display = 'block';
+  const reEmpty = document.getElementById('research-empty');
+  const reChart = document.getElementById('research-chart');
+  if (reEmpty) reEmpty.style.display = 'none';
+  if (reChart) reChart.style.display = 'block';
   setEl('research-card-label', card.name || '—');
 
   // Look up set in SETS_DATA
@@ -1820,11 +1826,10 @@ function populateMarket(data) {
   setEl('sell-signal-title', ts > 0.6 ? 'Strong sell window' : ts < 0.4 ? 'Hold — price softening' : 'Neutral market conditions');
   setEl('sell-signal-sub', ts > 0.6 ? 'Trending up — good time to list' : 'Monitor for uptick before selling');
   const sv = document.getElementById('sell-verdict');
-  sv.textContent = ts > 0.6 ? '📈 SELL' : ts < 0.4 ? '⏸ HOLD' : '→ NEUTRAL';
-  sv.className = 'verdict ' + (ts > 0.6 ? 'v-sell' : ts < 0.4 ? 'v-hold' : 'v-hold');
-
-  const ask = parseFloat(document.getElementById('sell-ask').value) || 25;
-  document.getElementById('sell-ask').value = (prices.ebay?.NM || ask).toFixed(0);
+  if (sv) { sv.textContent = ts > 0.6 ? '📈 SELL' : ts < 0.4 ? '⏸ HOLD' : '→ NEUTRAL'; sv.className = 'verdict ' + (ts > 0.6 ? 'v-sell' : ts < 0.4 ? 'v-hold' : 'v-hold'); }
+  const sellAsk = document.getElementById('sell-ask');
+  const ask = parseFloat(sellAsk?.value) || 25;
+  if (sellAsk) sellAsk.value = (prices.ebay?.NM || ask).toFixed(0);
   calcPayout();
 }
 
