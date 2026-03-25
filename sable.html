@@ -1723,13 +1723,12 @@ function populateMarket(data) {
 
   // Grade table
   const tbody = document.getElementById('grade-table-body');
-  if (!tbody) return;
-  tbody.innerHTML = '';
+  if (tbody) tbody.innerHTML = '';
   const psaG = prices.psaGrades || {};
   const nmRaw = prices.ebay?.NM || prices.avg || 0;
   const psaFee = STATE.psaFee || 18;
   let hasAnyGrade = false;
-  [10,9,8,7,6].forEach(g => {
+  if (tbody) [10,9,8,7,6].forEach(g => {
     const price = psaG[g];
     const tr = document.createElement('tr');
     if (price) {
@@ -1741,7 +1740,7 @@ function populateMarket(data) {
     } else {
       tr.innerHTML = `<td style="color:var(--muted2)">PSA ${g}</td><td style="color:var(--muted)">No data</td><td>—</td><td>—</td>`;
     }
-    tbody.appendChild(tr);
+    if (tbody) tbody.appendChild(tr);
   });
   const ratio = psaG[10] && psaG[9] ? (psaG[10] / psaG[9]).toFixed(2) + 'x' : '—';
   setEl('scarcity-ratio', ratio);
