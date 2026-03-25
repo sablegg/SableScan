@@ -1248,7 +1248,7 @@ function populateResults(data) {
   const liqEl = document.getElementById('liq-note');
   const liqSalesEl = document.getElementById('liq-sales');
   if (liqEl) liqEl.textContent = liqNote;
-  if (liqSalesEl) liqSalesEl.textContent = (prices.saleCount || 0) + ' sales';
+  if (liqSalesEl) liqSalesEl.textContent = ((prices && prices.saleCount) || 0) + ' sales';
   document.getElementById('trend-note').textContent = trendScore > 0.6 ? '↑ Trending up' : trendScore < 0.4 ? '↓ Softening' : '→ Stable';
   document.getElementById('trend-last').textContent = prices.avg1d ? '$' + prices.avg1d.toFixed(2) : '—';
 
@@ -1625,6 +1625,7 @@ function setResearchPeriod(period, el) {
 // MARKET PAGE
 // ═══════════════════════════════════════════════════════════════
 function populateSealedContext(setEntry, cardName) {
+  try {
   // Find or create sealed context card
   let ctxCard = document.getElementById('sealed-set-context');
   if (!ctxCard) return;
@@ -1674,28 +1675,29 @@ function populateSealedContext(setEntry, cardName) {
     </div>
   `;
   ctxCard.style.display = 'block';
+  } catch(e) { console.warn('populateSealedContext error:', e); }
 }
 
 function populateMarket(data) {
   const card = data.card || {};
   const prices = data.prices || {};
-  document.getElementById('market-card-name').textContent = card.name || '—';
+  setEl('market-card-name', card.name || '—');
   document.getElementById('market-empty').style.display = 'none';
   document.getElementById('market-content').style.display = 'block';
 
   const a1d = prices.avg1d || prices.avg || 0;
   const a7d = prices.avg7d || prices.avg || 0;
   const a30d = prices.avg30d || prices.avg || 0;
-  document.getElementById('mom-1d').textContent = '$' + (a1d).toFixed(2);
-  document.getElementById('mom-7d').textContent = '$' + (a7d).toFixed(2);
-  document.getElementById('mom-30d').textContent = '$' + (a30d).toFixed(2);
+  setEl('mom-1d', '$' + (a1d).toFixed(2));
+  setEl('mom-7d', '$' + (a7d).toFixed(2));
+  setEl('mom-30d', '$' + (a30d).toFixed(2));
 
   const d1 = a30d > 0 ? ((a1d - a30d) / a30d * 100) : 0;
   const d7 = a30d > 0 ? ((a7d - a30d) / a30d * 100) : 0;
   const fn = v => `<span style="color:${v>0?'var(--green)':v<0?'var(--red)':'var(--muted)'}">${v>0?'+':''}${v.toFixed(1)}%</span>`;
-  document.getElementById('mom-1d-d').innerHTML = fn(d1);
-  document.getElementById('mom-7d-d').innerHTML = fn(d7);
-  document.getElementById('mom-30d-d').innerHTML = '';
+  setHTML('mom-1d-d', fn(d1));
+  setHTML('mom-7d-d', fn(d7));
+  setHTML('mom-30d-d', '');
 
   const trendScore = data.trendScore || 0.5;
   const liq = data.liquidityScore || 0.5;
@@ -1703,18 +1705,20 @@ function populateMarket(data) {
   tp.textContent = trendScore > 0.6 ? '↑ RISING' : trendScore < 0.4 ? '↓ FALLING' : '→ STABLE';
   tp.className = 'pill ' + (trendScore > 0.6 ? 'up' : trendScore < 0.4 ? 'dn' : 'fl');
   const lp = document.getElementById('liq-pill');
-  lp.textContent = liq > 0.6 ? 'HIGH' : liq > 0.3 ? 'MEDIUM' : 'LOW';
-  lp.className = 'pill ' + (liq > 0.6 ? 'up' : liq < 0.3 ? 'dn' : 'fl');
+  if (lp) { lp.textContent = liq > 0.6 ? 'HIGH' : liq > 0.3 ? 'MEDIUM' : 'LOW'; lp.className = 'pill ' + (liq > 0.6 ? 'up' : liq < 0.3 ? 'dn' : 'fl'); }
 
-  document.getElementById('arb-us').textContent = '$' + (prices.ebay?.NM || prices.avg || 0).toFixed(2);
-  document.getElementById('arb-eu').textContent = prices.cardmarket?.NM ? '€' + prices.cardmarket.NM.toFixed(2) : '—';
-  document.getElementById('plat-ebay').textContent = '$' + (prices.ebay?.NM || 0).toFixed(2);
-  document.getElementById('plat-tcg').textContent = prices.tcgplayer?.NM ? '$' + prices.tcgplayer.NM.toFixed(2) : '—';
-  document.getElementById('plat-floor').textContent = '$' + (prices.low || prices.ebay?.DMG || 0).toFixed(2);
-  document.getElementById('plat-count').textContent = (prices.saleCount || 0) + ' sales';
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setHTML = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
+  setEl('arb-us', '$' + (prices.ebay?.NM || prices.avg || 0).toFixed(2));
+  setEl('arb-eu', prices.cardmarket?.NM ? '€' + prices.cardmarket.NM.toFixed(2) : '—');
+  setEl('plat-ebay', '$' + (prices.ebay?.NM || 0).toFixed(2));
+  setEl('plat-tcg', prices.tcgplayer?.NM ? '$' + prices.tcgplayer.NM.toFixed(2) : '—');
+  setEl('plat-floor', '$' + (prices.low || prices.ebay?.DMG || 0).toFixed(2));
+  setEl('plat-count', (prices.saleCount || 0) + ' sales');
 
   const cardName = encodeURIComponent((card.name || '') + ' ' + (card.set || '') + ' Pokemon Card');
-  document.getElementById('ebay-link').href = 'https://www.ebay.com/sch/i.html?_nkw=' + cardName + '&LH_Sold=1&LH_Complete=1';
+  const ebayLink = document.getElementById('ebay-link');
+  if (ebayLink) ebayLink.href = 'https://www.ebay.com/sch/i.html?_nkw=' + cardName + '&LH_Sold=1&LH_Complete=1';
 
   // Grade table
   const tbody = document.getElementById('grade-table-body');
@@ -1738,18 +1742,18 @@ function populateMarket(data) {
     tbody.appendChild(tr);
   });
   const ratio = psaG[10] && psaG[9] ? (psaG[10] / psaG[9]).toFixed(2) + 'x' : '—';
-  document.getElementById('scarcity-ratio').textContent = ratio;
-  document.getElementById('scarcity-text').textContent = hasAnyGrade
+  setEl('scarcity-ratio', ratio);
+  setEl('scarcity-text', hasAnyGrade
     ? 'PSA 10s command a ' + ratio + ' premium over PSA 9.'
-    : 'No graded sales data available for this card.';
-  document.getElementById('best-exit').textContent = hasAnyGrade
+    : 'No graded sales data available for this card.');
+  setEl('best-exit', hasAnyGrade
     ? 'PSA 9 typically offers best ROI for most non-10 pop cards.'
-    : 'Grade data unavailable — check PokeTrace for this card.';
+    : 'Grade data unavailable — check PokeTrace for this card.');
 
   // EU arb — show CardMarket if available, otherwise note US-only
   const euPrice = prices.cardmarket?.NM || prices.cardmarket?.avg || null;
   const usPrice = prices.ebay?.NM || prices.avg || 0;
-  document.getElementById('arb-eu').textContent = euPrice ? '€' + euPrice.toFixed(2) : 'EU N/A';
+  setEl('arb-eu', euPrice ? '€' + euPrice.toFixed(2) : 'EU N/A');
   if (euPrice && usPrice) {
     const arbSpread = usPrice - euPrice;
     const arbEl = document.getElementById('arb-spread');
@@ -1762,7 +1766,7 @@ function populateMarket(data) {
   // Sealed tab — populate from SETS_DATA
   document.getElementById('research-empty').style.display = 'none';
   document.getElementById('research-chart').style.display = 'block';
-  document.getElementById('research-card-label').textContent = card.name || '—';
+  setEl('research-card-label', card.name || '—');
 
   // Look up set in SETS_DATA
   const setName = card.set || '';
@@ -1772,6 +1776,7 @@ function populateMarket(data) {
   );
 
   if (setEntry) {
+    try {
     // Reprint risk based on signal + age
     const reprintRisk = setEntry.signal === 'peak' ? 'High — top sets get reprinted' :
                         setEntry.year >= 2023 ? 'Medium — recent set' :
@@ -1793,28 +1798,29 @@ function populateMarket(data) {
                         sealedPremium > 0  ? `$${setEntry.sealed} sealed (+${sealedPremium}% over MSRP)` :
                         `$${setEntry.sealed} sealed (at/below MSRP)`;
 
-    document.getElementById('ctx-reprint').textContent = reprintRisk;
-    document.getElementById('ctx-print').textContent = printStatus;
-    document.getElementById('ctx-jp').textContent = sigLabels[setEntry.signal] || setEntry.signal;
-    document.getElementById('ctx-era').textContent = setEntry.gen + ' · ' + sealedLabel;
+    setEl('ctx-reprint', reprintRisk);
+    setEl('ctx-print', printStatus);
+    setEl('ctx-jp', sigLabels[setEntry.signal] || setEntry.signal);
+    setEl('ctx-era', setEntry.gen + ' · ' + sealedLabel);
 
     // Show chase cards section in sealed tab
     populateSealedContext(setEntry, card.name);
+    } catch(e) { console.warn('setEntry error:', e); }
   } else {
-    document.getElementById('ctx-reprint').textContent = '—';
-    document.getElementById('ctx-print').textContent = '—';
-    document.getElementById('ctx-jp').textContent = '—';
-    document.getElementById('ctx-era').textContent = setName || '—';
+    setEl('ctx-reprint', '—');
+    setEl('ctx-print', '—');
+    setEl('ctx-jp', '—');
+    setEl('ctx-era', setName || '—');
   }
 
   // Sell page
-  document.getElementById('sell-card-name').textContent = card.name || '—';
+  setEl('sell-card-name', card.name || '—');
   document.getElementById('sell-empty').style.display = 'none';
   document.getElementById('sell-content').style.display = 'block';
   const ts = trendScore;
-  document.getElementById('sell-icon').textContent = ts > 0.6 ? '📈' : ts < 0.4 ? '📉' : '📊';
-  document.getElementById('sell-signal-title').textContent = ts > 0.6 ? 'Strong sell window' : ts < 0.4 ? 'Hold — price softening' : 'Neutral market conditions';
-  document.getElementById('sell-signal-sub').textContent = ts > 0.6 ? 'Trending up — good time to list' : 'Monitor for uptick before selling';
+  setEl('sell-icon', ts > 0.6 ? '📈' : ts < 0.4 ? '📉' : '📊');
+  setEl('sell-signal-title', ts > 0.6 ? 'Strong sell window' : ts < 0.4 ? 'Hold — price softening' : 'Neutral market conditions');
+  setEl('sell-signal-sub', ts > 0.6 ? 'Trending up — good time to list' : 'Monitor for uptick before selling');
   const sv = document.getElementById('sell-verdict');
   sv.textContent = ts > 0.6 ? '📈 SELL' : ts < 0.4 ? '⏸ HOLD' : '→ NEUTRAL';
   sv.className = 'verdict ' + (ts > 0.6 ? 'v-sell' : ts < 0.4 ? 'v-hold' : 'v-hold');
