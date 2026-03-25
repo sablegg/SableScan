@@ -967,14 +967,15 @@ function normalizeApiResponse(d) {
   }
 
   // Normalize psaGrades: psa10→10, psa9→9 etc
-  if (d.psaGrades) {
-    const pg = {};
-    [10,9,8,7,6].forEach(g => {
-      pg[g] = d.psaGrades[g] || d.psaGrades['psa'+g] || null;
-    });
-    if (!d.prices) d.prices = {};
-    d.prices.psaGrades = pg;
-  }
+  // Normalize PSA grades to numeric keys for renderGradeGrid
+  const rawPsa = d.psaGrades || d.prices?.psaGrades || {};
+  const normalizedPsa = {};
+  [10,9,8,7,6].forEach(g => {
+    normalizedPsa[g] = rawPsa[g] || rawPsa['psa'+g] || rawPsa['PSA_'+g] || null;
+  });
+  if (!d.prices) d.prices = {};
+  d.prices.psaGrades = normalizedPsa;
+  d.psaGrades = normalizedPsa;
 
   // Normalize prices structure
   if (!d.prices) d.prices = {};
@@ -1294,19 +1295,30 @@ function populateResults(data) {
 function renderConditions(prices, selectedCond) {
   const container = document.getElementById('condition-rows');
   container.innerHTML = '';
-  const max = Math.max(...Object.values(prices).filter(Boolean));
+  const nmPrice = prices['NM'] || 0;
+  // Multipliers for estimated prices when real data missing
+  const EST = {NM:1, LP:0.72, MP:0.57, HP:0.42, DMG:0.22};
+  const allPrices = {};
   COND_ORDER.forEach(cond => {
-    const price = prices[cond];
+    allPrices[cond] = prices[cond] || (nmPrice ? nmPrice * EST[cond] : null);
+  });
+  const validPrices = Object.values(allPrices).filter(Boolean);
+  if (!validPrices.length) return;
+  const max = Math.max(...validPrices);
+  COND_ORDER.forEach(cond => {
+    const price = allPrices[cond];
     if (!price) return;
+    const isReal = !!prices[cond];
     const isYou = cond === selectedCond;
     const row = document.createElement('div');
     row.className = 'cond-row' + (isYou ? ' on' : '');
     row.onclick = () => switchCondition(cond);
     const pct = Math.round((price / max) * 100);
+    const priceLabel = isReal ? '$' + price.toFixed(2) : '<span style="color:var(--muted);font-size:10px">~$' + price.toFixed(2) + '</span>';
     row.innerHTML = `
       <span class="cond-label${isYou?' you':''}">${cond}</span>
-      <div class="cond-bar-track"><div class="cond-bar-fill" style="width:${pct}%;background:${COND_COLORS[cond]}"></div></div>
-      <span class="cond-price${isYou?' you':''}">$${price.toFixed(2)}</span>
+      <div class="cond-bar-track"><div class="cond-bar-fill" style="width:${pct}%;background:${isReal ? COND_COLORS[cond] : 'var(--border2)'}"></div></div>
+      <span class="cond-price${isYou?' you':''}">${priceLabel}</span>
     `;
     container.appendChild(row);
   });
