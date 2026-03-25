@@ -332,11 +332,16 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
         <div class="trend-track" id="trend-track">
           <div class="trend-dot" id="trend-dot" style="left:50%"></div>
         </div>
-        <div class="trend-liq" id="trend-liq-track"><div class="trend-liq-fill" id="trend-liq-fill" style="width:50%;background:var(--yellow)"></div></div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--muted)">
+      <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:10px;color:var(--muted)">
         <span id="trend-note">—</span>
         <span>Last: <span id="trend-last">—</span></span>
+      </div>
+      <div class="trend-label" style="margin-top:6px"><span id="liq-label-low">⬇ Low Liquidity</span><span id="liq-label-high">High Liquidity ⬆</span></div>
+      <div class="trend-liq" id="trend-liq-track"><div class="trend-liq-fill" id="trend-liq-fill" style="width:50%;background:var(--yellow)"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:10px;color:var(--muted)">
+        <span id="liq-note">—</span>
+        <span id="liq-sales">—</span>
       </div>
     </div>
     <!-- Cycle panel -->
@@ -494,12 +499,13 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     </div>
   </div>
   <div class="card">
-    <div class="ct">🗺️ Market Context</div>
+    <div class="ct">🗺️ Set Intelligence</div>
     <div class="sr"><span class="sl">Reprint risk</span><span class="sv" id="ctx-reprint">—</span></div>
     <div class="sr"><span class="sl">Print status</span><span class="sv" id="ctx-print">—</span></div>
-    <div class="sr"><span class="sl">JP vs EN</span><span class="sv" id="ctx-jp">—</span></div>
-    <div class="sr"><span class="sl">Era comparison</span><span class="sv" id="ctx-era">—</span></div>
+    <div class="sr"><span class="sl">Market signal</span><span class="sv" id="ctx-jp">—</span></div>
+    <div class="sr"><span class="sl">Sealed</span><span class="sv" id="ctx-era">—</span></div>
   </div>
+  <div class="card" id="sealed-set-context" style="display:none"></div>
 </div>
 
 <!-- ════ PAGE: SELL ════ -->
@@ -1238,6 +1244,11 @@ function populateResults(data) {
   document.getElementById('trend-dot').className = 'trend-dot ' + (trendScore > 0.6 ? 'rising' : trendScore < 0.4 ? 'falling' : '');
   document.getElementById('trend-liq-fill').style.width = (liqScore * 100) + '%';
   document.getElementById('trend-liq-fill').style.background = liqScore > 0.6 ? 'var(--green)' : liqScore < 0.3 ? 'var(--red)' : 'var(--yellow)';
+  const liqNote = liqScore > 0.6 ? '↑ High — easy to flip' : liqScore < 0.3 ? '↓ Low — slow mover' : '→ Medium';
+  const liqEl = document.getElementById('liq-note');
+  const liqSalesEl = document.getElementById('liq-sales');
+  if (liqEl) liqEl.textContent = liqNote;
+  if (liqSalesEl) liqSalesEl.textContent = (prices.saleCount || 0) + ' sales';
   document.getElementById('trend-note').textContent = trendScore > 0.6 ? '↑ Trending up' : trendScore < 0.4 ? '↓ Softening' : '→ Stable';
   document.getElementById('trend-last').textContent = prices.avg1d ? '$' + prices.avg1d.toFixed(2) : '—';
 
@@ -1613,6 +1624,58 @@ function setResearchPeriod(period, el) {
 // ═══════════════════════════════════════════════════════════════
 // MARKET PAGE
 // ═══════════════════════════════════════════════════════════════
+function populateSealedContext(setEntry, cardName) {
+  // Find or create sealed context card
+  let ctxCard = document.getElementById('sealed-set-context');
+  if (!ctxCard) return;
+
+  // Signal color
+  const sigColors = {
+    rising:'var(--green)', falling:'var(--red)', peak:'var(--orange,#ff8c00)',
+    slept:'var(--yellow)', floor:'var(--accent)', stable:'var(--muted2)'
+  };
+  const sigColor = sigColors[setEntry.signal] || 'var(--muted2)';
+
+  // Build chase cards HTML — highlight scanned card if it matches
+  const chaseHtml = setEntry.chase.map(c => {
+    const isThis = cardName && c.n.toLowerCase().includes(cardName.toLowerCase());
+    const trendColor = c.t.startsWith('+') ? 'var(--green)' : 'var(--red)';
+    const bg = isThis ? 'background:var(--surface2);margin:0 -8px;padding:5px 8px;border-radius:6px;' : '';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);${bg}">
+      <span style="font-size:11px;color:${isThis?'var(--accent)':'var(--text)'};font-weight:${isThis?'600':'400'}">${isThis?'▶ ':''}${c.n}</span>
+      <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--green)">$${c.p} <span style="color:${trendColor};font-size:10px">${c.t}</span></span>
+    </div>`;
+  }).join('');
+
+  ctxCard.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em">${setEntry.name}</div>
+        <div style="font-size:10px;color:var(--muted)">${setEntry.gen} · ${setEntry.year}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;color:var(--muted)">VALUE SCORE</div>
+        <div style="font-family:'DM Mono',monospace;font-size:18px;color:${sigColor}">${setEntry.score}</div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">JACKPOT CARD</div>
+    <div style="font-size:11px;color:var(--accent);margin-bottom:10px;padding:6px 8px;background:var(--surface);border-radius:6px;border-left:2px solid var(--accent)">${setEntry.jackpot}</div>
+    <div style="font-size:10px;color:var(--muted);letter-spacing:.08em;margin-bottom:4px">CHASE CARDS</div>
+    ${chaseHtml}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">
+      <div style="background:var(--surface);border-radius:6px;padding:8px;text-align:center">
+        <div style="font-size:9px;color:var(--muted);margin-bottom:2px">SEALED BOX</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:16px">$${setEntry.sealed}</div>
+      </div>
+      <div style="background:var(--surface);border-radius:6px;padding:8px;text-align:center">
+        <div style="font-size:9px;color:var(--muted);margin-bottom:2px">SIGNAL</div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:${sigColor};font-weight:600">${setEntry.signal.toUpperCase()}</div>
+      </div>
+    </div>
+  `;
+  ctxCard.style.display = 'block';
+}
+
 function populateMarket(data) {
   const card = data.card || {};
   const prices = data.prices || {};
@@ -1696,14 +1759,53 @@ function populateMarket(data) {
     }
   }
 
-  // Research page
+  // Sealed tab — populate from SETS_DATA
   document.getElementById('research-empty').style.display = 'none';
   document.getElementById('research-chart').style.display = 'block';
   document.getElementById('research-card-label').textContent = card.name || '—';
-  document.getElementById('ctx-reprint').textContent = 'Low';
-  document.getElementById('ctx-print').textContent = 'Out of print';
-  document.getElementById('ctx-jp').textContent = 'JP ~20% cheaper';
-  document.getElementById('ctx-era').textContent = 'XY era — strong collector demand';
+
+  // Look up set in SETS_DATA
+  const setName = card.set || '';
+  const setEntry = SETS_DATA.find(s =>
+    setName.toLowerCase().includes(s.name.toLowerCase()) ||
+    s.name.toLowerCase().includes(setName.toLowerCase())
+  );
+
+  if (setEntry) {
+    // Reprint risk based on signal + age
+    const reprintRisk = setEntry.signal === 'peak' ? 'High — top sets get reprinted' :
+                        setEntry.year >= 2023 ? 'Medium — recent set' :
+                        setEntry.year <= 2019 ? 'Low — vintage, unlikely reprint' : 'Low';
+    // Print status
+    const currentYear = new Date().getFullYear();
+    const age = currentYear - setEntry.year;
+    const printStatus = setEntry.year >= currentYear - 1 ? 'Currently in print' :
+                        setEntry.year >= currentYear - 2 ? 'Recently out of print' :
+                        age >= 4 ? 'Long out of print — supply tight' : 'Out of print';
+    // Signal label
+    const sigLabels = {rising:'↑ Rising — buy window',falling:'↓ Falling — hold off',
+      peak:'⚠ Peak — near top',slept:'💤 Slept on — undervalued',
+      floor:'⬛ Floor — accumulate',stable:'→ Stable market'};
+    // Sealed vs MSRP
+    const sealedPremium = setEntry.msrp > 0 ?
+      Math.round(((setEntry.sealed - setEntry.msrp) / setEntry.msrp) * 100) : 0;
+    const sealedLabel = sealedPremium > 50 ? `$${setEntry.sealed} sealed (+${sealedPremium}% over MSRP)` :
+                        sealedPremium > 0  ? `$${setEntry.sealed} sealed (+${sealedPremium}% over MSRP)` :
+                        `$${setEntry.sealed} sealed (at/below MSRP)`;
+
+    document.getElementById('ctx-reprint').textContent = reprintRisk;
+    document.getElementById('ctx-print').textContent = printStatus;
+    document.getElementById('ctx-jp').textContent = sigLabels[setEntry.signal] || setEntry.signal;
+    document.getElementById('ctx-era').textContent = setEntry.gen + ' · ' + sealedLabel;
+
+    // Show chase cards section in sealed tab
+    populateSealedContext(setEntry, card.name);
+  } else {
+    document.getElementById('ctx-reprint').textContent = '—';
+    document.getElementById('ctx-print').textContent = '—';
+    document.getElementById('ctx-jp').textContent = '—';
+    document.getElementById('ctx-era').textContent = setName || '—';
+  }
 
   // Sell page
   document.getElementById('sell-card-name').textContent = card.name || '—';
