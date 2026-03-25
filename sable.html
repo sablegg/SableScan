@@ -448,26 +448,6 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
       </div>
     </div>
     <div class="card">
-      <div class="ct">🌐 US vs EU Arbitrage (NM)</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="arb-cell"><div class="arb-label">US MARKET</div><div class="arb-price" id="arb-us">—</div><div style="font-size:10px;color:var(--muted)">eBay/TCGPlayer</div></div>
-        <div class="arb-cell"><div class="arb-label">EU MARKET</div><div class="arb-price" id="arb-eu">—</div><div style="font-size:10px;color:var(--muted)">CardMarket</div></div>
-      </div>
-      <div style="margin:6px 0 0;padding:8px;background:var(--surface);border:1px solid var(--border2);border-radius:7px;font-size:11px;color:var(--muted2);text-align:center" id="arb-gap">No significant arbitrage detected</div>
-    </div>
-    <div class="card">
-      <div class="ct">⚖️ Platform Comparison (NM)</div>
-      <div class="sr"><span class="sl">eBay avg sold</span><span class="sv" id="plat-ebay">—</span></div>
-      <div class="sr"><span class="sl">TCGPlayer market</span><span class="sv" id="plat-tcg">—</span></div>
-      <div class="sr"><span class="sl">Price floor</span><span class="sv a" id="plat-floor">—</span></div>
-      <div class="sr"><span class="sl">Sales (30d)</span><span class="sv" id="plat-count">—</span></div>
-      <div style="margin-top:10px"><a id="ebay-link" href="#" target="_blank" class="btn btn-g btn-f" style="font-size:11px">🔗 Verify on eBay →</a></div>
-    </div>
-    <div class="card" id="anomaly-card" style="display:none">
-      <div class="ct" style="color:var(--orange)">⚠️ Anomaly Detected</div>
-      <div style="font-size:11px;color:var(--muted2);line-height:1.5" id="anomaly-text">—</div>
-    </div>
-    <div class="card">
       <div class="ct">🏆 Grading Intelligence</div>
       <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
         <div><div style="font-size:9px;color:var(--muted)">PSA10/PSA9 ratio</div><div style="font-family:'Bebas Neue',sans-serif;font-size:22px" id="scarcity-ratio">—</div></div>
@@ -1677,15 +1657,44 @@ function populateMarket(data) {
   const tbody = document.getElementById('grade-table-body');
   tbody.innerHTML = '';
   const psaG = prices.psaGrades || {};
+  const nmRaw = prices.ebay?.NM || prices.avg || 0;
+  const psaFee = STATE.psaFee || 18;
+  let hasAnyGrade = false;
   [10,9,8,7,6].forEach(g => {
-    if (!psaG[g]) return;
+    const price = psaG[g];
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>PSA ${g}</td><td>$${psaG[g]}</td><td style="color:var(--green)">+—%</td><td>—</td>`;
+    if (price) {
+      hasAnyGrade = true;
+      const net = price - psaFee - nmRaw;
+      const trend7d = '—';
+      const netColor = net > 0 ? 'var(--green)' : 'var(--red)';
+      tr.innerHTML = `<td>PSA ${g}</td><td>$${price.toFixed(0)}</td><td style="color:${netColor}">${net >= 0 ? '+' : ''}$${net.toFixed(0)}</td><td>${(psaG[g-1] && psaG[g] ? (psaG[g]/psaG[g-1]).toFixed(1)+'x' : '—')}</td>`;
+    } else {
+      tr.innerHTML = `<td style="color:var(--muted2)">PSA ${g}</td><td style="color:var(--muted)">No data</td><td>—</td><td>—</td>`;
+    }
     tbody.appendChild(tr);
   });
-  document.getElementById('best-exit').textContent = 'PSA 9 typically offers best ROI for most non-10 pop cards.';
-  document.getElementById('scarcity-ratio').textContent = psaG[10] && psaG[9] ? (psaG[10] / psaG[9]).toFixed(2) + 'x' : '—';
-  document.getElementById('scarcity-text').textContent = 'PSA 10s command a premium. Consider grading NM copies.';
+  const ratio = psaG[10] && psaG[9] ? (psaG[10] / psaG[9]).toFixed(2) + 'x' : '—';
+  document.getElementById('scarcity-ratio').textContent = ratio;
+  document.getElementById('scarcity-text').textContent = hasAnyGrade
+    ? 'PSA 10s command a ' + ratio + ' premium over PSA 9.'
+    : 'No graded sales data available for this card.';
+  document.getElementById('best-exit').textContent = hasAnyGrade
+    ? 'PSA 9 typically offers best ROI for most non-10 pop cards.'
+    : 'Grade data unavailable — check PokeTrace for this card.';
+
+  // EU arb — show CardMarket if available, otherwise note US-only
+  const euPrice = prices.cardmarket?.NM || prices.cardmarket?.avg || null;
+  const usPrice = prices.ebay?.NM || prices.avg || 0;
+  document.getElementById('arb-eu').textContent = euPrice ? '€' + euPrice.toFixed(2) : 'EU N/A';
+  if (euPrice && usPrice) {
+    const arbSpread = usPrice - euPrice;
+    const arbEl = document.getElementById('arb-spread');
+    if (arbEl) {
+      arbEl.textContent = arbSpread > 0 ? 'US +$' + arbSpread.toFixed(2) : 'EU +€' + Math.abs(arbSpread).toFixed(2);
+      arbEl.style.color = Math.abs(arbSpread) > 2 ? 'var(--green)' : 'var(--muted)';
+    }
+  }
 
   // Research page
   document.getElementById('research-empty').style.display = 'none';
