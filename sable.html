@@ -309,7 +309,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
           </div>
         </div>
         <div class="buy-price" id="buy-price-big" style="font-size:40px">—</div>
-        <div id="tier-badge" style="font-size:10px;padding:2px 7px;border-radius:4px;display:inline-block;margin-top:3px">—</div>
+        <div id="tier-badge" style="font-size:10px;padding:2px 7px;border-radius:4px;display:none;margin-top:3px">—</div>
       </div>
     </div>
     <!-- Action buttons -->
@@ -1221,15 +1221,14 @@ function populateResults(data) {
   if (verdict === 'strong-buy' || verdict === 'strongBuy') { priceColor = 'strong'; tierClass = 'active-g'; tierText = '✅ STRONG BUY'; }
   else if (verdict === 'pass') { priceColor = 'pass'; tierClass = 'active-r'; tierText = '🔴 PASS'; }
 
-  const displayPrice = verdict === 'strong-buy' || verdict === 'strongBuy' ? strong : verdict === 'pass' ? pass : acceptable;
+  // MAX PAY is always margin % off NM price — always green
   const bpEl = document.getElementById('buy-price-big');
-  bpEl.textContent = '$' + displayPrice.toFixed(0);
-  bpEl.className = 'buy-price ' + priceColor;
+  bpEl.textContent = acceptable !== null ? '$' + acceptable.toFixed(0) : '—';
+  bpEl.className = 'buy-price strong';
 
+  // tier-badge hidden — AI verdict (AI PICKUP/MID/AVOID) replaces this
   const tb = document.getElementById('tier-badge');
-  tb.textContent = tierText;
-  tb.style.background = tierClass === 'active-g' ? 'var(--green-dim)' : tierClass === 'active-y' ? 'var(--yellow-dim)' : 'var(--red-dim)';
-  tb.style.color = tierClass === 'active-g' ? 'var(--green)' : tierClass === 'active-y' ? 'var(--yellow)' : 'var(--red)';
+  if (tb) tb.style.display = 'none';
 
   ['strong','acceptable','pass'].forEach(t => {
     document.getElementById('tier-'+t).className = 'buy-tier dim';
@@ -1241,7 +1240,18 @@ function populateResults(data) {
   document.getElementById('tier-ok-price').textContent = '$' + acceptable.toFixed(0);
   document.getElementById('tier-pass-price').textContent = '$' + pass.toFixed(0);
 
-  document.getElementById('buy-reasoning').textContent = data.reasoning || '';
+  // Investment verdict from Claude
+  const invVerdict = data.investmentVerdict || data.claudeData?.investmentVerdict || '';
+  const invReason  = data.investmentReason  || data.claudeData?.investmentReason  || '';
+  const reasonEl = document.getElementById('buy-reasoning');
+  if (invVerdict || invReason) {
+    const color = invVerdict === 'pickup' || invVerdict === 'good' ? 'var(--green)' : invVerdict === 'avoid' || invVerdict === 'poor' ? 'var(--red)' : 'var(--yellow)';
+    const label = invVerdict === 'pickup' || invVerdict === 'good' ? 'AI PICKUP' : invVerdict === 'avoid' || invVerdict === 'poor' ? 'AI AVOID' : 'AI MID';
+    const bg    = invVerdict === 'pickup' || invVerdict === 'good' ? 'rgba(74,222,128,0.12)' : invVerdict === 'avoid' || invVerdict === 'poor' ? 'rgba(255,77,109,0.12)' : 'rgba(250,204,21,0.12)';
+    reasonEl.innerHTML = '<span style="color:' + color + ';font-weight:700;font-family:DM Mono,monospace;font-size:10px;background:' + bg + ';padding:2px 7px;border-radius:4px;letter-spacing:.05em">' + label + '</span> <span style="color:var(--muted2);font-size:11px">' + invReason + '</span>';
+  } else {
+    reasonEl.textContent = '';
+  }
 
   // Trend spectrum
   const trendScore = data.trendScore || 0.5;
@@ -1321,9 +1331,9 @@ function recalcBuyPrice() {
   let priceColor = 'ok', tierClass = 'active-y';
   if (verdict === 'strong-buy' || verdict === 'strongBuy') { priceColor = 'strong'; tierClass = 'active-g'; }
   else if (verdict === 'pass') { priceColor = 'pass'; tierClass = 'active-r'; }
-  const displayPrice = tierClass === 'active-g' ? strong : tierClass === 'active-r' ? pass : acceptable;
+  // MAX PAY always = margin % off price — always green
   const bpEl = document.getElementById('buy-price-big');
-  if (bpEl) { bpEl.textContent = '$' + displayPrice.toFixed(0); bpEl.className = 'buy-price ' + priceColor; }
+  if (bpEl) { bpEl.textContent = acceptable !== null ? '$' + acceptable.toFixed(0) : '—'; bpEl.className = 'buy-price strong'; }
   const tsp = document.getElementById('tier-strong-price');
   const top = document.getElementById('tier-ok-price');
   const tpp = document.getElementById('tier-pass-price');
@@ -1399,8 +1409,8 @@ function switchCondition(cond) {
   else if (verdict === 'pass') { priceColor = 'pass'; tierClass = 'active-r'; }
   const displayPrice = tierClass === 'active-g' ? strong : tierClass === 'active-r' ? pass : acceptable;
   const bpEl = document.getElementById('buy-price-big');
-  bpEl.textContent = '$' + displayPrice.toFixed(0);
-  bpEl.className = 'buy-price ' + priceColor;
+  bpEl.textContent = acceptable !== null ? '$' + acceptable.toFixed(0) : '—';
+  bpEl.className = 'buy-price strong';
   document.getElementById('tier-strong-price').textContent = '$' + strong.toFixed(0);
   document.getElementById('tier-ok-price').textContent    = '$' + acceptable.toFixed(0);
   document.getElementById('tier-pass-price').textContent  = '$' + pass.toFixed(0);
