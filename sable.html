@@ -783,18 +783,30 @@ const DEMO = {
 // SETS DATA
 // ═══════════════════════════════════════════════════════════════
 const SETS_DATA = [
-  // Modern era
+  // Mega Evolution era (2025-2026)
+  {gen:'Mega Evolution',name:'Ascended Heroes',year:2026,signal:'rising',score:72,msrp:180,sealed:195,jackpot:'Mega Attack Rares',chase:[{n:'Mega Lucario ex SAR',p:85,t:'+15%'},{n:'Mega Gardevoir ex SAR',p:70,t:'+12%'}]},
+  {gen:'Mega Evolution',name:'Phantasmal Flames',year:2025,signal:'rising',score:78,msrp:180,sealed:220,jackpot:'Mega Charizard X ex',chase:[{n:'Mega Charizard X ex SAR',p:180,t:'+25%'},{n:'Mega Gengar ex SAR',p:95,t:'+18%'}]},
+  {gen:'Mega Evolution',name:'Mega Evolution Base',year:2025,signal:'rising',score:75,msrp:180,sealed:210,jackpot:'Mega Venusaur ex + Mega Latias ex',chase:[{n:'Mega Venusaur ex SAR',p:90,t:'+20%'},{n:'Mega Latias ex SAR',p:75,t:'+15%'}]},
+  // Scarlet & Violet final sets
+  {gen:'Scarlet & Violet',name:'Black Bolt & White Flare',year:2025,signal:'rising',score:74,msrp:180,sealed:205,jackpot:'Final SV set — collector demand',chase:[{n:'Miraidon ex SAR',p:85,t:'+12%'},{n:'Koraidon ex SAR',p:80,t:'+10%'}]},
+  {gen:'Scarlet & Violet',name:'Destined Rivals',year:2025,signal:'stable',score:65,msrp:180,sealed:175,jackpot:'Rival mechanic cards',chase:[{n:'Charizard ex IR',p:95,t:'+8%'},{n:'Mewtwo ex SAR',p:75,t:'+6%'}]},
+  {gen:'Scarlet & Violet',name:'Journey Together',year:2025,signal:'stable',score:62,msrp:180,sealed:170,jackpot:'Erika + Larry chase cards',chase:[{n:'Erika SAR',p:55,t:'+5%'},{n:'Larry SAR',p:42,t:'+4%'}]},
   {gen:'Scarlet & Violet',name:'Prismatic Evolutions',year:2025,signal:'peak',score:88,msrp:180,sealed:310,jackpot:'Eevee Heroes reprint',chase:[{n:'Umbreon ex SAR',p:380,t:'+28%'},{n:'Sylveon ex SAR',p:210,t:'+18%'}]},
+  {gen:'Scarlet & Violet',name:'Surging Sparks',year:2024,signal:'rising',score:76,msrp:180,sealed:215,jackpot:'Pikachu ex SAR',chase:[{n:'Pikachu ex SAR',p:145,t:'+22%'},{n:'Raichu ex SAR',p:65,t:'+12%'}]},
   {gen:'Scarlet & Violet',name:'Stellar Crown',year:2024,signal:'rising',score:72,msrp:180,sealed:195,jackpot:'Stellar Crown ETB',chase:[{n:'Terapagos ex SAR',p:95,t:'+12%'},{n:'Pecharunt ex IR',p:42,t:'+8%'}]},
   {gen:'Scarlet & Violet',name:'Shrouded Fable',year:2024,signal:'floor',score:65,msrp:180,sealed:160,jackpot:'Below MSRP sealed',chase:[{n:'Pecharunt ex IR',p:38,t:'+5%'},{n:'Darkrai ex SAR',p:28,t:'+2%'}]},
   {gen:'Scarlet & Violet',name:'Twilight Masquerade',year:2024,signal:'stable',score:60,msrp:180,sealed:170,jackpot:'Standard legal holos',chase:[{n:'Teal Mask Ogerpon ex IR',p:52,t:'+6%'},{n:'Bloodmoon Ursaluna ex',p:38,t:'+4%'}]},
   {gen:'Scarlet & Violet',name:'Temporal Forces',year:2024,signal:'stable',score:58,msrp:180,sealed:168,jackpot:'Tera cards',chase:[{n:'Iron Leaves ex IR',p:30,t:'+3%'},{n:'Walking Wake ex IR',p:28,t:'+3%'}]},
+  {gen:'Scarlet & Violet',name:'Paldean Fates',year:2024,signal:'rising',score:80,msrp:80,sealed:185,jackpot:'Shiny Charizard ex',chase:[{n:'Shiny Charizard ex',p:120,t:'+18%'},{n:'Shiny Gardevoir ex',p:65,t:'+12%'}]},
   {gen:'Scarlet & Violet',name:'Paradox Rift',year:2023,signal:'rising',score:75,msrp:180,sealed:220,jackpot:'Ancient paradox holos',chase:[{n:'Roaring Moon ex SAR',p:75,t:'+15%'},{n:'Iron Valiant ex SAR',p:55,t:'+12%'}]},
   {gen:'Scarlet & Violet',name:'Obsidian Flames',year:2023,signal:'stable',score:68,msrp:180,sealed:185,jackpot:'Tera Charizard ex IRT',chase:[{n:'Tera Charizard ex IRT',p:120,t:'+8%'},{n:'Pidgeot ex IR',p:32,t:'+3%'}]},
   {gen:'Scarlet & Violet',name:'Paldea Evolved',year:2023,signal:'stable',score:60,msrp:180,sealed:175,jackpot:'Iono SAR',chase:[{n:'Iono SAR',p:160,t:'+5%'},{n:'Pokémon League HQ',p:22,t:'+2%'}]},
   {gen:'Scarlet & Violet',name:'Scarlet & Violet Base',year:2023,signal:'floor',score:52,msrp:180,sealed:160,jackpot:'Charizard ex SAR',chase:[{n:'Charizard ex SAR',p:85,t:'+4%'},{n:'Miriam SAR',p:48,t:'+2%'}]},
+  {gen:'Scarlet & Violet',name:'151',year:2023,signal:'peak',score:90,msrp:60,sealed:280,jackpot:'Mew ex SAR',chase:[{n:'Mew ex SAR',p:180,t:'+20%'},{n:'Charizard ex SAR',p:150,t:'+15%'}]},
   // Sword & Shield
-  {gen:'Sword & Shield',name:'Crown Zenith',year:2023,signal:'rising',score:78,msrp:180,sealed:280,jackpot:'VSTAR Universe reprints',chase:[{n:'Giratina VSTAR Alt Art',p:200,t:'+18%'},{n:'Arceus VSTAR Rainbow',p:85,t:'+10%'}]},
+  {gen:'Sword & Shield',name:'Crown Zenith',year:2025,signal:'peak',score:88,msrp:180,sealed:310,jackpot:'Eevee Heroes reprint',chase:[{n:'Umbreon ex SAR',p:380,t:'+28%'},{n:'Sylveon ex SAR',p:210,t:'+18%'}]},
+  // Sword & Shield
+
   {gen:'Sword & Shield',name:'Silver Tempest',year:2022,signal:'stable',score:65,msrp:180,sealed:190,jackpot:'Lugia VSTAR Alt Art',chase:[{n:'Lugia VSTAR Alt Art',p:95,t:'+8%'},{n:'Regidrago VSTAR Alt Art',p:55,t:'+6%'}]},
   {gen:'Sword & Shield',name:'Lost Origin',year:2022,signal:'rising',score:72,msrp:180,sealed:210,jackpot:'Giratina VSTAR Alt Art',chase:[{n:'Giratina VSTAR Alt Art',p:180,t:'+22%'},{n:'Aerodactyl VSTAR Alt Art',p:62,t:'+10%'}]},
   {gen:'Sword & Shield',name:'Astral Radiance',year:2022,signal:'stable',score:64,msrp:180,sealed:188,jackpot:'Origin Palkia VSTAR Alt',chase:[{n:'Origin Palkia VSTAR Alt',p:70,t:'+6%'},{n:'Hisuian Electrode V Alt',p:42,t:'+4%'}]},
@@ -915,6 +927,14 @@ function showPage(id) {
   document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
   document.getElementById('page-' + id).classList.add('active');
   document.getElementById('nav-' + id).classList.add('on');
+  // Draw research chart when sealed tab opened
+  if (id === 'sealed' && STATE.lastResult) {
+    const ph = STATE.lastResult.priceHistory || {};
+    const ebay = ph['30d'] || ph.thirtyDay || [];
+    const tcg  = ph['tcg_30d'] || ph.tcg_thirtyDay || [];
+    const canvas = document.getElementById('research-chart-canvas');
+    if (canvas) drawResearchChart(ebay, tcg);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1617,8 +1637,98 @@ function setMiniChartPeriod(period, el) {
 }
 
 function setResearchPeriod(period, el) {
-  document.querySelectorAll('#page-research .mini-chart-tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('#page-sealed .mini-chart-tab').forEach(t => t.classList.remove('on'));
   el.classList.add('on');
+  if (!STATE.lastResult) return;
+  const ph = STATE.lastResult.priceHistory || {};
+  const periodMap = {'30d':'thirtyDay','90d':'ninetyDay','7d':'sevenDay'};
+  const alt = periodMap[period] || period;
+  const ebay = ph[period] || ph[alt] || [];
+  const tcg  = ph['tcg_'+period] || ph['tcg_'+alt] || [];
+  const canvas = document.getElementById('research-chart-canvas');
+  if (canvas) drawResearchChart(ebay, tcg);
+}
+
+function drawResearchChart(ebayData, tcgData) {
+  const canvas = document.getElementById('research-chart-canvas');
+  if (!canvas) return;
+  const W = canvas.offsetWidth || 320;
+  const H = 140;
+  canvas.width = W * window.devicePixelRatio;
+  canvas.height = H * window.devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx.clearRect(0, 0, W, H);
+
+  const hasEbay = ebayData && ebayData.length >= 2;
+  const hasTcg  = tcgData  && tcgData.length  >= 2;
+
+  if (!hasEbay && !hasTcg) {
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#55556a';
+    ctx.font = '12px DM Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No price history available', W/2, H/2 + 4);
+    return;
+  }
+
+  const allVals = [...(hasEbay ? ebayData : []), ...(hasTcg ? tcgData : [])];
+  const min = Math.min(...allVals) * 0.93;
+  const max = Math.max(...allVals) * 1.07;
+  const scaleY = v => H - ((v - min) / (max - min)) * (H - 20) - 10;
+
+  const drawSeries = (data, color, fillColor) => {
+    if (!data || data.length < 2) return;
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, fillColor);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath();
+    data.forEach((v, i) => {
+      const x = (i / (data.length - 1)) * (W - 20);
+      const y = scaleY(v);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.lineTo(W-20, H); ctx.lineTo(0, H); ctx.closePath();
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath();
+    data.forEach((v, i) => {
+      const x = (i / (data.length - 1)) * (W - 20);
+      const y = scaleY(v);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+    // End dot
+    const lx = W - 20, ly = scaleY(data[data.length-1]);
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(lx, ly, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#0a0a0f';
+    ctx.beginPath(); ctx.arc(lx, ly, 2, 0, Math.PI*2); ctx.fill();
+    // Price labels
+    ctx.fillStyle = color; ctx.font = 'bold 10px DM Mono, monospace'; ctx.textAlign = 'right';
+    ctx.fillText('$'+data[data.length-1].toFixed(2), W-4, ly-5);
+  };
+
+  if (hasTcg)  drawSeries(tcgData,  '#a78bfa', 'rgba(167,139,250,0.12)');
+  if (hasEbay) drawSeries(ebayData, '#00e5ff', 'rgba(0,229,255,0.18)');
+
+  // Y-axis labels
+  ctx.fillStyle = '#55556a'; ctx.font = '9px DM Mono, monospace'; ctx.textAlign = 'left';
+  ctx.fillText('$'+max.toFixed(0), 2, 14);
+  ctx.fillText('$'+min.toFixed(0), 2, H-4);
+
+  // Legend
+  if (hasEbay) {
+    ctx.fillStyle = '#00e5ff'; ctx.beginPath(); ctx.arc(8, 10, 3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#88889a'; ctx.font = '9px DM Mono'; ctx.textAlign = 'left';
+    ctx.fillText('eBay', 14, 13.5);
+  }
+  if (hasTcg) {
+    const ox = hasEbay ? 50 : 8;
+    ctx.fillStyle = '#a78bfa'; ctx.beginPath(); ctx.arc(ox, 10, 3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#88889a'; ctx.textAlign = 'left';
+    ctx.fillText('TCG', ox+6, 13.5);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1773,10 +1883,13 @@ function populateMarket(data) {
 
   // Look up set in SETS_DATA
   const setName = card.set || '';
-  const setEntry = SETS_DATA.find(s =>
-    setName.toLowerCase().includes(s.name.toLowerCase()) ||
-    s.name.toLowerCase().includes(setName.toLowerCase())
-  );
+  // Try exact match first, then partial — prefer longer name matches
+  let setEntry = SETS_DATA.find(s => s.name.toLowerCase() === setName.toLowerCase());
+  if (!setEntry) setEntry = SETS_DATA.find(s => setName.toLowerCase().includes(s.name.toLowerCase()));
+  if (!setEntry) setEntry = SETS_DATA.find(s => s.name.toLowerCase().includes(setName.toLowerCase()));
+  // Special case mappings
+  if (!setEntry && setName.includes('151')) setEntry = SETS_DATA.find(s => s.name === '151');
+  if (!setEntry && (setName.includes('Black Bolt') || setName.includes('White Flare'))) setEntry = SETS_DATA.find(s => s.name === 'Black Bolt & White Flare');
 
   if (setEntry) {
     try {
