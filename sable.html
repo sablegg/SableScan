@@ -289,7 +289,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
         </div>
         <div class="id-name" id="result-name">—</div>
         <div class="id-set" id="result-set">—</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:2px"><div id="result-rarity" style="font-size:10px;color:var(--muted)"></div><div id="result-variant" style="font-size:10px;color:var(--muted2);padding:1px 6px;border-radius:4px;border:1px solid var(--border);display:none"></div></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px"><div id="result-rarity" style="font-size:10px;color:var(--muted)"></div><div id="result-variant" style="font-size:10px;color:var(--muted2);padding:1px 6px;border-radius:4px;border:1px solid var(--border);display:none"></div><div id="result-psa-pill" style="display:none;font-size:10px;font-family:'DM Mono',monospace;padding:1px 6px;border-radius:4px;background:rgba(247,181,0,0.12);border:1px solid rgba(247,181,0,0.3);color:#f7b500"></div></div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
           <div class="conf-track"><div class="conf-fill" id="conf-fill" style="width:0"></div></div>
           <span id="conf-pct" style="font-size:10px;color:var(--accent)">—</span>
@@ -453,16 +453,37 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
       </div>
     </div>
     <div class="card">
-      <div class="ct">🏆 Grading Intelligence</div>
-      <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
-        <div><div style="font-size:9px;color:var(--muted)">PSA10/PSA9 ratio</div><div style="font-family:'Bebas Neue',sans-serif;font-size:22px" id="scarcity-ratio">—</div></div>
-        <div style="flex:1;font-size:11px;color:var(--muted2);line-height:1.4" id="scarcity-text">—</div>
+      <div class="ct">🏆 Grading Arbitrage</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+        <div style="flex:1"><div style="font-size:9px;color:var(--muted)">PSA 10 / PSA 9</div><div style="font-family:'Bebas Neue',sans-serif;font-size:22px" id="scarcity-ratio">—</div></div>
+        <div style="font-size:10px;color:var(--muted2);line-height:1.4;flex:2" id="scarcity-text">—</div>
       </div>
-      <div style="overflow-x:auto"><table class="grade-table"><thead><tr><th>Grade</th><th>Price</th><th>7d Trend</th><th>Sales/30d</th></tr></thead><tbody id="grade-table-body"></tbody></table></div>
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <div style="font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Best exit grade</div>
-        <div style="font-size:11px;color:var(--text);line-height:1.5" id="best-exit">—</div>
+      <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap" id="grading-fee-chips">
+        <span class="psa-fee-chip on" onclick="setPsaFee(18,this)">$18 Bulk</span>
+        <span class="psa-fee-chip" onclick="setPsaFee(25,this)">$25 Value</span>
+        <span class="psa-fee-chip" onclick="setPsaFee(75,this)">$75 Regular</span>
+        <span class="psa-fee-chip" onclick="setPsaFee(150,this)">$150 Express</span>
       </div>
+      <div style="overflow-x:auto">
+        <table class="grade-table">
+          <thead><tr><th>Grade</th><th>Price</th><th>Company</th><th>Net @ fee</th></tr></thead>
+          <tbody id="grade-table-body"></tbody>
+        </table>
+      </div>
+      <div id="ev-box" style="display:none;margin-top:10px;padding:10px;background:var(--surface);border-radius:8px;border:1px solid var(--border2)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:10px;color:var(--muted);letter-spacing:.1em" id="ev-grade-label">PSA 10</span>
+          <span style="font-size:10px;color:var(--muted2)" id="ev-verdict">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div><div style="font-size:9px;color:var(--muted)">GRADED</div><div style="font-family:'DM Mono',monospace;font-size:13px" id="ev-psa-price">—</div></div>
+          <div><div style="font-size:9px;color:var(--muted)">FEE</div><div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--red)" id="ev-fee">—</div></div>
+          <div><div style="font-size:9px;color:var(--muted)">RAW</div><div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--muted2)" id="ev-raw">—</div></div>
+          <div><div style="font-size:9px;color:var(--muted)">NET</div><div class="ev-big" id="ev-net">—</div></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px" id="ev-pct">—</div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--muted2)" id="best-exit">—</div>
     </div>
   </div>
 </div>
@@ -975,13 +996,16 @@ function normalizeApiResponse(d) {
   // Normalize psaGrades: psa10→10, psa9→9 etc
   // Normalize PSA grades to numeric keys for renderGradeGrid
   const rawPsa = d.psaGrades || d.prices?.psaGrades || {};
+  const gp = d.gradedPrices || {};
   const normalizedPsa = {};
   [10,9,8,7,6].forEach(g => {
-    normalizedPsa[g] = rawPsa[g] || rawPsa['psa'+g] || rawPsa['PSA_'+g] || null;
+    normalizedPsa[g] = rawPsa[g] || rawPsa['psa'+g] || rawPsa['PSA_'+g] || gp['psa'+g] || null;
   });
   if (!d.prices) d.prices = {};
   d.prices.psaGrades = normalizedPsa;
   d.psaGrades = normalizedPsa;
+  // Store all grading companies for market tab
+  d.gradedPrices = gp;
 
   // Normalize prices structure
   if (!d.prices) d.prices = {};
@@ -1183,6 +1207,22 @@ function populateResults(data) {
   const conf = card.confidence || 0;
   document.getElementById('conf-fill').style.width = conf + '%';
   document.getElementById('conf-pct').textContent = conf + '%';
+
+  // PSA pill — show best graded price if available
+  const psaPill = document.getElementById('result-psa-pill');
+  if (psaPill) {
+    const pg = data.gradedPrices || {};
+    const psaNm = prices.psaGrades || {};
+    const psa10 = psaNm[10] || pg.psa10;
+    const psa9  = psaNm[9]  || pg.psa9;
+    const bestGrade = psa10 ? {g:10, p:psa10} : psa9 ? {g:9, p:psa9} : null;
+    if (bestGrade) {
+      psaPill.textContent = 'PSA ' + bestGrade.g + ' $' + bestGrade.p.toFixed(0);
+      psaPill.style.display = 'inline-block';
+    } else {
+      psaPill.style.display = 'none';
+    }
+  }
 
   // Thumb
   const thumb = document.getElementById('result-thumb');
@@ -1455,10 +1495,14 @@ function renderVariants(variants) {
 
 function renderGradeGrid(psaGrades, condition, fee) {
   const grid = document.getElementById('grade-grid');
+  if (!grid) return;
   grid.innerHTML = '';
   const probs = GRADE_PROBS[condition] || GRADE_PROBS['NM'];
-  [10,9,8,7,6].forEach(g => {
-    const price = psaGrades[g];
+  const gp = STATE.lastResult?.gradedPrices || {};
+  const hasAnyData = Object.values(psaGrades).some(v => v !== null);
+
+  [10,9,8,7].forEach(g => {
+    const psaPrice = psaGrades[g];
     const prob = probs[g] || 0;
     const tag = document.createElement('div');
     tag.className = 'grade-tag';
@@ -1467,7 +1511,7 @@ function renderGradeGrid(psaGrades, condition, fee) {
     tag.innerHTML = `
       <span class="gt-label">PSA ${g}</span>
       <span class="gt-prob ${probClass}">${Math.round(prob*100)}%</span>
-      ${price ? `<span class="gt-price">$${price}</span>` : `<span class="gt-price nd">No data</span>`}
+      ${psaPrice ? `<span class="gt-price">$${psaPrice}</span>` : `<span class="gt-price nd">No data</span>`}
     `;
     grid.appendChild(tag);
   });
@@ -1831,26 +1875,37 @@ function populateMarket(data) {
   const ebayLink = document.getElementById('ebay-link');
   if (ebayLink) ebayLink.href = 'https://www.ebay.com/sch/i.html?_nkw=' + cardName + '&LH_Sold=1&LH_Complete=1';
 
-  // Grade table
+  // Grade table — show all companies, best price, net arbitrage
   const tbody = document.getElementById('grade-table-body');
   if (tbody) tbody.innerHTML = '';
   const psaG = prices.psaGrades || {};
-  const nmRaw = prices.ebay?.NM || prices.avg || 0;
+  const gp = data.gradedPrices || STATE.lastResult?.gradedPrices || {};
+  const nmRaw = prices.ebay?.NM || prices.tcgplayer?.NM || prices.avg || 0;
   const psaFee = STATE.psaFee || 18;
   let hasAnyGrade = false;
   if (tbody) [10,9,8,7,6].forEach(g => {
-    const price = psaG[g];
+    // Find best price across companies
+    const candidates = [
+      psaG[g] ? {label:'PSA', price:psaG[g]} : null,
+      gp['bgs'+g] ? {label:'BGS', price:gp['bgs'+g]} : null,
+      (g===9 && gp.bgs9_5) ? {label:'BGS 9.5', price:gp.bgs9_5} : null,
+      gp['cgc'+g] ? {label:'CGC', price:gp['cgc'+g]} : null,
+      gp['sgc'+g] ? {label:'SGC', price:gp['sgc'+g]} : null,
+    ].filter(Boolean);
+    const best = candidates.length ? candidates.reduce((a,b) => a.price > b.price ? a : b) : null;
     const tr = document.createElement('tr');
-    if (price) {
+    if (best) {
       hasAnyGrade = true;
-      const net = price - psaFee - nmRaw;
-      const trend7d = '—';
+      const net = best.price - psaFee - nmRaw;
       const netColor = net > 0 ? 'var(--green)' : 'var(--red)';
-      tr.innerHTML = `<td>PSA ${g}</td><td>$${price.toFixed(0)}</td><td style="color:${netColor}">${net >= 0 ? '+' : ''}$${net.toFixed(0)}</td><td>${(psaG[g-1] && psaG[g] ? (psaG[g]/psaG[g-1]).toFixed(1)+'x' : '—')}</td>`;
+      const netStr = (net >= 0 ? '+' : '') + '$' + Math.abs(net).toFixed(0);
+      tr.innerHTML = `<td>Grade ${g}</td><td>$${best.price.toFixed(0)}</td><td style="font-size:10px;color:var(--muted2)">${best.label}</td><td style="color:${netColor}">${netStr}</td>`;
+      tr.style.cursor = 'pointer';
+      tr.onclick = () => selectGrade(g, psaG, psaFee);
     } else {
-      tr.innerHTML = `<td style="color:var(--muted2)">PSA ${g}</td><td style="color:var(--muted)">No data</td><td>—</td><td>—</td>`;
+      tr.innerHTML = `<td style="color:var(--muted2)">Grade ${g}</td><td style="color:var(--muted)">—</td><td>—</td><td>—</td>`;
     }
-    if (tbody) tbody.appendChild(tr);
+    tbody.appendChild(tr);
   });
   const ratio = psaG[10] && psaG[9] ? (psaG[10] / psaG[9]).toFixed(2) + 'x' : '—';
   setEl('scarcity-ratio', ratio);
