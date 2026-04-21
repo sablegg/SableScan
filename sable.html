@@ -267,7 +267,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
   </div>
   <div class="cfg-strip">
     <select class="cfg-sel" id="cfg-sales"><option value="5">5 sales</option><option value="10" selected>10 sales</option><option value="20">20 sales</option><option value="30">30 sales</option></select>
-    <select class="cfg-sel" id="cfg-margin" onchange="recalcBuyPrice()"><option value="10">10% margin</option><option value="15" selected>15% margin</option><option value="20">20% margin</option><option value="25">25% margin</option><option value="30">30% margin</option><option value="35">35% margin</option></select>
+    <select class="cfg-sel" id="cfg-margin" onchange="recalcBuyPrice()"><option value="10">10% margin</option><option value="15">15% margin</option><option value="20" selected>20% margin</option><option value="25">25% margin</option><option value="30">30% margin</option><option value="40">40% margin</option><option value="50">50% margin</option></select>
     <select class="cfg-sel" id="cfg-window"><option value="7">7d avg</option><option value="30" selected>30d avg</option><option value="90">90d avg</option></select>
   </div>
 
@@ -692,7 +692,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     <div class="sr">
       <div><div style="font-size:12px;color:var(--text)">Buy margin</div><div style="font-size:10px;color:var(--muted)">Target discount below market avg</div></div>
       <select id="s-margin" onchange="syncConfig('margin',this.value)" style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:12px;color:var(--text);font-family:'DM Mono',monospace;outline:none">
-        <option value="10">10%</option><option value="15" selected>15%</option><option value="20">20%</option><option value="25">25%</option>
+        <option value="10">10%</option><option value="15">15%</option><option value="20" selected>20%</option><option value="25">25%</option><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option>
       </select>
     </div>
   </div>
@@ -935,6 +935,11 @@ function logOut() {
 function initApp() {
   loadCollection();
   renderSets();
+  const savedMargin = localStorage.getItem('sable_margin');
+  if (savedMargin) {
+    document.getElementById('cfg-margin').value = savedMargin;
+    document.getElementById('s-margin').value = savedMargin;
+  }
   document.getElementById('settings-user').textContent = STATE.user;
   document.getElementById('settings-role').textContent = STATE.role.toUpperCase();
   // File input
@@ -1110,7 +1115,7 @@ async function startScan(file, textOnly) {
     }
 
     const hint = document.getElementById('quick-hint').value.trim();
-    const marginPct = parseInt(document.getElementById('cfg-margin').value) || 15;
+    const marginPct = parseInt(document.getElementById('cfg-margin').value) || 20;
     const salesCount = parseInt(document.getElementById('cfg-sales').value) || 10;
     const avgWindow = parseInt(document.getElementById('cfg-window').value) || 30;
 
@@ -2346,6 +2351,9 @@ function closeSettings() { document.getElementById('settings-ov').style.display 
 function syncConfig(key, val) {
   if (key === 'margin') {
     document.getElementById('cfg-margin').value = val;
+    document.getElementById('s-margin').value = val;
+    localStorage.setItem('sable_margin', val);
+    recalcBuyPrice();
   }
 }
 function syncMode(mode) { setMode(mode); }
