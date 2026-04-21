@@ -250,7 +250,6 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
   <button class="nb" onclick="showPage('sell')" id="nav-sell"><span class="nb-icon">💰</span><span class="nb-label">Sell</span></button>
   <button class="nb" onclick="showPage('collection')" id="nav-collection"><span class="nb-icon">📁</span><span class="nb-label">Collect</span></button>
   <button class="nb" onclick="showPage('sets')" id="nav-sets"><span class="nb-icon">🗂️</span><span class="nb-label">Sets</span></button>
-  <span id="app-version-display" style="font-size:8px;color:var(--muted2);font-family:'DM Mono',monospace;align-self:center;padding:0 6px;white-space:nowrap"></span>
 </nav>
 
 <!-- ════ PAGE: SCAN ════ -->
@@ -271,6 +270,8 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     <select class="cfg-sel" id="cfg-margin" onchange="recalcBuyPrice()"><option value="10">10% margin</option><option value="15">15% margin</option><option value="20" selected>20% margin</option><option value="25">25% margin</option><option value="30">30% margin</option><option value="40">40% margin</option><option value="50">50% margin</option></select>
     <select class="cfg-sel" id="cfg-window"><option value="7">7d avg</option><option value="30" selected>30d avg</option><option value="90">90d avg</option></select>
   </div>
+
+  <div id="app-version-display" style="text-align:center;padding:6px 0 2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.05em"></div>
 
   <div id="loading-panel">
     <div class="load-title"><div class="spinner"></div>Analyzing…</div>
