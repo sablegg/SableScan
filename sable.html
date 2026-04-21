@@ -250,6 +250,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
   <button class="nb" onclick="showPage('sell')" id="nav-sell"><span class="nb-icon">💰</span><span class="nb-label">Sell</span></button>
   <button class="nb" onclick="showPage('collection')" id="nav-collection"><span class="nb-icon">📁</span><span class="nb-label">Collect</span></button>
   <button class="nb" onclick="showPage('sets')" id="nav-sets"><span class="nb-icon">🗂️</span><span class="nb-label">Sets</span></button>
+  <span id="app-version-display" style="font-size:8px;color:var(--muted2);font-family:'DM Mono',monospace;align-self:center;padding:0 6px;white-space:nowrap"></span>
 </nav>
 
 <!-- ════ PAGE: SCAN ════ -->
@@ -617,7 +618,6 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 
 <div class="page" id="page-sets">
   <div class="ph"><div class="pt">Sets Intelligence</div><div class="ps">Lifecycle · Value zones · Slept-on picks</div></div>
-  <div style="text-align:right;padding:2px 14px 0;font-size:9px;color:var(--muted2);font-family:'DM Mono',monospace" id="app-version-display"></div>
   <div class="sets-ctrl">
     <select id="sets-sort" onchange="renderSets()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:11px;color:var(--text);font-family:'DM Mono',monospace;outline:none;flex-shrink:0">
       <option value="newest">Newest first</option><option value="oldest">Oldest first</option>
