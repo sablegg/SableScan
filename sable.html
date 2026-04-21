@@ -617,6 +617,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 
 <div class="page" id="page-sets">
   <div class="ph"><div class="pt">Sets Intelligence</div><div class="ps">Lifecycle · Value zones · Slept-on picks</div></div>
+  <div style="text-align:right;padding:2px 14px 0;font-size:9px;color:var(--muted2);font-family:'DM Mono',monospace" id="app-version-display"></div>
   <div class="sets-ctrl">
     <select id="sets-sort" onchange="renderSets()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:11px;color:var(--text);font-family:'DM Mono',monospace;outline:none;flex-shrink:0">
       <option value="newest">Newest first</option><option value="oldest">Oldest first</option>
@@ -699,7 +700,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
   <div class="card">
     <div class="ct">🔗 Connection Status</div>
     <div class="sr"><span class="sl">n8n webhook</span><span id="s-webhook" style="font-size:10px;padding:2px 8px;border-radius:4px;background:var(--green-dim);color:var(--green)">● Connected</span></div>
-    <div class="sr"><span class="sl">App version</span><span style="font-size:10px;color:var(--muted2)">1.1.0</span></div>
+    <div class="sr"><span class="sl">App version</span><span style="font-size:10px;color:var(--muted2)" id="s-version"></span></div>
   </div>
   <div class="card">
     <div class="ct">⚠️ Data</div>
@@ -711,6 +712,8 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 <script>
 // ═══════════════════════════════════════════════════════════════
 // CONFIG
+const VERSION = '1.2.0';
+
 // ═══════════════════════════════════════════════════════════════
 const BACKEND = {
   scanWebhook: 'https://sablescan.app.n8n.cloud/webhook/514d21e7-de3a-452b-b3ab-5c4c5ada4dcd',
@@ -942,6 +945,8 @@ function initApp() {
   }
   document.getElementById('settings-user').textContent = STATE.user;
   document.getElementById('settings-role').textContent = STATE.role.toUpperCase();
+  document.getElementById('s-version').textContent = VERSION;
+  document.getElementById('app-version-display').textContent = 'v' + VERSION;
   // File input
   document.getElementById('file-input').addEventListener('change', e => {
     const f = e.target.files[0];
