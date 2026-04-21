@@ -2434,7 +2434,7 @@ function openVariantsSheet() {
         <div style="font-size:13px;font-weight:600;color:${isActive?'var(--accent)':'var(--text)'}">${label}</div>
         <div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--green);margin-top:2px">${price}</div>
       </div>
-      ${isActive?'<span style="font-size:10px;color:var(--accent);font-family:'DM Mono',monospace">CURRENT</span>':''}
+      ${isActive?'<span style="font-size:10px;color:var(--accent);font-family:\'DM Mono\',monospace">CURRENT</span>':''}
     `;
     if (!isActive) row.onclick = () => selectVariant(v);
     list.appendChild(row);
