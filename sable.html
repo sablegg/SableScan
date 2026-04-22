@@ -703,6 +703,10 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     <div class="sr"><span class="sl">n8n webhook</span><span id="s-webhook" style="font-size:10px;padding:2px 8px;border-radius:4px;background:var(--green-dim);color:var(--green)">● Connected</span></div>
     <div class="sr"><span class="sl">App version</span><span style="font-size:10px;color:var(--muted2)" id="s-version"></span></div>
   </div>
+  <!-- TODO: Add "Sync New Sets" button here -->
+  <!-- When tapped, call PokeTrace /v1/sets, compare against SET_SLUGS in the n8n
+       Code in JavaScript node, and surface any missing set slugs so they can be
+       added. Could show a modal listing new/unknown sets with their slugs. -->
   <div class="card">
     <div class="ct">⚠️ Data</div>
     <button onclick="clearCollectionData()" class="btn btn-g btn-f" style="margin-bottom:8px;font-size:11px">Clear collection data</button>
@@ -803,8 +807,8 @@ const DEMO = {
       history: [22,23,24,23,25,26,27,26,28,27,28,28.5],
     },
     variants: [
-      {label:'Full Art',condition:'NM',price:28.50,active:true},
-      {label:'Regular',condition:'NM',price:4.50,active:false},
+      {variant:'Full_Art',price:28.50,image:null,id:'demo-fa'},
+      {variant:'Normal',price:4.50,image:null,id:'demo-nm'},
     ],
     priceHistory: {
       '7d': [27,26.5,27,27.5,28,28.2,28.5],
@@ -1079,7 +1083,7 @@ function normalizeApiResponse(d) {
   // Normalize variants
   if (!d.variants || !d.variants.length) {
     const nm = d.prices.ebay?.NM || d.prices.avg || 0;
-    d.variants = [{ label: d.card?.variant || 'Standard', condition:'NM', price: nm, active: true }];
+    d.variants = [{ variant: d.card?.variant || 'Standard', price: nm, image: d.card?.imageUrl || null, id: d.card?.poketraceId || null }];
   }
 
   return d;
@@ -1172,6 +1176,7 @@ async function startScan(file, textOnly) {
     await delay(300);
 
     STATE.scanCount++;
+    data = normalizeApiResponse(data);
     STATE.lastResult = data;
     STATE.currentCondition = data.card?.condition || 'NM';
 
@@ -1182,8 +1187,9 @@ async function startScan(file, textOnly) {
     console.error('Scan error:', err);
     showToast('Error — showing demo data');
     loading.style.display = 'none';
-    STATE.lastResult = DEMO.scan;
-    populateResults(DEMO.scan);
+    const demo = normalizeApiResponse(Object.assign({}, DEMO.scan));
+    STATE.lastResult = demo;
+    populateResults(demo);
   }
 }
 
