@@ -633,10 +633,13 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     <button onclick="closeVariantsSheet()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0 4px">✕</button>
   </div>
   <div id="variants-list"></div>
-  <!-- TODO: with variants button, as it pops up with variants, add a 'Find Additional Variants' button
-       and then proceed to find any additional variants. Add a 'Report Missing Variants' button as well.
-       Let it return 'Reported' as a text reply near the bottom.
-       Make a place in settings as a bug list for admin. -->
+  <div id="variants-actions" style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+    <button id="find-more-btn" onclick="findAdditionalVariants()" class="btn btn-g btn-f" style="font-size:11px">🔍 Find Additional Variants</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button id="report-missing-btn" onclick="reportMissingVariants()" class="btn btn-g btn-f" style="font-size:11px;flex:1">🚩 Report Missing Variants</button>
+      <span id="report-missing-feedback" style="display:none;font-size:10px;color:var(--green);font-family:'DM Mono',monospace">Reported ✓</span>
+    </div>
+  </div>
 </div>
 <div id="variants-backdrop" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,0.6)" onclick="closeVariantsSheet()"></div>
 <div id="toast"></div>
@@ -702,6 +705,11 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
   <!-- When tapped, call PokeTrace /v1/sets, compare against SET_SLUGS in the n8n
        Code in JavaScript node, and surface any missing set slugs so they can be
        added. Could show a modal listing new/unknown sets with their slugs. -->
+  <div class="card" id="admin-bug-list-card" style="display:none">
+    <div class="ct">🐛 Bug Reports <span id="bug-count" style="font-size:10px;color:var(--muted)"></span></div>
+    <div id="bug-reports-list" style="font-size:11px;color:var(--muted);line-height:1.8"></div>
+    <button onclick="clearBugReports()" class="btn btn-g btn-f" style="font-size:11px;margin-top:8px">Clear Reports</button>
+  </div>
   <div class="card">
     <div class="ct">⚠️ Data</div>
     <button onclick="clearCollectionData()" class="btn btn-g btn-f" style="margin-bottom:8px;font-size:11px">Clear collection data</button>
@@ -2359,6 +2367,11 @@ function openSettings() {
   document.getElementById('settings-ov').style.display = 'block';
   document.getElementById('settings-user').textContent = STATE.user || '—';
   document.getElementById('settings-role').textContent = (STATE.role || 'user').toUpperCase();
+  const adminCard = document.getElementById('admin-bug-list-card');
+  if (adminCard) {
+    adminCard.style.display = STATE.role === 'admin' ? 'block' : 'none';
+    if (STATE.role === 'admin') renderBugReports();
+  }
 }
 function closeSettings() { document.getElementById('settings-ov').style.display = 'none'; }
 function syncConfig(key, val) {
@@ -2427,6 +2440,12 @@ function openVariantsSheet() {
     if (!isActive) row.onclick = () => selectVariant(v);
     list.appendChild(row);
   });
+  const findBtn = document.getElementById('find-more-btn');
+  if (findBtn) { findBtn.textContent = '🔍 Find Additional Variants'; findBtn.disabled = false; }
+  const reportBtn = document.getElementById('report-missing-btn');
+  if (reportBtn) { reportBtn.disabled = false; }
+  const reportFeedback = document.getElementById('report-missing-feedback');
+  if (reportFeedback) { reportFeedback.style.display = 'none'; }
   document.getElementById('variants-sheet').style.display = 'block';
   document.getElementById('variants-backdrop').style.display = 'block';
 }
@@ -2482,6 +2501,85 @@ async function selectVariant(v) {
     console.error('selectVariant error:', e);
     showToast('Could not load variant data');
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VARIANT DISCOVERY + BUG REPORTS
+// ═══════════════════════════════════════════════════════════════
+
+async function findAdditionalVariants() {
+  const card = STATE.lastResult?.card;
+  if (!card?.name) { showToast('No card loaded'); return; }
+  const btn = document.getElementById('find-more-btn');
+  btn.textContent = 'Searching…';
+  btn.disabled = true;
+  try {
+    const existing = new Set((STATE.lastResult?.variants || []).map(v => v.id));
+    const url = `https://api.poketrace.com/v1/cards?search=${encodeURIComponent(card.name)}&game=pokemon&market=US&limit=50`;
+    const resp = await fetch(url, { headers: { 'X-API-Key': 'pc_f98e4bdeb0ab1697330a106b8ac25e90c0ea506d78a4776d' } });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const json = await resp.json();
+    const allCards = json.data || [];
+    const newVariants = allCards
+      .filter(c => !existing.has(c.id))
+      .map(c => ({
+        variant: c.variant || 'Normal',
+        price: c.prices?.ebay?.NEAR_MINT?.avg || c.prices?.tcgplayer?.NEAR_MINT?.avg || null,
+        image: c.image || null,
+        id: c.id,
+      }));
+    if (!newVariants.length) {
+      showToast('No additional variants found');
+      btn.textContent = '✓ None Found';
+      return;
+    }
+    STATE.lastResult.variants = [...(STATE.lastResult.variants || []), ...newVariants];
+    const badge = document.getElementById('variants-count');
+    if (badge) { badge.textContent = STATE.lastResult.variants.length; badge.style.display = 'inline'; }
+    openVariantsSheet();
+    showToast(`Found ${newVariants.length} more variant${newVariants.length > 1 ? 's' : ''}`);
+  } catch(e) {
+    console.error('findAdditionalVariants:', e);
+    showToast('Search failed');
+    btn.textContent = '🔍 Find Additional Variants';
+    btn.disabled = false;
+  }
+}
+
+function reportMissingVariants() {
+  const card = STATE.lastResult?.card;
+  if (!card?.name) { showToast('No card loaded'); return; }
+  const reports = JSON.parse(localStorage.getItem('sable_bug_reports') || '[]');
+  reports.push({ type: 'missing_variant', card: card.name, set: card.set || '?', cardNumber: card.number || '?', timestamp: Date.now() });
+  localStorage.setItem('sable_bug_reports', JSON.stringify(reports));
+  const feedback = document.getElementById('report-missing-feedback');
+  if (feedback) feedback.style.display = 'inline';
+  const btn = document.getElementById('report-missing-btn');
+  if (btn) btn.disabled = true;
+  showToast('Missing variant reported');
+}
+
+function renderBugReports() {
+  const reports = JSON.parse(localStorage.getItem('sable_bug_reports') || '[]');
+  const list = document.getElementById('bug-reports-list');
+  const count = document.getElementById('bug-count');
+  if (!list) return;
+  if (count) count.textContent = reports.length ? `(${reports.length})` : '';
+  if (!reports.length) { list.textContent = 'No reports yet.'; return; }
+  list.innerHTML = reports.map(r => {
+    const d = new Date(r.timestamp);
+    const ds = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div><span style="color:var(--text)">${r.card}</span> <span style="color:var(--muted)">${r.set} #${r.cardNumber}</span></div>
+      <span style="color:var(--muted);font-size:9px;font-family:'DM Mono',monospace">${ds}</span>
+    </div>`;
+  }).join('');
+}
+
+function clearBugReports() {
+  localStorage.removeItem('sable_bug_reports');
+  renderBugReports();
+  showToast('Reports cleared');
 }
 
 // ═══════════════════════════════════════════════════════════════
