@@ -313,7 +313,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     <!-- Action buttons -->
     <div style="display:flex;gap:5px;padding:7px 12px 6px;overflow-x:auto;scrollbar-width:none">
       <button class="id-btn" id="variants-btn" onclick="openVariantsSheet()">🎴 Variants <span id="variants-count" style="display:none;background:var(--accent);color:#000;border-radius:8px;font-size:9px;padding:1px 5px;margin-left:2px"></span></button>
-      <button class="id-btn" onclick="togglePanel('search-panel')">✏️ Wrong?</button>
+
       <button class="id-btn" onclick="addToCollection()">＋ Collect</button>
       <button class="id-btn" onclick="exportToSell()">→ Sell</button>
       <button class="id-btn" onclick="openSettings()">⚙️</button>
@@ -354,15 +354,6 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
       </div>
     </div>
     <!-- Search panel -->
-    <div id="search-panel" style="display:none">
-      <div style="padding:10px 12px;background:var(--surface2);border-bottom:1px solid var(--border)">
-        <div style="display:flex;gap:6px;margin-bottom:8px">
-          <input type="text" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--text);outline:none" id="search-input" placeholder="Search cards…" oninput="handleSearch(this.value)">
-          <button class="btn btn-g" onclick="togglePanel('search-panel')" style="padding:8px 10px;font-size:11px">✕</button>
-        </div>
-        <div id="search-results" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto"></div>
-      </div>
-    </div>
     <!-- Buy tiers -->
     <div style="padding:8px 12px">
       <div class="buy-tiers">
@@ -2390,19 +2381,6 @@ function togglePanel(id) {
   el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
-function handleSearch(q) {
-  const res = document.getElementById('search-results');
-  res.innerHTML = '';
-  if (q.length < 2) return;
-  const matches = SETS_DATA.flatMap(s => s.chase).filter(c => c.n.toLowerCase().includes(q.toLowerCase())).slice(0, 5);
-  matches.forEach(m => {
-    const div = document.createElement('div');
-    div.style.cssText = 'padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px';
-    div.textContent = m.n + ' · $' + m.p;
-    div.onclick = () => { togglePanel('search-panel'); showToast('Selected: ' + m.n); };
-    res.appendChild(div);
-  });
-}
 
 function showToast(msg) {
   const t = document.getElementById('toast');
