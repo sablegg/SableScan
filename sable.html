@@ -1213,7 +1213,7 @@ function populateResults(data) {
 
   // Identity
   document.getElementById('result-name').textContent = card.name || '—';
-  document.getElementById('result-set').textContent = (card.set || '') + (card.number ? ' · #' + card.number : '');
+  document.getElementById('result-set').textContent = (card.set || '') + (card.fullNumber ? ' · ' + card.fullNumber : card.number ? ' · #' + card.number : '');
   document.getElementById('result-rarity').textContent = card.rarity || '';
   const marginVal = document.getElementById('cfg-margin').value;
   const md = document.getElementById('margin-display');
