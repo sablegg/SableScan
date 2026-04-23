@@ -88,6 +88,13 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 .cfg-strip{display:flex;gap:6px;padding:0 12px 10px;overflow-x:auto;scrollbar-width:none}
 .cfg-strip::-webkit-scrollbar{display:none}
 .cfg-sel{flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 8px;font-size:11px;color:var(--muted2);cursor:pointer;outline:none;-webkit-appearance:none}
+.text-entry-panel{margin:0 12px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:none}
+.text-entry-panel.open{display:block}
+.text-entry-row{display:flex;gap:8px;align-items:center}
+.text-entry-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text);font-family:'DM Mono',monospace;outline:none;transition:border-color .15s}
+.text-entry-input:focus{border-color:var(--accent)}
+.text-entry-input::placeholder{color:var(--muted)}
+.text-entry-go{flex-shrink:0;background:var(--accent);color:#000;border:none;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.05em;cursor:pointer}
 .mode-tog{flex-shrink:0;display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:7px;overflow:hidden}
 .mt-btn{padding:5px 9px;font-size:10px;color:var(--muted);cursor:pointer;border-right:1px solid var(--border);transition:all .15s;white-space:nowrap}
 .mt-btn:last-child{border-right:none}
@@ -274,9 +281,16 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     <select class="cfg-sel" id="cfg-sales"><option value="5">5 sales</option><option value="10" selected>10 sales</option><option value="20">20 sales</option><option value="30">30 sales</option></select>
     <select class="cfg-sel" id="cfg-margin" onchange="recalcBuyPrice()"><option value="10">10% margin</option><option value="15">15% margin</option><option value="20" selected>20% margin</option><option value="25">25% margin</option><option value="30">30% margin</option><option value="35">35% margin</option><option value="40">40% margin</option><option value="45">45% margin</option><option value="50">50% margin</option></select>
     <select class="cfg-sel" id="cfg-window"><option value="7">7d avg</option><option value="30" selected>30d avg</option><option value="90">90d avg</option></select>
+    <button class="cfg-sel" id="text-entry-btn" onclick="toggleTextEntry()" style="color:var(--accent);border-color:var(--border2)">✏️ Text</button>
+  </div>
+  <div class="text-entry-panel" id="text-entry-panel">
+    <div class="text-entry-row">
+      <input class="text-entry-input" id="text-entry-input" type="text" placeholder="e.g. Charizard 4/102 Base Set Holo" autocomplete="off" onkeydown="if(event.key==='Enter')submitTextEntry()">
+      <button class="text-entry-go" onclick="submitTextEntry()">SCAN</button>
+    </div>
   </div>
 
-  <div id="app-version-display" style="text-align:center;padding:6px 0 2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.05em">v1.5.0</div>
+  <div id="app-version-display" style="text-align:center;padding:6px 0 2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.05em">v1.5.1</div>
 
   <div id="loading-panel">
     <div class="load-title"><div class="spinner"></div>Analyzing…</div>
@@ -746,7 +760,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 <script>
 // ═══════════════════════════════════════════════════════════════
 // CONFIG
-const VERSION = '1.5.0';
+const VERSION = '1.5.1';
 
 // ═══════════════════════════════════════════════════════════════
 const BACKEND = {
@@ -2443,6 +2457,25 @@ function syncMode(mode) { setMode(mode); }
 // MISC
 // ═══════════════════════════════════════════════════════════════
 function setMode(mode){STATE.currentMode=mode;['both','formula','ai'].forEach(m=>{const btn=document.getElementById('mode-'+m);if(m===mode){btn.style.background='var(--accent)';btn.style.color='#000';btn.style.border='none';btn.style.fontWeight='600';}else{btn.style.background='var(--surface2)';btn.style.color='var(--muted2)';btn.style.border='1px solid var(--border)';btn.style.fontWeight='400';}});}
+
+function toggleTextEntry() {
+  const panel = document.getElementById('text-entry-panel');
+  const btn = document.getElementById('text-entry-btn');
+  const open = panel.classList.toggle('open');
+  btn.style.color = open ? '#000' : 'var(--accent)';
+  btn.style.background = open ? 'var(--accent)' : '';
+  if (open) document.getElementById('text-entry-input').focus();
+}
+
+function submitTextEntry() {
+  const val = document.getElementById('text-entry-input').value.trim();
+  if (!val) { showToast('Enter a card name first'); return; }
+  document.getElementById('quick-hint').value = val;
+  document.getElementById('text-entry-panel').classList.remove('open');
+  document.getElementById('text-entry-btn').style.color = 'var(--accent)';
+  document.getElementById('text-entry-btn').style.background = '';
+  startScan(null, true);
+}
 
 function togglePanel(id) {
   const el = document.getElementById(id);
