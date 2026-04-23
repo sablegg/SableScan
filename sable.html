@@ -663,7 +663,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 
 <!-- SYNC SETS MODAL -->
 <div id="sync-sets-backdrop" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.7)" onclick="closeSyncSetsModal()"></div>
-<div id="sync-sets-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:20px;width:calc(100% - 40px);max-width:480px;max-height:80vh;display:flex;flex-direction:column">
+<div id="sync-sets-modal" style="display:none;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:20px;width:calc(100% - 40px);max-width:480px;max-height:80vh">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.05em">POKETRACE SETS</div>
     <button onclick="closeSyncSetsModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0 4px">✕</button>
