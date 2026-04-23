@@ -289,7 +289,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
   <div id="results-panel">
     <!-- Identity row -->
     <div style="display:flex;gap:10px;padding:10px 12px 0;align-items:flex-start">
-      <img class="card-thumb" id="result-thumb" src="" alt="" onclick="togglePanel('cycle-panel')">
+      <img class="card-thumb" id="result-thumb" src="" alt="">
       <div style="flex:1;min-width:0;padding-top:2px">
         <div id="slab-badge" class="slab-badge" style="display:none;margin:0 0 4px">
           <span id="slab-company">PSA</span>&nbsp;<span id="slab-grade">9</span>&nbsp;·&nbsp;Cert&nbsp;<span id="slab-cert">#</span>
@@ -354,13 +354,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
       </div>
     </div>
     <!-- Cycle panel -->
-    <div id="cycle-panel" style="display:none">
-      <div style="padding:10px 12px;background:var(--surface2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-        <div style="font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Other Printings</div>
-        <div id="cycle-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"></div>
-      </div>
-    </div>
-    <!-- Search panel -->
+    <!-- Buy tiers -->
     <!-- Buy tiers -->
     <div style="padding:8px 12px">
       <div class="buy-tiers">
@@ -1435,16 +1429,6 @@ function populateResults(data) {
   if (data.set) {
     populateSetPulse(data.set);
   }
-
-  // Cycle grid
-  const cg = document.getElementById('cycle-grid');
-  cg.innerHTML = '';
-  (data.variants || []).forEach(v => {
-    const d = document.createElement('div');
-    d.style.cssText = 'text-align:center;cursor:pointer;padding:6px 4px;border-radius:6px;border:1px solid var(--border);background:var(--surface2)';
-    d.innerHTML = `<div style="font-size:9px;color:var(--muted2);margin-bottom:2px">${v.label}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--text)">$${(v.price||0).toFixed(0)}</div>`;
-    cg.appendChild(d);
-  });
 
   // Market page
   populateMarket(data);
