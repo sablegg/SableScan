@@ -313,6 +313,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     <!-- Action buttons -->
     <div style="display:flex;gap:5px;padding:7px 12px 6px;overflow-x:auto;scrollbar-width:none">
       <button class="id-btn" id="variants-btn" onclick="openVariantsSheet()">🎴 Variants <span id="variants-count" style="display:none;background:var(--accent);color:#000;border-radius:8px;font-size:9px;padding:1px 5px;margin-left:2px"></span></button>
+      <button class="id-btn" id="wrong-btn" onclick="openCandidatesSheet()" style="display:none">❓ Wrong?</button>
 
       <button class="id-btn" onclick="addToCollection()">＋ Collect</button>
       <button class="id-btn" onclick="exportToSell()">→ Sell</button>
@@ -642,6 +643,17 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
   </div>
 </div>
 <div id="variants-backdrop" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,0.6)" onclick="closeVariantsSheet()"></div>
+
+<!-- CANDIDATES SHEET -->
+<div id="candidates-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border2);border-radius:16px 16px 0 0;padding:16px;max-height:65vh;overflow-y:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.05em">WRONG CARD?</div>
+    <button onclick="closeCandidatesSheet()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0 4px">✕</button>
+  </div>
+  <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Tap the correct card below to switch</div>
+  <div id="candidates-list"></div>
+</div>
+<div id="candidates-backdrop" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,0.6)" onclick="closeCandidatesSheet()"></div>
 <div id="toast"></div>
 
 <!-- SYNC SETS MODAL -->
@@ -1306,6 +1318,10 @@ function populateResults(data) {
   }
   // Store poketraceId for current variant detection
   if (data.card) data.card.poketraceId = data.card.poketraceId || null;
+
+  // Wrong? button — show when candidates exist
+  const wrongBtn = document.getElementById('wrong-btn');
+  if (wrongBtn) wrongBtn.style.display = (data.candidates && data.candidates.length > 1) ? 'inline-flex' : 'none';
 
   // Buy price & tiers
   const condition = STATE.currentCondition;
@@ -2509,6 +2525,101 @@ async function selectVariant(v) {
   } catch(e) {
     console.error('selectVariant error:', e);
     showToast('Could not load variant data');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CANDIDATES SHEET (Wrong? button)
+// ═══════════════════════════════════════════════════════════════
+
+function openCandidatesSheet() {
+  const candidates = STATE.lastResult?.candidates || [];
+  const list = document.getElementById('candidates-list');
+  if (!list) return;
+  if (!candidates.length) { showToast('No other candidates available'); return; }
+  const currentId = STATE.lastResult?.card?.poketraceId || null;
+  const variantDisplay = {
+    'Holofoil':'Holo','Reverse_Holofoil':'Reverse Holo','Normal':'Normal',
+    '1st_Edition':'1st Ed','1st_Edition_Holofoil':'1st Ed Holo',
+    'IR':'Illustration Rare','SAR':'Special Art Rare','Full_Art':'Full Art',
+  };
+  list.innerHTML = '';
+  candidates.forEach(c => {
+    const isActive = c.id === currentId;
+    const label = variantDisplay[c.variant] || c.variant || 'Standard';
+    const price = c.price ? '$' + c.price.toFixed(2) : 'No data';
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${isActive?'var(--surface2)':'transparent'};border:1px solid ${isActive?'var(--accent)':'transparent'}`;
+    row.innerHTML = `
+      ${c.image ? `<img src="${c.image}" style="width:44px;height:62px;object-fit:contain;border-radius:4px;background:var(--surface2)">` : `<div style="width:44px;height:62px;background:var(--surface2);border-radius:4px"></div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:${isActive?'var(--accent)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name || 'Unknown'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:1px">${c.set || ''} · #${c.cardNumber || '?'} · ${label}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--green);margin-top:2px">${price}</div>
+      </div>
+      ${isActive ? '<span style="font-size:10px;color:var(--accent);font-family:\'DM Mono\',monospace;white-space:nowrap">CURRENT</span>' : ''}
+    `;
+    if (!isActive) row.onclick = () => selectCandidate(c);
+    list.appendChild(row);
+  });
+  document.getElementById('candidates-sheet').style.display = 'block';
+  document.getElementById('candidates-backdrop').style.display = 'block';
+}
+
+function closeCandidatesSheet() {
+  document.getElementById('candidates-sheet').style.display = 'none';
+  document.getElementById('candidates-backdrop').style.display = 'none';
+}
+
+async function selectCandidate(c) {
+  closeCandidatesSheet();
+  showToast('Loading ' + (c.name || 'card') + '…');
+  try {
+    const resp = await fetch('https://api.poketrace.com/v1/cards/' + c.id, {
+      headers: { 'X-API-Key': 'pc_f98e4bdeb0ab1697330a106b8ac25e90c0ea506d78a4776d' }
+    });
+    if (!resp.ok) throw new Error('PokeTrace ' + resp.status);
+    const json = await resp.json();
+    const card = json.data || {};
+    const existing = STATE.lastResult || {};
+    const ebayPrices = card.prices?.ebay || {};
+    const tcgPrices  = card.prices?.tcgplayer || {};
+    const priceSource = Object.keys(ebayPrices).length > 0 ? ebayPrices : tcgPrices;
+    const nm  = priceSource.NEAR_MINT?.avg  || null;
+    const lp  = priceSource.LIGHTLY_PLAYED?.avg || null;
+    const mp  = priceSource.MODERATELY_PLAYED?.avg || null;
+    const hp  = priceSource.HEAVILY_PLAYED?.avg || null;
+    const dmg = priceSource.DAMAGED?.avg || null;
+    const updated = Object.assign({}, existing, {
+      card: Object.assign({}, existing.card, {
+        name: card.name || c.name || existing.card?.name,
+        set: card.set?.name || c.set || existing.card?.set,
+        number: card.cardNumber || c.cardNumber || existing.card?.number,
+        variant: card.variant || c.variant || existing.card?.variant,
+        rarity: card.rarity || existing.card?.rarity,
+        imageUrl: card.image || existing.card?.imageUrl,
+        poketraceId: c.id,
+      }),
+      prices: Object.assign({}, existing.prices, {
+        ebay: { NM: nm, LP: lp, MP: mp, HP: hp, DMG: dmg },
+        tcgplayer: { NM: tcgPrices.NEAR_MINT?.avg || null },
+        avg: nm, avg1d: nm, avg7d: nm, avg30d: nm,
+        saleCount: priceSource.NEAR_MINT?.saleCount || 0,
+      }),
+      marketPrice: nm,
+      maxPay: nm ? parseFloat((nm * 0.80).toFixed(2)) : null,
+      buyTargets: {
+        strongBuy:  nm ? parseFloat((nm * 0.75 * 0.88).toFixed(2)) : null,
+        acceptable: nm ? parseFloat((nm * 0.80).toFixed(2)) : null,
+        pass:       nm ? parseFloat((nm * 0.97).toFixed(2)) : null,
+      },
+    });
+    STATE.lastResult = normalizeApiResponse(updated);
+    populateResults(STATE.lastResult);
+    showToast('Switched to ' + (c.name || 'card'));
+  } catch(e) {
+    console.error('selectCandidate error:', e);
+    showToast('Could not load card data');
   }
 }
 
