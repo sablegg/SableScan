@@ -82,7 +82,9 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 #upload-preview{display:none;width:80px;height:112px;object-fit:cover;border-radius:6px;border:2px solid var(--accent);box-shadow:0 0 16px rgba(0,229,255,.3)}
 #file-input{display:none}
 .hint-row{display:flex;gap:8px;margin:0 12px 10px}
-.hint-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text);outline:none;transition:border-color .15s}
+.hint-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 30px 9px 12px;font-size:12px;color:var(--text);outline:none;transition:border-color .15s;width:100%}
+.hint-wrap{position:relative;flex:1}
+.hint-clear{display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:14px;line-height:1;cursor:pointer;padding:2px 4px}
 .hint-input:focus{border-color:var(--accent)}
 .hint-input::placeholder{color:var(--muted)}
 .cfg-strip{display:flex;gap:6px;padding:0 12px 10px;overflow-x:auto;scrollbar-width:none}
@@ -91,9 +93,11 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 .text-entry-panel{margin:0 12px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:none}
 .text-entry-panel.open{display:block}
 .text-entry-row{display:flex;gap:8px;align-items:center}
-.text-entry-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text);font-family:'DM Mono',monospace;outline:none;transition:border-color .15s}
+.text-entry-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 30px 9px 12px;font-size:12px;color:var(--text);font-family:'DM Mono',monospace;outline:none;transition:border-color .15s;width:100%}
 .text-entry-input:focus{border-color:var(--accent)}
 .text-entry-input::placeholder{color:var(--muted)}
+.text-entry-wrap{position:relative;flex:1}
+.text-entry-clear{display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:14px;line-height:1;cursor:pointer;padding:2px 4px}
 .text-entry-go{flex-shrink:0;background:var(--accent);color:#000;border:none;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.05em;cursor:pointer}
 .mode-tog{flex-shrink:0;display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:7px;overflow:hidden}
 .mt-btn{padding:5px 9px;font-size:10px;color:var(--muted);cursor:pointer;border-right:1px solid var(--border);transition:all .15s;white-space:nowrap}
@@ -275,7 +279,10 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
   </div>
   <input type="file" id="file-input" accept="image/*" capture="environment">
   <div class="hint-row">
-    <input type="text" class="hint-input" id="quick-hint" placeholder="Card name hint (optional)…" autocomplete="off">
+    <div class="hint-wrap">
+      <input type="text" class="hint-input" id="quick-hint" placeholder="Card name hint (optional)…" autocomplete="off" oninput="const c=document.getElementById('hint-clear');c.style.display=this.value?'block':'none'">
+      <button class="hint-clear" id="hint-clear" onclick="document.getElementById('quick-hint').value='';this.style.display='none';document.getElementById('quick-hint').focus()">×</button>
+    </div>
   </div>
   <div class="cfg-strip">
     <select class="cfg-sel" id="cfg-sales"><option value="5">5 sales</option><option value="10" selected>10 sales</option><option value="20">20 sales</option><option value="30">30 sales</option></select>
@@ -285,12 +292,15 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
   </div>
   <div class="text-entry-panel" id="text-entry-panel">
     <div class="text-entry-row">
-      <input class="text-entry-input" id="text-entry-input" type="text" placeholder="e.g. Charizard 4/102 Base Set Holo" autocomplete="off" onkeydown="if(event.key==='Enter')submitTextEntry()">
+      <div class="text-entry-wrap">
+        <input class="text-entry-input" id="text-entry-input" type="text" placeholder="e.g. Charizard 4/102 Base Set Holo" autocomplete="off" onkeydown="if(event.key==='Enter')submitTextEntry()" oninput="const c=document.getElementById('text-entry-clear');c.style.display=this.value?'block':'none'">
+        <button class="text-entry-clear" id="text-entry-clear" onclick="document.getElementById('text-entry-input').value='';this.style.display='none';document.getElementById('text-entry-input').focus()">×</button>
+      </div>
       <button class="text-entry-go" onclick="submitTextEntry()">SCAN</button>
     </div>
   </div>
 
-  <div id="app-version-display" style="text-align:center;padding:6px 0 2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.05em">v1.5.3</div>
+  <div id="app-version-display" style="text-align:center;padding:6px 0 2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.05em">v1.5.4</div>
 
   <div id="loading-panel">
     <div class="load-title"><div class="spinner"></div>Analyzing…</div>
@@ -338,6 +348,11 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
       <button class="id-btn" id="buy-btn" onclick="addToBuyList()">← Buy <span id="buy-count" style="display:none;background:var(--accent);color:#000;border-radius:8px;font-size:9px;padding:1px 5px;margin-left:2px;cursor:pointer" onclick="event.stopPropagation();openBuySheet()"></span></button>
       <button class="id-btn" onclick="exportToSell()">→ Sell</button>
       <button class="id-btn" onclick="openSettings()">⚙️</button>
+    </div>
+    <!-- DEBUG PANEL (admin only) -->
+    <div id="debug-panel" style="display:none;margin:0 12px 6px;padding:8px 10px;background:rgba(255,200,0,0.06);border:1px solid rgba(255,200,0,0.2);border-radius:6px;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);line-height:1.8">
+      <div style="color:rgba(255,200,0,0.7);letter-spacing:.08em;margin-bottom:3px">⚠ n8n DEBUG</div>
+      <div id="debug-content"></div>
     </div>
     <!-- Variants -->
     <div style="padding:0 12px 6px"><div class="chips" id="variant-strip"></div></div>
@@ -689,7 +704,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.05em">WRONG CARD?</div>
     <button onclick="closeCandidatesSheet()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0 4px">✕</button>
   </div>
-  <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Tap the correct card below to switch</div>
+  <div id="candidates-subtitle" style="font-size:10px;color:var(--muted);margin-bottom:12px">Tap the correct card below to switch</div>
   <div id="candidates-list"></div>
 </div>
 <div id="candidates-backdrop" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,0.6)" onclick="closeCandidatesSheet()"></div>
@@ -785,7 +800,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 <script>
 // ═══════════════════════════════════════════════════════════════
 // CONFIG
-const VERSION = '1.5.3';
+const VERSION = '1.5.4';
 
 // ═══════════════════════════════════════════════════════════════
 const BACKEND = {
@@ -1121,7 +1136,10 @@ function normalizeApiResponse(d) {
     const tmap = { rising:0.75, up:0.75, stable:0.5, flat:0.5, falling:0.25, down:0.25, softening:0.25 };
     d.trendScore = tmap[(d.trend||'').toLowerCase()] ?? 0.5;
   }
-  if (!d.liquidityScore) d.liquidityScore = 0.5;
+  if (d.liquidityScore == null) {
+    const sc = d.prices?.saleCount || 0;
+    d.liquidityScore = sc === 0 ? 0.05 : Math.min(1.0, sc / 50);
+  }
 
   // Normalize verdict from gradingFlag / trend
   if (!d.verdict) {
@@ -1238,6 +1256,9 @@ async function startScan(file, textOnly) {
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const raw = await resp.json();
       data = Array.isArray(raw) ? raw[0] : raw;
+      console.log('[n8n raw card]', JSON.stringify(data.card || {}));
+      console.log('[n8n raw variants]', JSON.stringify((data.variants||[]).map(v=>({variant:v.variant,id:v.id}))));
+      console.log('[n8n raw candidates]', JSON.stringify((data.candidates||[]).map(c=>({name:c.name,set:c.set,variant:c.variant,id:c.id}))));
       if (data.error) throw new Error(data.error);
     } catch (err) {
       console.warn('n8n error, using demo:', err.message);
@@ -1376,9 +1397,28 @@ function populateResults(data) {
   // Store poketraceId for current variant detection
   if (data.card) data.card.poketraceId = data.card.poketraceId || null;
 
-  // Wrong? button — show when candidates exist
+  // Admin debug panel
+  const debugPanel = document.getElementById('debug-panel');
+  if (debugPanel) {
+    if (STATE.role === 'admin') {
+      const dc = document.getElementById('debug-content');
+      if (dc) dc.innerHTML = [
+        `name: <b style="color:var(--text)">${card.name || '—'}</b>`,
+        `set: <b style="color:var(--text)">${card.set || '—'}</b>`,
+        `setSlug: <b style="color:var(--text)">${card.setSlug || '—'}</b>`,
+        `number: ${card.number || '—'} &nbsp; variant: <b style="color:${card.variant?'var(--accent)':'#f66'}">${card.variant || 'MISSING'}</b>`,
+        `rarity: ${card.rarity || '—'} &nbsp; confidence: ${card.confidence || '—'}%`,
+        `variants: ${(data.variants||[]).length} &nbsp; candidates: ${(data.candidates||[]).length}`,
+      ].map(l => `<div>${l}</div>`).join('');
+      debugPanel.style.display = 'block';
+    } else {
+      debugPanel.style.display = 'none';
+    }
+  }
+
+  // Wrong? button — always show after a scan
   const wrongBtn = document.getElementById('wrong-btn');
-  if (wrongBtn) wrongBtn.style.display = (data.candidates && data.candidates.length > 1) ? 'inline-flex' : 'none';
+  if (wrongBtn) wrongBtn.style.display = 'inline-flex';
 
   // Buy price & tiers
   const condition = STATE.currentCondition;
@@ -1450,7 +1490,7 @@ function populateResults(data) {
   document.getElementById('trend-dot').className = 'trend-dot ' + (trendScore > 0.6 ? 'rising' : trendScore < 0.4 ? 'falling' : '');
   document.getElementById('trend-liq-fill').style.width = (liqScore * 100) + '%';
   document.getElementById('trend-liq-fill').style.background = liqScore > 0.6 ? 'var(--green)' : liqScore < 0.3 ? 'var(--red)' : 'var(--yellow)';
-  const liqNote = liqScore > 0.6 ? '↑ High — easy to flip' : liqScore < 0.3 ? '↓ Low — slow mover' : '→ Medium';
+  const liqNote = liqScore >= 0.6 ? 'High' : liqScore >= 0.3 ? 'Medium' : liqScore >= 0.1 ? 'Low' : 'Illiquid';
   const liqEl = document.getElementById('liq-note');
   const liqSalesEl = document.getElementById('liq-sales');
   if (liqEl) liqEl.textContent = liqNote;
@@ -1620,7 +1660,7 @@ function renderVariants(variants) {
   (variants || []).forEach((v, i) => {
     const chip = document.createElement('button');
     chip.className = 'chip' + (i === 0 ? ' on' : '');
-    chip.textContent = v.label + (v.price ? ' · $' + v.price.toFixed(0) : '');
+    chip.textContent = (v.variant || v.label || '?') + (v.price ? ' · $' + v.price.toFixed(0) : '');
     chip.onclick = () => {
       strip.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
       chip.classList.add('on');
@@ -2622,38 +2662,67 @@ async function selectVariant(v) {
 // CANDIDATES SHEET (Wrong? button)
 // ═══════════════════════════════════════════════════════════════
 
-function openCandidatesSheet() {
-  const candidates = STATE.lastResult?.candidates || [];
+async function openCandidatesSheet() {
+  const card = STATE.lastResult?.card;
+  if (!card?.name) { showToast('No card loaded'); return; }
+
   const list = document.getElementById('candidates-list');
+  const subtitle = document.getElementById('candidates-subtitle');
   if (!list) return;
-  if (!candidates.length) { showToast('No other candidates available'); return; }
-  const currentId = STATE.lastResult?.card?.poketraceId || null;
-  const variantDisplay = {
-    'Holofoil':'Holo','Reverse_Holofoil':'Reverse Holo','Normal':'Normal',
-    '1st_Edition':'1st Ed','1st_Edition_Holofoil':'1st Ed Holo',
-    'IR':'Illustration Rare','SAR':'Special Art Rare','Full_Art':'Full Art',
-  };
-  list.innerHTML = '';
-  candidates.forEach(c => {
-    const isActive = c.id === currentId;
-    const label = variantDisplay[c.variant] || c.variant || 'Standard';
-    const price = c.price ? '$' + c.price.toFixed(2) : 'No data';
-    const row = document.createElement('div');
-    row.style.cssText = `display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${isActive?'var(--surface2)':'transparent'};border:1px solid ${isActive?'var(--accent)':'transparent'}`;
-    row.innerHTML = `
-      ${c.image ? `<img src="${c.image}" style="width:44px;height:62px;object-fit:contain;border-radius:4px;background:var(--surface2)">` : `<div style="width:44px;height:62px;background:var(--surface2);border-radius:4px"></div>`}
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;color:${isActive?'var(--accent)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name || 'Unknown'}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:1px">${c.set || ''} · #${c.cardNumber || '?'} · ${label}</div>
-        <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--green);margin-top:2px">${price}</div>
-      </div>
-      ${isActive ? '<span style="font-size:10px;color:var(--accent);font-family:\'DM Mono\',monospace;white-space:nowrap">CURRENT</span>' : ''}
-    `;
-    if (!isActive) row.onclick = () => selectCandidate(c);
-    list.appendChild(row);
-  });
+
+  // Show sheet immediately with loading state
+  list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">Searching…</div>';
+  if (subtitle) subtitle.textContent = 'Searching PokeTrace for "' + card.name + '"…';
   document.getElementById('candidates-sheet').style.display = 'block';
   document.getElementById('candidates-backdrop').style.display = 'block';
+
+  try {
+    const currentId = STATE.lastResult?.card?.poketraceId || null;
+    const variantDisplay = {
+      'Holofoil':'Holo','Reverse_Holofoil':'Reverse Holo','Normal':'Normal',
+      '1st_Edition':'1st Ed','1st_Edition_Holofoil':'1st Ed Holo',
+      'IR':'Illustration Rare','SAR':'Special Art Rare','Full_Art':'Full Art',
+    };
+
+    const url = `https://api.poketrace.com/v1/cards?search=${encodeURIComponent(card.name)}&game=pokemon&market=US&limit=50`;
+    const resp = await fetch(url, { headers: { 'X-API-Key': 'pc_f98e4bdeb0ab1697330a106b8ac25e90c0ea506d78a4776d' } });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const json = await resp.json();
+    const allCards = (json.data || []).filter(c => c.cardNumber);
+
+    if (!allCards.length) {
+      list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">No results found</div>';
+      if (subtitle) subtitle.textContent = 'No results for "' + card.name + '"';
+      return;
+    }
+
+    if (subtitle) subtitle.textContent = allCards.length + ' result' + (allCards.length !== 1 ? 's' : '') + ' — tap the correct card';
+    list.innerHTML = '';
+    allCards.forEach(c => {
+      const isActive = c.id === currentId;
+      const label = variantDisplay[c.variant] || c.variant || 'Standard';
+      const nm = c.prices?.ebay?.NEAR_MINT?.avg || c.prices?.tcgplayer?.NEAR_MINT?.avg || null;
+      const price = nm ? '$' + nm.toFixed(2) : 'No data';
+      const setName = c.set?.name || c.set || '';
+      const row = document.createElement('div');
+      row.style.cssText = `display:flex;align-items:center;gap:10px;padding:10px 8px;border-radius:8px;cursor:${isActive?'default':'pointer'};margin-bottom:4px;background:${isActive?'var(--surface2)':'transparent'};border:1px solid ${isActive?'var(--accent)':'transparent'}`;
+      row.innerHTML = `
+        ${c.image ? `<img src="${c.image}" style="width:44px;height:62px;object-fit:contain;border-radius:4px;background:var(--surface2)">` : `<div style="width:44px;height:62px;background:var(--surface2);border-radius:4px"></div>`}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:${isActive?'var(--accent)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name || 'Unknown'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:1px">${setName}${c.cardNumber ? ' · #' + c.cardNumber : ''} · ${label}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--green);margin-top:2px">${price}</div>
+        </div>
+        ${isActive ? '<span style="font-size:10px;color:var(--accent);font-family:\'DM Mono\',monospace;white-space:nowrap">CURRENT</span>' : ''}
+      `;
+      if (!isActive) row.onclick = () => selectCandidate({ id: c.id, name: c.name, set: setName, cardNumber: c.cardNumber, variant: c.variant });
+      list.appendChild(row);
+    });
+  } catch(e) {
+    console.error('openCandidatesSheet:', e);
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">Search failed — try again</div>';
+    if (subtitle) subtitle.textContent = '';
+  }
 }
 
 function closeCandidatesSheet() {
