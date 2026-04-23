@@ -96,10 +96,15 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 /* ─── LOADING ─── */
 #loading-panel{display:none;margin:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 16px}
 .load-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.08em;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:10px}
-.load-step{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:7px;font-size:11px;color:var(--muted);border:1px solid var(--border);margin-bottom:6px;transition:all .35s}
-.load-step.active{border-color:var(--accent);color:var(--text);background:rgba(0,229,255,.05)}
-.load-step.done{border-color:var(--green);color:var(--green);background:var(--green-dim)}
-.step-icon{font-size:14px;width:18px;text-align:center}
+.load-step{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border-radius:7px;font-size:11px;color:var(--muted);border:1px solid var(--border);margin-bottom:6px;transition:border-color .35s,color .35s;position:relative;overflow:hidden}
+.load-step.active{border-color:var(--accent);color:var(--text)}
+.load-step.done{border-color:var(--green);color:var(--green)}
+.step-fill{position:absolute;inset:0;width:0%;pointer-events:none;border-radius:inherit;z-index:0}
+.load-step.active .step-fill{background:rgba(0,229,255,.08);animation:stepFill 8s cubic-bezier(.15,.5,.3,1) forwards}
+.load-step.done .step-fill{width:100%;background:rgba(0,210,90,.1);transition:width .2s ease}
+@keyframes stepFill{0%{width:0%}20%{width:45%}45%{width:68%}70%{width:82%}90%{width:88%}100%{width:91%}}
+.step-icon{font-size:14px;width:18px;text-align:center;position:relative;z-index:1}
+.load-step span:last-child{position:relative;z-index:1}
 
 /* ─── RESULTS ─── */
 #results-panel{display:none}
@@ -275,11 +280,11 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 
   <div id="loading-panel">
     <div class="load-title"><div class="spinner"></div>Analyzing…</div>
-    <div class="load-step" id="step-1"><span class="step-icon">🔍</span>Identifying card…</div>
-    <div class="load-step" id="step-2"><span class="step-icon">📡</span>Fetching PokeTrace prices…</div>
-    <div class="load-step" id="step-3"><span class="step-icon">💎</span>Loading card data…</div>
-    <div class="load-step" id="step-4"><span class="step-icon">📐</span>Calculating buy targets…</div>
-    <div class="load-step" id="step-5"><span class="step-icon">🤖</span>Claude AI evaluation…</div>
+    <div class="load-step" id="step-1"><div class="step-fill"></div><span class="step-icon">🔍</span><span>Identifying card…</span></div>
+    <div class="load-step" id="step-2"><div class="step-fill"></div><span class="step-icon">📡</span><span>Fetching PokeTrace prices…</span></div>
+    <div class="load-step" id="step-3"><div class="step-fill"></div><span class="step-icon">💎</span><span>Loading card data…</span></div>
+    <div class="load-step" id="step-4"><div class="step-fill"></div><span class="step-icon">📐</span><span>Calculating buy targets…</span></div>
+    <div class="load-step" id="step-5"><div class="step-fill"></div><span class="step-icon">🤖</span><span>Claude AI evaluation…</span></div>
   </div>
   <div id="results-panel">
     <!-- Identity row -->
@@ -1127,10 +1132,19 @@ async function startScan(file, textOnly) {
   steps.forEach(s => {
     const el = document.getElementById(s);
     el.classList.remove('active','done');
+    const fill = el.querySelector('.step-fill');
+    if (fill) { fill.style.animation = ''; fill.style.width = ''; }
   });
 
   function stepOn(i) {
-    if (i > 0) document.getElementById('step-'+i).classList.remove('active'), document.getElementById('step-'+i).classList.add('done');
+    if (i > 0) {
+      const el = document.getElementById('step-'+i);
+      el.classList.remove('active');
+      el.classList.add('done');
+      // snap fill to 100%
+      const fill = el.querySelector('.step-fill');
+      if (fill) { fill.style.animation = 'none'; fill.style.width = '100%'; }
+    }
     if (i < 5) document.getElementById('step-'+(i+1)).classList.add('active');
   }
 
