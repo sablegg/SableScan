@@ -290,7 +290,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     </div>
   </div>
 
-  <div id="app-version-display" style="text-align:center;padding:6px 0 2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.05em">v1.5.1</div>
+  <div id="app-version-display" style="text-align:center;padding:6px 0 2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.05em">v1.5.2</div>
 
   <div id="loading-panel">
     <div class="load-title"><div class="spinner"></div>Analyzing…</div>
@@ -335,6 +335,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
       <button class="id-btn" id="wrong-btn" onclick="openCandidatesSheet()" style="display:none">❓ Wrong?</button>
 
       <button class="id-btn" onclick="addToCollection()">＋ Collect</button>
+      <button class="id-btn" id="buy-btn" onclick="addToBuyList()">← Buy <span id="buy-count" style="display:none;background:var(--accent);color:#000;border-radius:8px;font-size:9px;padding:1px 5px;margin-left:2px;cursor:pointer" onclick="event.stopPropagation();openBuySheet()"></span></button>
       <button class="id-btn" onclick="exportToSell()">→ Sell</button>
       <button class="id-btn" onclick="openSettings()">⚙️</button>
     </div>
@@ -658,6 +659,30 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 </div>
 <div id="variants-backdrop" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,0.6)" onclick="closeVariantsSheet()"></div>
 
+<!-- BUY SHEET -->
+<div id="buy-sheet" style="display:none;flex-direction:column;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border2);border-radius:16px 16px 0 0;padding:16px;max-height:75vh">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.05em">BUY LIST</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="clearBuyList()" style="font-size:10px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace">Clear all</button>
+      <button onclick="closeBuySheet()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0 4px">✕</button>
+    </div>
+  </div>
+  <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Tap a card to remove it from the list</div>
+  <div id="buy-list-items" style="overflow-y:auto;flex:1"></div>
+  <div id="buy-list-footer" style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:none">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+      <span style="font-size:11px;color:var(--muted)">Total market value</span>
+      <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text)" id="buy-total-nm">—</span>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span style="font-size:11px;color:var(--muted)">Total max pay</span>
+      <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--green)" id="buy-total-max">—</span>
+    </div>
+  </div>
+</div>
+<div id="buy-backdrop" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,0.6)" onclick="closeBuySheet()"></div>
+
 <!-- CANDIDATES SHEET -->
 <div id="candidates-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border2);border-radius:16px 16px 0 0;padding:16px;max-height:65vh;overflow-y:auto">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
@@ -760,7 +785,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 <script>
 // ═══════════════════════════════════════════════════════════════
 // CONFIG
-const VERSION = '1.5.1';
+const VERSION = '1.5.2';
 
 // ═══════════════════════════════════════════════════════════════
 const BACKEND = {
@@ -802,6 +827,7 @@ const STATE = {
   psaFee: 18,
   collection: [],
   watchlist: [],
+  buyList: [],
   scanCount: 0,
   maxScans: 50,
 };
@@ -986,6 +1012,7 @@ function logOut() {
 // ═══════════════════════════════════════════════════════════════
 function initApp() {
   loadCollection();
+  loadBuyList();
   renderSets();
   const savedMargin = localStorage.getItem('sable_margin');
   if (savedMargin) {
@@ -2819,6 +2846,126 @@ function clearBugReports() {
   localStorage.removeItem('sable_bug_reports');
   renderBugReports();
   showToast('Reports cleared');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BUY LIST
+// ═══════════════════════════════════════════════════════════════
+
+function loadBuyList() {
+  try { STATE.buyList = JSON.parse(localStorage.getItem('sable_buy_list') || '[]'); } catch(e) { STATE.buyList = []; }
+  updateBuyBadge();
+}
+
+function saveBuyList() {
+  localStorage.setItem('sable_buy_list', JSON.stringify(STATE.buyList));
+}
+
+function updateBuyBadge() {
+  const badge = document.getElementById('buy-count');
+  if (!badge) return;
+  const n = STATE.buyList.length;
+  if (n > 0) { badge.textContent = n; badge.style.display = 'inline'; }
+  else { badge.style.display = 'none'; }
+}
+
+function addToBuyList() {
+  const data = STATE.lastResult;
+  if (!data?.card?.name) { showToast('Scan a card first'); return; }
+  const card = data.card;
+  const prices = data.prices || {};
+  const condPrices = prices.ebay && Object.values(prices.ebay).some(v => v) ? prices.ebay : {};
+  const nmPrice = condPrices.NM || prices.avg || null;
+  const maxPay = data.maxPay || data.buyTargets?.acceptable || (nmPrice ? nmPrice * 0.80 : null);
+  STATE.buyList.push({
+    name: card.name,
+    set: card.set || '',
+    number: card.fullNumber || card.number || '',
+    variant: card.variant || 'Normal',
+    imageUrl: card.imageUrl || '',
+    condition: STATE.currentCondition,
+    nmPrice,
+    maxPay,
+    strongBuy: data.buyTargets?.strongBuy || null,
+    addedAt: Date.now(),
+  });
+  saveBuyList();
+  updateBuyBadge();
+  showToast('Added to buy list');
+}
+
+function removeFromBuyList(idx) {
+  STATE.buyList.splice(idx, 1);
+  saveBuyList();
+  updateBuyBadge();
+  renderBuySheet();
+}
+
+function clearBuyList() {
+  STATE.buyList = [];
+  saveBuyList();
+  updateBuyBadge();
+  renderBuySheet();
+}
+
+function renderBuySheet() {
+  const container = document.getElementById('buy-list-items');
+  const footer = document.getElementById('buy-list-footer');
+  if (!container) return;
+  const list = STATE.buyList;
+  if (!list.length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:12px 0;text-align:center">Buy list is empty</div>';
+    if (footer) footer.style.display = 'none';
+    return;
+  }
+  const variantDisplay = {
+    'Holofoil':'Holo','Reverse_Holofoil':'Reverse Holo','Normal':'Normal',
+    '1st_Edition':'1st Ed','1st_Edition_Holofoil':'1st Ed Holo',
+    'Full_Art':'Full Art','IR':'Illustration Rare','SAR':'Special Art Rare',
+  };
+  container.innerHTML = '';
+  let totalNm = 0, totalMax = 0;
+  list.forEach((item, idx) => {
+    const label = variantDisplay[item.variant] || item.variant;
+    const nmStr = item.nmPrice ? '$' + item.nmPrice.toFixed(2) : '—';
+    const maxStr = item.maxPay ? '$' + item.maxPay.toFixed(2) : '—';
+    const strongStr = item.strongBuy ? '$' + item.strongBuy.toFixed(2) : '—';
+    if (item.nmPrice) totalNm += item.nmPrice;
+    if (item.maxPay) totalMax += item.maxPay;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start;cursor:pointer';
+    row.title = 'Tap to remove';
+    row.onclick = () => { if (confirm('Remove ' + item.name + ' from buy list?')) removeFromBuyList(idx); };
+    row.innerHTML = `
+      ${item.imageUrl ? `<img src="${item.imageUrl}" style="width:40px;height:56px;object-fit:contain;border-radius:4px;background:var(--surface2);flex-shrink:0">` : `<div style="width:40px;height:56px;background:var(--surface2);border-radius:4px;flex-shrink:0"></div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.name}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:1px">${item.set}${item.number ? ' · #' + item.number : ''} · ${label} · ${item.condition}</div>
+        <div style="display:flex;gap:12px;margin-top:6px">
+          <div><div style="font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase">Market</div><div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text)">${nmStr}</div></div>
+          <div><div style="font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase">Max Pay</div><div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--green)">${maxStr}</div></div>
+          <div><div style="font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase">Strong Buy</div><div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">${strongStr}</div></div>
+        </div>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+  if (footer) {
+    footer.style.display = 'block';
+    document.getElementById('buy-total-nm').textContent = totalNm ? '$' + totalNm.toFixed(2) : '—';
+    document.getElementById('buy-total-max').textContent = totalMax ? '$' + totalMax.toFixed(2) : '—';
+  }
+}
+
+function openBuySheet() {
+  renderBuySheet();
+  document.getElementById('buy-sheet').style.display = 'flex';
+  document.getElementById('buy-backdrop').style.display = 'block';
+}
+
+function closeBuySheet() {
+  document.getElementById('buy-sheet').style.display = 'none';
+  document.getElementById('buy-backdrop').style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════════════
