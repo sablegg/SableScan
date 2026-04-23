@@ -2787,7 +2787,7 @@ async function findAdditionalVariants() {
     const json = await resp.json();
     const allCards = json.data || [];
     const newVariants = allCards
-      .filter(c => !existing.has(c.id))
+      .filter(c => c.cardNumber && !existing.has(c.id))
       .map(c => ({
         variant: c.variant || 'Normal',
         price: c.prices?.ebay?.NEAR_MINT?.avg || c.prices?.tcgplayer?.NEAR_MINT?.avg || null,
