@@ -1328,33 +1328,49 @@ function populateResults(data) {
   const nmPrice = condPrices.NM || prices.avg || 0;
   const condPrice = condPrices[condition] || nmPrice;
 
-  const strong     = targets.strongBuy  || data.maxPay * 0.88 || condPrice * 0.75;
-  const acceptable = targets.acceptable || data.maxPay          || condPrice * 0.80;
-  const pass       = targets.pass       || condPrice * 0.97;
+  // Bulk check — NM ≤ $1.00 overrides everything
+  const isBulk = nmPrice > 0 && nmPrice <= 1.00;
+  if (isBulk) {
+    const bpEl = document.getElementById('buy-price-big');
+    bpEl.textContent = '$0.10';
+    bpEl.className = 'buy-price';
+    const tb = document.getElementById('tier-badge');
+    if (tb) { tb.textContent = 'BULK'; tb.style.display = 'inline-block'; tb.style.background = 'rgba(255,255,255,0.07)'; tb.style.color = 'var(--muted)'; tb.style.border = '1px solid var(--border)'; }
+    ['strong','acceptable','pass'].forEach(t => { document.getElementById('tier-'+t).className = 'buy-tier dim'; });
+    document.getElementById('tier-strong-price').textContent = '$0.10';
+    document.getElementById('tier-ok-price').textContent = '$0.10';
+    document.getElementById('tier-pass-price').textContent = '$0.10';
+    document.getElementById('tier-acceptable').className = 'buy-tier active-y';
+  }
 
-  const verdict = data.verdict || 'acceptable';
-  let priceColor = 'ok', tierClass = 'active-y', tierText = '🟡 ACCEPTABLE';
-  if (verdict === 'strong-buy' || verdict === 'strongBuy') { priceColor = 'strong'; tierClass = 'active-g'; tierText = '✅ STRONG BUY'; }
-  else if (verdict === 'pass') { priceColor = 'pass'; tierClass = 'active-r'; tierText = '🔴 PASS'; }
+  const strong     = isBulk ? 0.10 : (targets.strongBuy  || data.maxPay * 0.88 || condPrice * 0.75);
+  const acceptable = isBulk ? 0.10 : (targets.acceptable || data.maxPay          || condPrice * 0.80);
+  const pass       = isBulk ? 0.10 : (targets.pass       || condPrice * 0.97);
 
-  // MAX PAY is always margin % off NM price — always green
-  const bpEl = document.getElementById('buy-price-big');
-  bpEl.textContent = acceptable !== null ? '$' + acceptable.toFixed(0) : '—';
-  bpEl.className = 'buy-price strong';
+  const verdict = isBulk ? 'bulk' : (data.verdict || 'acceptable');
 
-  // tier-badge hidden — AI verdict (AI PICKUP/MID/AVOID) replaces this
-  const tb = document.getElementById('tier-badge');
-  if (tb) tb.style.display = 'none';
+  if (!isBulk) {
+    let priceColor = 'ok', tierClass = 'active-y';
+    if (verdict === 'strong-buy' || verdict === 'strongBuy') { priceColor = 'strong'; tierClass = 'active-g'; }
+    else if (verdict === 'pass') { priceColor = 'pass'; tierClass = 'active-r'; }
 
-  ['strong','acceptable','pass'].forEach(t => {
-    document.getElementById('tier-'+t).className = 'buy-tier dim';
-  });
-  const activeId = verdict === 'strong-buy' || verdict === 'strongBuy' ? 'tier-strong' : verdict === 'pass' ? 'tier-pass' : 'tier-acceptable';
-  document.getElementById(activeId).className = 'buy-tier ' + tierClass;
+    const bpEl = document.getElementById('buy-price-big');
+    bpEl.textContent = acceptable !== null ? '$' + acceptable.toFixed(0) : '—';
+    bpEl.className = 'buy-price strong';
 
-  document.getElementById('tier-strong-price').textContent = '$' + strong.toFixed(0);
-  document.getElementById('tier-ok-price').textContent = '$' + acceptable.toFixed(0);
-  document.getElementById('tier-pass-price').textContent = '$' + pass.toFixed(0);
+    const tb = document.getElementById('tier-badge');
+    if (tb) tb.style.display = 'none';
+
+    ['strong','acceptable','pass'].forEach(t => {
+      document.getElementById('tier-'+t).className = 'buy-tier dim';
+    });
+    const activeId = verdict === 'strong-buy' || verdict === 'strongBuy' ? 'tier-strong' : verdict === 'pass' ? 'tier-pass' : 'tier-acceptable';
+    document.getElementById(activeId).className = 'buy-tier ' + tierClass;
+
+    document.getElementById('tier-strong-price').textContent = '$' + strong.toFixed(0);
+    document.getElementById('tier-ok-price').textContent = '$' + acceptable.toFixed(0);
+    document.getElementById('tier-pass-price').textContent = '$' + pass.toFixed(0);
+  }
 
   // Investment verdict from Claude
   const invVerdict = data.investmentVerdict || data.claudeData?.investmentVerdict || '';
