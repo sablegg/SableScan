@@ -332,6 +332,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
         Price by Condition <span style="color:var(--accent);font-size:9px">· tap to set yours</span>
       </div>
       <div id="condition-rows"></div>
+      <div id="tcg-nm-ref" style="display:none;font-family:'DM Mono',monospace;font-size:11px;color:#8a8a8a;margin-top:4px"></div>
     </div>
     <!-- Trend spectrum -->
     <div class="trend-wrap">
@@ -1318,6 +1319,12 @@ function populateResults(data) {
   // Condition & prices
   const condPrices = (prices.ebay && Object.values(prices.ebay).some(v => v !== null)) ? prices.ebay : {};
   renderConditions(condPrices, STATE.currentCondition);
+  const tcgEl = document.getElementById('tcg-nm-ref');
+  const tcgNM = data.prices?.tcgplayer?.NM;
+  if (tcgEl) {
+    if (tcgNM) { tcgEl.textContent = 'TCG: $' + tcgNM.toFixed(2); tcgEl.style.display = 'block'; }
+    else { tcgEl.style.display = 'none'; }
+  }
 
   // Variants — store and update badge
   renderVariants(data.variants || []);
