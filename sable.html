@@ -1628,12 +1628,54 @@ function selectGrade(grade, psaGrades, fee) {
   document.getElementById('ev-box').classList.add('show');
 }
 
+function renderGradeTable(data, fee) {
+  const tbody = document.getElementById('grade-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const prices = data.prices || {};
+  const psaG = prices.psaGrades || {};
+  const gp = data.gradedPrices || {};
+  const nmRaw = prices.ebay?.NM || prices.tcgplayer?.NM || prices.avg || 0;
+  let hasAnyGrade = false;
+  [10,9,8,7,6].forEach(g => {
+    const cos = [
+      psaG[g]         ? {label:'PSA',     price:psaG[g]}         : null,
+      gp['bgs'+g]     ? {label:'BGS',     price:gp['bgs'+g]}     : null,
+      (g===9&&gp.bgs9_5) ? {label:'BGS 9.5',price:gp.bgs9_5}    : null,
+      gp['cgc'+g]     ? {label:'CGC',     price:gp['cgc'+g]}     : null,
+      gp['sgc'+g]     ? {label:'SGC',     price:gp['sgc'+g]}     : null,
+    ].filter(Boolean);
+    const best = cos.length ? cos.reduce((a,b) => a.price > b.price ? a : b) : null;
+    const tr = document.createElement('tr');
+    if (best) {
+      hasAnyGrade = true;
+      const net = best.price - fee - nmRaw;
+      const netColor = net > 0 ? 'var(--green)' : 'var(--red)';
+      const netStr = (net >= 0 ? '+' : '') + '$' + Math.abs(net).toFixed(0);
+      tr.innerHTML = `<td>Grade ${g}</td><td>$${best.price.toFixed(0)}</td><td style="font-size:10px;color:var(--muted2)">${best.label}</td><td style="color:${netColor}">${netStr}</td>`;
+      tr.style.cursor = 'pointer';
+      tr.onclick = () => selectGrade(g, psaG, fee);
+    } else {
+      tr.innerHTML = `<td style="color:var(--muted2)">Grade ${g}</td><td style="color:var(--muted)">—</td><td>—</td><td>—</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+  const ratio = psaG[10] && psaG[9] ? (psaG[10] / psaG[9]).toFixed(2) + 'x' : '—';
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setEl('scarcity-ratio', ratio);
+  setEl('scarcity-text', hasAnyGrade
+    ? 'PSA 10s command a ' + ratio + ' premium over PSA 9.'
+    : 'No graded sales data available for this card.');
+}
+
 function setPsaFee(fee, el) {
   STATE.psaFee = fee;
-  document.querySelectorAll('.psa-fee-chip').forEach(c => c.classList.remove('on'));
+  // Scope chip highlight to the clicked chip's container only
+  el.parentElement.querySelectorAll('.psa-fee-chip').forEach(c => c.classList.remove('on'));
   el.classList.add('on');
   if (STATE.lastResult) {
     renderGradeGrid(STATE.lastResult.prices?.psaGrades || {}, STATE.currentCondition, fee);
+    renderGradeTable(STATE.lastResult, fee);
   }
 }
 
@@ -1965,43 +2007,9 @@ function populateMarket(data) {
   const ebayLink = document.getElementById('ebay-link');
   if (ebayLink) ebayLink.href = 'https://www.ebay.com/sch/i.html?_nkw=' + cardName + '&LH_Sold=1&LH_Complete=1';
 
-  // Grade table — show all companies, best price, net arbitrage
-  const tbody = document.getElementById('grade-table-body');
-  if (tbody) tbody.innerHTML = '';
-  const psaG = prices.psaGrades || {};
-  const gp = data.gradedPrices || STATE.lastResult?.gradedPrices || {};
-  const nmRaw = prices.ebay?.NM || prices.tcgplayer?.NM || prices.avg || 0;
-  const psaFee = STATE.psaFee || 18;
-  let hasAnyGrade = false;
-  if (tbody) [10,9,8,7,6].forEach(g => {
-    // Find best price across companies
-    const candidates = [
-      psaG[g] ? {label:'PSA', price:psaG[g]} : null,
-      gp['bgs'+g] ? {label:'BGS', price:gp['bgs'+g]} : null,
-      (g===9 && gp.bgs9_5) ? {label:'BGS 9.5', price:gp.bgs9_5} : null,
-      gp['cgc'+g] ? {label:'CGC', price:gp['cgc'+g]} : null,
-      gp['sgc'+g] ? {label:'SGC', price:gp['sgc'+g]} : null,
-    ].filter(Boolean);
-    const best = candidates.length ? candidates.reduce((a,b) => a.price > b.price ? a : b) : null;
-    const tr = document.createElement('tr');
-    if (best) {
-      hasAnyGrade = true;
-      const net = best.price - psaFee - nmRaw;
-      const netColor = net > 0 ? 'var(--green)' : 'var(--red)';
-      const netStr = (net >= 0 ? '+' : '') + '$' + Math.abs(net).toFixed(0);
-      tr.innerHTML = `<td>Grade ${g}</td><td>$${best.price.toFixed(0)}</td><td style="font-size:10px;color:var(--muted2)">${best.label}</td><td style="color:${netColor}">${netStr}</td>`;
-      tr.style.cursor = 'pointer';
-      tr.onclick = () => selectGrade(g, psaG, psaFee);
-    } else {
-      tr.innerHTML = `<td style="color:var(--muted2)">Grade ${g}</td><td style="color:var(--muted)">—</td><td>—</td><td>—</td>`;
-    }
-    tbody.appendChild(tr);
-  });
-  const ratio = psaG[10] && psaG[9] ? (psaG[10] / psaG[9]).toFixed(2) + 'x' : '—';
-  setEl('scarcity-ratio', ratio);
-  setEl('scarcity-text', hasAnyGrade
-    ? 'PSA 10s command a ' + ratio + ' premium over PSA 9.'
-    : 'No graded sales data available for this card.');
+  // Grade table — delegated to shared function
+  renderGradeTable(data, STATE.psaFee || 18);
+  const hasAnyGrade = !!(data.gradedPrices && Object.values(data.gradedPrices).some(v => v));
   setEl('best-exit', hasAnyGrade
     ? 'PSA 9 typically offers best ROI for most non-10 pop cards.'
     : 'Grade data unavailable — check PokeTrace for this card.');
