@@ -246,6 +246,13 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 .pulse-wrap{margin:0 12px 4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;display:none}
 /* Auth */
 #auth-gate{display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;padding:32px 24px}
+/* Sable+ */
+#sable-plus-overlay{display:none;position:fixed;inset:0;z-index:600;background:var(--bg);overflow-y:auto;padding-bottom:40px}
+.sable-plus-tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 12px;cursor:pointer;transition:border-color .15s,background .15s;-webkit-tap-highlight-color:transparent}
+.sable-plus-tile:active{background:var(--surface2);border-color:var(--border2)}
+.spt-icon{font-size:22px;margin-bottom:6px}
+.spt-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.06em;color:var(--text);line-height:1.1;margin-bottom:3px}
+.spt-desc{font-size:10px;color:var(--muted);line-height:1.3}
 /* Settings */
 #settings-ov{display:none;position:fixed;inset:0;z-index:500;background:var(--bg);overflow-y:auto;padding-bottom:40px}
 /* Toast */
@@ -271,6 +278,10 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 <!-- ════ PAGE: SCAN ════ -->
 
 <div class="page active" id="page-scan">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px 4px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.1em;color:var(--accent);line-height:1">SABLE</div>
+    <button id="sable-plus-btn" onclick="openSablePlus()" style="width:28px;height:28px;border-radius:7px;background:var(--surface2);border:1px solid var(--border2);color:var(--accent);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;line-height:1">+</button>
+  </div>
   <div id="upload-zone" onclick="document.getElementById('file-input').click()">
     <img id="upload-preview" src="" alt="">
     <span class="uz-icon" id="upload-icon">📸</span>
@@ -300,7 +311,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     </div>
   </div>
 
-  <div id="app-version-display" style="text-align:center;padding:6px 0 2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.05em">v1.6.0</div>
+  <div id="app-version-display" style="text-align:center;padding:6px 0 2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.05em">v1.7.0</div>
 
   <div id="loading-panel">
     <div class="load-title"><div class="spinner"></div>Analyzing…</div>
@@ -724,6 +735,32 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
   <div id="sync-sets-list" style="overflow-y:auto;flex:1;font-size:11px"></div>
 </div>
 
+<!-- SABLE+ OVERLAY -->
+<div id="sable-plus-backdrop" style="display:none;position:fixed;inset:0;z-index:599;background:rgba(0,0,0,0.6)" onclick="closeSablePlus()"></div>
+<div id="sable-plus-overlay">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 14px 0;margin-bottom:22px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.1em;color:var(--accent)">SABLE+</div>
+    <button onclick="closeSablePlus()" style="background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;padding:0 4px">✕</button>
+  </div>
+  <div id="sable-plus-midscan">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.12em;color:var(--muted);padding:0 14px 10px">MID-SCAN</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 24px">
+      <div class="sable-plus-tile" onclick="window.location.href='sable-offer-list-v7.html'"><div class="spt-icon">📋</div><div class="spt-name">OFFER LIST</div><div class="spt-desc">Multi-card offer calculator</div></div>
+      <div class="sable-plus-tile" onclick="window.location.href='sable-mark.html'"><div class="spt-icon">🏷️</div><div class="spt-name">MARK</div><div class="spt-desc">Tag cards BUY / HOLD / SELL</div></div>
+    </div>
+  </div>
+  <div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.12em;color:var(--muted);padding:0 14px 10px">STANDALONE</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px">
+      <div class="sable-plus-tile" onclick="window.location.href='sable-pulse-v2.html'"><div class="spt-icon">📈</div><div class="spt-name">MARKET PULSE</div><div class="spt-desc">Watchlist & price alerts</div></div>
+      <div class="sable-plus-tile" onclick="window.location.href='sable-radar.html'"><div class="spt-icon">🚀</div><div class="spt-name">RELEASE RADAR</div><div class="spt-desc">Upcoming set calendar</div></div>
+      <div class="sable-plus-tile" onclick="window.location.href='sable-packselection.html'"><div class="spt-icon">📦</div><div class="spt-name">PACK SELECTION</div><div class="spt-desc">Sealed product EV analyzer</div></div>
+      <div class="sable-plus-tile" onclick="window.location.href='sable-inventory.html'"><div class="spt-icon">🗃️</div><div class="spt-name">INVENTORY</div><div class="spt-desc">Track your collection</div></div>
+      <div class="sable-plus-tile" onclick="window.location.href='sable-credits.html'"><div class="spt-icon">💚</div><div class="spt-name">HEALTH MONITOR</div><div class="spt-desc">API usage & system status</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- AUTH GATE -->
 
 <div id="auth-gate">
@@ -810,7 +847,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 <script>
 // ═══════════════════════════════════════════════════════════════
 // CONFIG
-const VERSION = '1.6.0';
+const VERSION = '1.7.0';
 
 // ═══════════════════════════════════════════════════════════════
 const BACKEND = {
@@ -1036,6 +1073,21 @@ function logOut() {
 // ═══════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// SABLE+ LAUNCHER
+// ═══════════════════════════════════════════════════════════════
+function openSablePlus() {
+  const midscan = document.getElementById('sable-plus-midscan');
+  if (midscan) midscan.style.display = STATE.lastResult ? 'block' : 'none';
+  document.getElementById('sable-plus-overlay').style.display = 'block';
+  document.getElementById('sable-plus-backdrop').style.display = 'block';
+}
+function closeSablePlus() {
+  document.getElementById('sable-plus-overlay').style.display = 'none';
+  document.getElementById('sable-plus-backdrop').style.display = 'none';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSablePlus(); });
+
 function initApp() {
   loadCollection();
   loadBuyList();
