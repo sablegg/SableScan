@@ -185,10 +185,13 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 .arb-label{font-size:10px;color:var(--muted);letter-spacing:.08em;margin-bottom:4px}
 .arb-price{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--text)}
 .grade-table{width:100%;border-collapse:collapse}
-.grade-table th{font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)}
-.grade-table td{font-size:11px;padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text)}
+.grade-table th{font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding:6px 4px;text-align:center;border-bottom:1px solid var(--border)}
+.grade-table th:first-child{text-align:left;padding-left:8px}
+.grade-table td{font-size:11px;padding:6px 4px;border-bottom:1px solid var(--border);color:var(--text)}
 .grade-table tr:last-child td{border-bottom:none}
-.grade-table td:first-child{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--muted2)}
+.grade-table td:first-child{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--muted2);padding-left:8px;white-space:nowrap}
+.arb-cell-data{text-align:center;padding:5px 3px}
+.arb-best{background:var(--green-dim)!important;outline:1px solid var(--green);border-radius:4px}
 .payout-cell{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 8px;text-align:center}
 .payout-platform{font-size:10px;color:var(--muted);margin-bottom:4px}
 .payout-net{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--text)}
@@ -311,7 +314,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
     </div>
   </div>
 
-  <div id="app-version-display" style="text-align:center;padding:6px 0 2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.05em">v1.7.0</div>
+  <div id="app-version-display" style="text-align:center;padding:6px 0 2px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace;letter-spacing:.05em">v1.7.1</div>
 
   <div id="loading-panel">
     <div class="load-title"><div class="spinner"></div>Analyzing…</div>
@@ -502,7 +505,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
       </div>
       <div style="overflow-x:auto">
         <table class="grade-table">
-          <thead><tr><th>Grade</th><th>Price</th><th>Company</th><th>Net @ fee</th></tr></thead>
+          <thead><tr><th>Grade</th><th>PSA</th><th>BGS</th><th>CGC</th><th>SGC</th><th>ACE</th></tr></thead>
           <tbody id="grade-table-body"></tbody>
         </table>
       </div>
@@ -847,7 +850,7 @@ input,select{font-family:'DM Mono',monospace;color:inherit}
 <script>
 // ═══════════════════════════════════════════════════════════════
 // CONFIG
-const VERSION = '1.7.0';
+const VERSION = '1.7.1';
 
 // ═══════════════════════════════════════════════════════════════
 const BACKEND = {
@@ -1799,33 +1802,59 @@ function renderGradeTable(data, fee) {
   const gp = data.gradedPrices || {};
   const nmRaw = prices.ebay?.NM || prices.tcgplayer?.NM || prices.avg || 0;
   let hasAnyGrade = false;
+
   [10,9,8,7,6].forEach(g => {
-    const cos = [
-      psaG[g]         ? {label:'PSA',     price:psaG[g]}         : null,
-      gp['bgs'+g]     ? {label:'BGS',     price:gp['bgs'+g]}     : null,
-      (g===9&&gp.bgs9_5) ? {label:'BGS 9.5',price:gp.bgs9_5}    : null,
-      gp['cgc'+g]     ? {label:'CGC',     price:gp['cgc'+g]}     : null,
-      gp['sgc'+g]     ? {label:'SGC',     price:gp['sgc'+g]}     : null,
-    ].filter(Boolean);
-    const best = cos.length ? cos.reduce((a,b) => a.price > b.price ? a : b) : null;
+    // For grade 9, prefer BGS 9.5 if it's higher than BGS 9
+    const bgsRaw = gp['bgs'+g] || null;
+    const bgsPrice = (g === 9 && (gp.bgs9_5 || 0) > (bgsRaw || 0)) ? gp.bgs9_5 : bgsRaw;
+    const bgsStar  = (g === 9 && (gp.bgs9_5 || 0) > (bgsRaw || 0));
+
+    const companies = [
+      { key:'PSA', price: psaG[g] || null },
+      { key:'BGS', price: bgsPrice, star: bgsStar },
+      { key:'CGC', price: gp['cgc'+g] || null },
+      { key:'SGC', price: gp['sgc'+g] || null },
+      { key:'ACE', price: gp['ace'+g] || null },
+    ];
+
+    const withData = companies.filter(c => c.price);
+    if (withData.length) hasAnyGrade = true;
+    const best = withData.length ? withData.reduce((a,b) => a.price > b.price ? a : b) : null;
+
     const tr = document.createElement('tr');
-    if (best) {
-      hasAnyGrade = true;
-      const net = best.price - fee - nmRaw;
-      const netColor = net > 0 ? 'var(--green)' : 'var(--red)';
-      const netStr = (net >= 0 ? '+' : '') + '$' + Math.abs(net).toFixed(0);
-      tr.innerHTML = `<td>Grade ${g}</td><td>$${best.price.toFixed(0)}</td><td style="font-size:10px;color:var(--muted2)">${best.label}</td><td style="color:${netColor}">${netStr}</td>`;
+    if (withData.length) {
       tr.style.cursor = 'pointer';
       tr.onclick = () => selectGrade(g, psaG, fee);
-    } else {
-      tr.innerHTML = `<td style="color:var(--muted2)">Grade ${g}</td><td style="color:var(--muted)">—</td><td>—</td><td>—</td>`;
     }
+
+    const gradeCell = document.createElement('td');
+    gradeCell.textContent = g;
+    tr.appendChild(gradeCell);
+
+    companies.forEach(co => {
+      const td = document.createElement('td');
+      td.className = 'arb-cell-data';
+      if (co.price) {
+        const isBest = best && co === best;
+        if (isBest) td.classList.add('arb-best');
+        const net = co.price - fee - nmRaw;
+        const netColor = net > 0 ? 'var(--green)' : 'var(--red)';
+        const netStr = (net >= 0 ? '+' : '') + '$' + Math.abs(net).toFixed(0);
+        const starBadge = co.star ? '<span style="font-size:7px;color:var(--muted);vertical-align:super">9.5</span>' : '';
+        td.innerHTML = `<div style="font-family:'DM Mono',monospace;font-size:9px;line-height:1.2">$${co.price.toFixed(0)}${starBadge}</div><div style="font-size:8px;color:${netColor}">${netStr}</div>`;
+      } else {
+        td.innerHTML = '<span style="color:var(--muted);font-size:10px">—</span>';
+      }
+      tr.appendChild(td);
+    });
+
     tbody.appendChild(tr);
   });
+
   const ratio = psaG[10] && psaG[9] ? (psaG[10] / psaG[9]).toFixed(2) + 'x' : '—';
-  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  setEl('scarcity-ratio', ratio);
-  setEl('scarcity-text', hasAnyGrade
+  const setEl2 = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setEl2('scarcity-ratio', ratio);
+  setEl2('scarcity-text', hasAnyGrade
     ? 'PSA 10s command a ' + ratio + ' premium over PSA 9.'
     : 'No graded sales data available for this card.');
 }
